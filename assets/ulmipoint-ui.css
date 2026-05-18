@@ -1,0 +1,165 @@
+/* ULMIPOINT unified app style v69 */
+:root{
+  --ui-bg:#f4f1e9;
+  --ui-bg-2:#eef5fb;
+  --ui-card:rgba(255,255,255,.88);
+  --ui-card-solid:#fffdf8;
+  --ui-text:#111827;
+  --ui-muted:#667085;
+  --ui-line:rgba(148,163,184,.34);
+  --ui-blue:#1764e8;
+  --ui-green:#10845f;
+  --ui-red:#d14b36;
+  --ui-orange:#f39b2f;
+  --ui-purple:#7652d6;
+  --ui-cyan:#1597b8;
+  --ui-shadow:0 18px 38px rgba(16,24,40,.10);
+  --ui-shadow-soft:0 8px 18px rgba(16,24,40,.07);
+}
+html,body{
+  background:
+    radial-gradient(circle at 14% 10%,rgba(37,99,235,.10),transparent 30%),
+    radial-gradient(circle at 86% 18%,rgba(243,155,47,.12),transparent 28%),
+    linear-gradient(135deg,var(--ui-bg),#fbfcff 62%,var(--ui-bg-2)) !important;
+  color:var(--ui-text) !important;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif !important;
+}
+.app,.wrap,main,.main{
+  max-width:1600px;
+}
+.hero,.head,.card,.panel,.lock-card,.notice,.site,.edit-panel,.fieldbox,.source,.today-card,.personal-plan,.plan-list,.tablewrap,.table-wrap,.monthbar,.house,.overview-hero,.overview-admin-card,.overview-card{
+  border-radius:26px !important;
+  border:1px solid var(--ui-line) !important;
+  background:var(--ui-card) !important;
+  box-shadow:var(--ui-shadow-soft) !important;
+}
+.hero,.head,.overview-hero,.lock-card{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 85% 10%,rgba(148,163,184,.23),transparent 22%),
+    radial-gradient(circle at 12% 88%,rgba(16,132,95,.09),transparent 26%),
+    var(--ui-card-solid) !important;
+}
+.hero::after,.overview-hero::after,.lock-card::after{
+  content:"";
+  position:absolute;
+  right:-40px;
+  bottom:-56px;
+  width:190px;
+  height:190px;
+  border-radius:50%;
+  background:rgba(148,163,184,.18);
+  pointer-events:none;
+}
+.card,.overview-card,.source,.site,.edit-panel,.today-card,.plan-list,.personal-plan,.tablewrap,.table-wrap{
+  position:relative;
+  overflow:hidden;
+}
+.card::after,.overview-card::after,.source::after,.site::after,.edit-panel::after,.today-card::after{
+  content:"";
+  position:absolute;
+  right:-34px;
+  top:-42px;
+  width:120px;
+  height:120px;
+  border-radius:50%;
+  background:rgba(148,163,184,.16);
+  pointer-events:none;
+}
+.card > *,.overview-card > *,.source > *,.site > *,.edit-panel > *,.today-card > *{position:relative;z-index:1}
+h1,h2,h3,.title h1,.hero h1,.overview-hero h2{
+  letter-spacing:-.065em !important;
+  color:var(--ui-text) !important;
+}
+.eyebrow,.overview-eyebrow{
+  color:var(--ui-blue) !important;
+  font-weight:950 !important;
+  letter-spacing:.06em !important;
+}
+.mini,.muted,.overview-section-sub{
+  color:var(--ui-muted) !important;
+  font-weight:800 !important;
+}
+button,a.btn,.tab,.quick-tabs a,.overview-admin-card,.overview-card,.pill,.status-chip,.apk-download{
+  border-radius:999px !important;
+  font-weight:950 !important;
+}
+button,a.btn,.tab,.quick-tabs a,.overview-admin-card,.apk-download{
+  transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;
+}
+button:hover,a.btn:hover,.tab:hover,.quick-tabs a:hover,.overview-admin-card:hover,.overview-card:hover,.apk-download:hover{
+  transform:translateY(-1px);
+  box-shadow:0 10px 22px rgba(16,24,40,.10) !important;
+}
+button.primary,.btn.primary,.tab.active,.quick-tabs a.primary,.overview-card.is-primary{
+  background:var(--ui-blue) !important;
+  border-color:var(--ui-blue) !important;
+  color:#fff !important;
+}
+input,select,textarea{
+  border-radius:16px !important;
+  border:1px solid var(--ui-line) !important;
+  background:rgba(255,255,255,.93) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+}
+.pill,.status-chip,.tag,.badge{
+  background:rgba(255,255,255,.72) !important;
+  border:1px solid var(--ui-line) !important;
+  color:#475467 !important;
+}
+.pill.blue,.blue,.status-chip.blue{color:var(--ui-blue)!important;background:#edf5ff!important;border-color:#c7ddff!important}
+.pill.green,.green,.ok,.status-chip.green{color:var(--ui-green)!important;background:#eaf8f0!important;border-color:#bfe8d2!important}
+.pill.red,.red,.bad{color:var(--ui-red)!important;background:#fff0ec!important;border-color:#ffc6b9!important}
+.pill.yellow,.yellow,.warn{color:#9a6700!important;background:#fff7da!important;border-color:#f5df90!important}
+.pill.brown,.brown{color:#7c2d12!important;background:#fff4ed!important;border-color:#fed7aa!important}
+.table-wrap table,.tablewrap table,table{
+  border-collapse:separate !important;
+  border-spacing:0 !important;
+}
+th,td{
+  border-color:rgba(148,163,184,.30) !important;
+}
+th{
+  background:rgba(248,250,252,.85) !important;
+  font-weight:950 !important;
+}
+tr:hover td{background:rgba(37,99,235,.035)}
+.overview-grid,.grid,.source-grid,.statgrid,.control-grid,.check-grid,.overview-admin-row{
+  gap:14px !important;
+}
+.overview-card,.source,.stat,.role-card,.employee-row,.unit-row,.plan-row,.candidate,.groupbox,.fieldbox{
+  border-radius:24px !important;
+  border:1px solid var(--ui-line) !important;
+  background:rgba(255,255,255,.82) !important;
+  box-shadow:0 8px 18px rgba(16,24,40,.06) !important;
+}
+.overview-card{
+  min-height:150px;
+  padding:22px !important;
+}
+.overview-card-topline{
+  height:5px !important;
+  border-radius:999px !important;
+  opacity:.95;
+}
+.overview-card .overview-icon,.overview-icon{
+  box-shadow:0 10px 20px rgba(16,24,40,.10) !important;
+}
+.overview-card strong,.overview-card-title,.source strong,.site-title,.today-duty,.plan-duty{
+  letter-spacing:-.04em;
+}
+.status-toast{
+  border-radius:999px !important;
+  box-shadow:var(--ui-shadow) !important;
+}
+@media(max-width:760px){
+  .app,.wrap,main{padding:10px !important}
+  .hero,.head{border-radius:22px !important;padding:14px !important}
+  .card,.overview-card,.source{border-radius:22px !important}
+  h1,.hero h1,.overview-hero h2{font-size:clamp(30px,10vw,48px) !important}
+}
+@media print{
+  html,body{background:#fff!important}
+  .hero,.card,.panel,.source,.tablewrap,.table-wrap{box-shadow:none!important;background:#fff!important}
+}

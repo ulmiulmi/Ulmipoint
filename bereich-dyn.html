@@ -6435,7 +6435,8 @@ function openPrintPDFPage(){
     td.innerHTML='<b>'+esc(name)+'</b>'+(role?'<div class="print-role">'+esc(role)+'</div>':'');
   });
   clone.classList.add('print-plan-table');
-  const html=`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${printPageCSS()}</style></head><body>
+  const html=`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${printPageCSS()}</style><link rel="stylesheet" href="assets/ulmipoint-ui.css?v=69">
+</head><body>
   <div class="screenbar"><div><b>${esc(title)}</b><div class="mini">A4 quer · kompakte Druckansicht ohne lange Saldo-Zeilen. Im Druckdialog „Als PDF speichern“ wählen.</div></div><div><button onclick="window.close()">Schliessen</button><button class="primary" onclick="window.print()">PDF speichern / Drucken</button></div></div>
   <main class="paper"><header class="print-head"><div><h1>${esc(title)}</h1><div class="meta" style="text-align:left">Plan passt kompakt auf eine A4-Seite quer. Namen bleiben kurz lesbar.</div></div><div class="meta">Erstellt: ${esc(generated)}<br><span id="scaleInfo">Skalierung wird berechnet…</span></div></header><section class="fitbox"><div class="fitcontent" id="fitcontent">${clone.outerHTML}</div></section><div class="print-note">Bei Bedarf im Druckdialog: Layout Querformat, Skalierung Standard/100%, Ränder Standard oder Keine.</div></main>
   <script>
