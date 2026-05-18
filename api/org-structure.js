@@ -66,28 +66,19 @@ function defaultOrganisation(){
     updatedAt:new Date().toISOString()
   };
 }
-function ensureOrg(data){
-  let changed=false;
-  if(!data.organisationStructure || typeof data.organisationStructure!=='object'){
-    data.organisationStructure=defaultOrganisation();
-    changed=true;
+function normalizeOrgForLoad(data){
+  const incoming=data && typeof data==='object' ? data.organisationStructure : null;
+  if(!incoming || typeof incoming!=='object'){
+    return {org:null, empty:true, reason:'missing'};
   }
-  if(!Array.isArray(data.organisationStructure.sites)){
-    data.organisationStructure.sites=[];
-    changed=true;
+  if(!Array.isArray(incoming.sites)){
+    incoming.sites=[];
+    return {org:incoming, empty:true, reason:'no-sites-array'};
   }
-  // Notfall-Sicherung: ein leer gespeicherter Organisationsstand darf die Häuser nicht verschwinden lassen.
-  if(data.organisationStructure.sites.length===0){
-    const def=defaultOrganisation();
-    data.organisationStructure=Object.assign({}, def, {
-      organisation: data.organisationStructure.organisation || def.organisation,
-      payrollProfileDefault: data.organisationStructure.payrollProfileDefault || def.payrollProfileDefault,
-      createdAt: data.organisationStructure.createdAt || def.createdAt,
-      updatedAt: new Date().toISOString()
-    });
-    changed=true;
+  if(incoming.sites.length===0){
+    return {org:incoming, empty:true, reason:'empty-sites'};
   }
-  return {org:data.organisationStructure,changed};
+  return {org:incoming, empty:false, reason:''};
 }
 function defaultAutomaticFunctions(type){
   type=safe(type)||'wohnheim';
@@ -134,8 +125,8 @@ module.exports=async function handler(req,res){
     const mode=safe(body.mode||'load');
     const row=await fetchStore();
     const data=row.data||{};
-    const ensured=ensureOrg(data);
-    const org=ensured.org;
+    const normalized=normalizeOrgForLoad(data);
+    const org=normalized.org;
     const hasOrgAdmin=validOrgAdminSession(data, body.orgAdminToken);
     let user=null;
     let access=null;
@@ -151,7 +142,8 @@ module.exports=async function handler(req,res){
           access=accessForPublicLoad();
         }
       }
-      return send(res,200,{ok:true,mode,organisationStructure:org,access,updatedAt:row.updated_at,seeded:ensured.changed});
+      const updatedAt=row.updated_at;
+      return send(res,200,{ok:true,mode,organisationStructure:org,access,updatedAt,empty:normalized.empty,emptyReason:normalized.reason,seeded:false});
     }
 
     if(mode==='save'){
@@ -165,9 +157,8 @@ module.exports=async function handler(req,res){
 
       const incoming=body.organisationStructure;
       if(!incoming || typeof incoming!=='object') throw new Error('Keine Organisationsstruktur übergeben.');
-      let sites=Array.isArray(incoming.sites)?incoming.sites.map(sanitizeSite):[];
-      // Auch beim Speichern nie versehentlich komplett leeren.
-      if(sites.length===0) sites=defaultOrganisation().sites;
+      let sites=Array.isArray(incoming.sites)?incoming.sites.map(sanitizeSite).filter(Boolean):[];
+      if(sites.length===0) throw new Error('Keine Standorte zum Speichern. Es wurde nichts überschrieben.');
       const next={
         version:'1.0',
         organisation:{
@@ -176,7 +167,7 @@ module.exports=async function handler(req,res){
         },
         payrollProfileDefault:safe(incoming.payrollProfileDefault)||'CH_BS_PERSONALRECHT_DEFAULT',
         sites,
-        createdAt:org.createdAt||new Date().toISOString(),
+        createdAt:(org&&org.createdAt)||new Date().toISOString(),
         updatedAt:new Date().toISOString(),
         updatedBy:{email:user.email||'',id:user.id||''}
       };

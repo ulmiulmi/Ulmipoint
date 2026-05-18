@@ -625,6 +625,15 @@
   }
 
 
+  function titleCase(value){
+    return String(value == null ? '' : value)
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\p{L}/gu, ch => ch.toUpperCase());
+  }
+
+
   function escapeOverviewText(value){
     return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   }
@@ -687,7 +696,7 @@
       + '<div class="overview-eyebrow">✨ ULMIPOINT Startseite</div>'
       + '<h2>'+escapeOverviewText(titleCase(name))+'</h2>'
       + '</div></div></section>'
-      + '<section><div class="overview-section-head"><div class="overview-section-title">Bereiche und Funktionen</div><div class="overview-section-sub">Tippen oder klicken zum Öffnen</div></div>'
+      + '<section><div class="overview-section-head"><div class="overview-section-title">Bereiche und Funktionen</div></div>'
       + '<div class="overview-grid">'+cards+'</div></section>'
       + '<section><div class="overview-section-head" style="margin-top:20px"><div class="overview-section-title">Verwaltung</div><div class="overview-section-sub">Admin und Portal</div></div>'
       + '<div class="overview-admin-row">'
@@ -711,8 +720,19 @@
     });
   }
 
+  function refreshGeneratedOverviewFrame(div){
+    if(!div) return;
+    div.innerHTML = renderGeneratedOverview();
+    div.dataset.boundOverview = '0';
+    bindGeneratedOverview(div);
+  }
+
   function ensureFrame(id){
-    if(frames.has(id)) return frames.get(id);
+    if(frames.has(id)){
+      const existing = frames.get(id);
+      if(id === "overview") refreshGeneratedOverviewFrame(existing);
+      return existing;
+    }
     if(id === "overview"){
       const div = document.createElement('div');
       div.className = 'planner-frame overview-frame';
