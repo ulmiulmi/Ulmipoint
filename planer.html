@@ -1,6 +1,63 @@
 <!doctype html>
 <html lang="de">
 <head>
+<script>
+(function(){
+  'use strict';
+  // ULMIPOINT v63: App-Daten werden nicht mehr dauerhaft im Browser gespeichert.
+  // Erlaubt bleibt nur der Passwortmanager des Browsers über autocomplete="username/current-password".
+  function safeParentStore(){
+    try{
+      if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_STORAGE__){
+        return window.parent.__ULMIPOINT_MEMORY_STORAGE__;
+      }
+    }catch(_){ }
+    return null;
+  }
+  function makeVolatileStorage(name){
+    const mem = Object.create(null);
+    function keys(){ return Object.keys(mem); }
+    function changed(key){
+      try{ if(typeof window.__ULMIPOINT_STORAGE_CHANGED__ === 'function') window.__ULMIPOINT_STORAGE_CHANGED__(String(key||'')); }catch(_){ }
+      try{ if(window.parent && window.parent !== window && typeof window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__ === 'function') window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__(String(key||'')); }catch(_){ }
+    }
+    return {
+      __volatile:true,
+      __name:name||'ulmipoint-memory',
+      getItem(key){ key=String(key); return Object.prototype.hasOwnProperty.call(mem,key) ? mem[key] : null; },
+      setItem(key,value){ key=String(key); mem[key]=String(value); changed(key); },
+      removeItem(key){ key=String(key); if(Object.prototype.hasOwnProperty.call(mem,key)){ delete mem[key]; changed(key); } },
+      clear(){ keys().forEach(k=>delete mem[k]); changed('*'); },
+      key(index){ return keys()[Number(index)] || null; },
+      get length(){ return keys().length; },
+      __dump(){ return Object.assign({}, mem); },
+      __load(items, replace){ if(replace) this.clear(); Object.entries(items||{}).forEach(([k,v])=>{mem[String(k)]=String(v ?? '');}); changed('*'); }
+    };
+  }
+  function shouldRemovePersistedKey(key){
+    key=String(key||'');
+    return /^(polypoint_|ulmipoint_|POLYPOINT_|ULMIPOINT_|sb-|supabase\.)/.test(key) || key.indexOf('supabase.auth.token')>=0;
+  }
+  try{
+    const real = window.localStorage;
+    if(real && !window.__ULMIPOINT_REAL_LOCAL_STORAGE__){ window.__ULMIPOINT_REAL_LOCAL_STORAGE__ = real; }
+    const doomed=[];
+    if(real){ for(let i=0;i<real.length;i++){ const k=real.key(i); if(shouldRemovePersistedKey(k)) doomed.push(k); } }
+    doomed.forEach(k=>{ try{ real.removeItem(k); }catch(_){ } });
+  }catch(_){ }
+  const parentStore = safeParentStore();
+  const appStore = parentStore || window.__ULMIPOINT_MEMORY_STORAGE__ || makeVolatileStorage('ulmipoint-app');
+  const sessionStore = (function(){
+    try{ if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__) return window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__; }catch(_){ }
+    return window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ || makeVolatileStorage('ulmipoint-session');
+  })();
+  window.__ULMIPOINT_MEMORY_STORAGE__ = appStore;
+  window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ = sessionStore;
+  window.__ULMIPOINT_PERSISTENT_BROWSER_STORAGE_DISABLED__ = true;
+  try{ Object.defineProperty(window,'localStorage',{value:appStore, configurable:true}); }catch(_){ }
+  try{ Object.defineProperty(window,'sessionStorage',{value:sessionStore, configurable:true}); }catch(_){ }
+})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ULMIPOINT Adapter</title>
@@ -33,6 +90,39 @@
   .frame-wrap{position:relative;min-height:0;background:#fff}
   .planner-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}
   .planner-frame.active{display:block}
+
+  .overview-frame{overflow:auto;background:radial-gradient(circle at 12% 0%,#eaf2ff 0,#f8fbff 38%,#f4f7fb 100%);padding:22px clamp(14px,3vw,34px) 34px}
+  .overview-page{max-width:1180px;margin:0 auto;color:var(--text)}
+  .overview-hero{border:1px solid rgba(217,226,239,.95);border-radius:30px;background:linear-gradient(135deg,#ffffff 0%,#f7fbff 55%,#fff7ed 100%);box-shadow:var(--shadow);padding:22px;position:relative;overflow:hidden;margin-bottom:18px}
+  .overview-hero:before{content:"";position:absolute;right:-80px;top:-100px;width:260px;height:260px;border-radius:999px;background:rgba(37,99,235,.10)}
+  .overview-hero:after{content:"";position:absolute;right:110px;bottom:-90px;width:220px;height:220px;border-radius:999px;background:rgba(15,138,95,.08)}
+  .overview-hero-inner{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start}
+  .overview-eyebrow{display:inline-flex;align-items:center;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:12px}
+  .overview-hero h2{font-size:clamp(30px,5vw,58px);line-height:.98;letter-spacing:-.07em;margin:0 0 9px;color:#111827}
+  .overview-lead{font-size:clamp(14px,2vw,18px);line-height:1.45;color:#475467;font-weight:750;max-width:760px;margin:0}
+  .overview-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .overview-pill{display:inline-flex;align-items:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:950;color:#475467}
+  .overview-pill.green{background:#e7f7ef;color:#0f8a5f;border-color:#b7e4ca}.overview-pill.blue{background:#eaf2ff;color:#175cd3;border-color:#c9dcff}.overview-pill.brown{background:#fff4ed;color:#7c2d12;border-color:#fed7aa}
+  .overview-quick{position:relative;z-index:1;display:grid;gap:8px;min-width:210px}
+  .overview-quick button{border:1px solid #c9dcff;background:#fff;color:#175cd3;border-radius:16px;padding:11px 12px;font-weight:950;text-align:left;box-shadow:0 8px 18px rgba(16,24,40,.06);cursor:pointer;white-space:normal}
+  .overview-section-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:18px 0 10px;padding:0 2px}
+  .overview-section-title{font-size:17px;font-weight:950;letter-spacing:-.03em}.overview-section-sub{font-size:12px;color:var(--muted);font-weight:850}
+  .overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .overview-card{position:relative;display:flex;flex-direction:column;text-align:left;min-height:142px;border:1px solid var(--line);border-radius:24px;background:var(--card);box-shadow:0 10px 26px rgba(16,24,40,.07);padding:16px;text-decoration:none;color:inherit;cursor:pointer;overflow:hidden;white-space:normal}
+  .overview-card:hover,.overview-quick button:hover,.overview-admin-card:hover{transform:translateY(-2px);box-shadow:0 18px 34px rgba(16,24,40,.12);border-color:#b8c7db}
+  .overview-card:before{content:"";position:absolute;inset:0 0 auto;height:6px;background:var(--accent,#2563eb)}
+  .overview-card-topline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+  .overview-tag{display:inline-flex;border-radius:999px;padding:4px 8px;background:#f2f4f7;color:#475467;font-size:11px;font-weight:950;border:1px solid #e4e7ec}
+  .overview-dot{width:13px;height:13px;border-radius:999px;background:var(--accent,#2563eb);box-shadow:0 0 0 5px rgba(37,99,235,.10)}
+  .overview-card h3{font-size:22px;line-height:1.05;letter-spacing:-.05em;margin:0 0 8px}
+  .overview-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.35;font-weight:780}
+  .overview-open{margin-top:auto;padding-top:16px;font-size:12px;font-weight:950;color:var(--accent,#2563eb)}
+  .overview-blue{--accent:#2563eb}.overview-green{--accent:#0f8a5f}.overview-orange{--accent:#ea580c}.overview-violet{--accent:#7c3aed}.overview-brown{--accent:#7c2d12}.overview-slate{--accent:#475467}.overview-red{--accent:#c73636}.overview-teal{--accent:#0891b2}.overview-amber{--accent:#b45309}
+  .overview-admin-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+  .overview-admin-card{border:1px solid var(--line);border-radius:24px;background:rgba(255,255,255,.86);box-shadow:0 10px 26px rgba(16,24,40,.06);padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;text-align:left;white-space:normal}
+  .overview-admin-card strong{font-size:17px;letter-spacing:-.03em}.overview-admin-card span{display:block;color:var(--muted);font-size:12px;font-weight:800;margin-top:3px}.overview-admin-card b{color:#175cd3;font-size:12px}
+  @media(max-width:980px){.overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-hero-inner{grid-template-columns:1fr}.overview-quick{grid-template-columns:repeat(3,minmax(0,1fr));min-width:0}.overview-quick button{text-align:center}.overview-admin-row{grid-template-columns:1fr}}
+  @media(max-width:620px){.overview-frame{padding:14px 10px 24px}.overview-hero{border-radius:24px;padding:17px}.overview-grid{grid-template-columns:1fr}.overview-quick{grid-template-columns:1fr}.overview-card{min-height:124px;border-radius:20px}.overview-admin-card{border-radius:20px}.overview-section-head{display:block}.overview-section-sub{margin-top:4px}.overview-meta{gap:6px}.overview-pill{font-size:11px;padding:6px 8px}}
   .loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f6f8fc;color:#667085;font-weight:950}
   @media(max-width:740px){.top{padding:6px 8px}.head{grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;margin-bottom:6px}.brand-logo{height:60px;max-width:min(295px,58vw);border-radius:14px}.brand-copy{display:block}.head .mini{display:none}h1{font-size:20px}button{padding:7px 10px;font-size:12px}.pill{font-size:11px;padding:4px 8px}.top-actions{grid-column:1/-1;grid-row:2;flex-wrap:nowrap;overflow-x:auto;margin-top:2px}}
 
@@ -383,6 +473,7 @@
   }
   function defaultSite(id){
     return {
+      __fallback:true,
       id:id || "haus_1",
       name:(id && id!=="haus_1") ? id.replace(/_/g," ") : "Haus 1",
       type:"wohnheim",
@@ -534,20 +625,123 @@
     return labels[id] ? id : 'overview';
   }
 
+
+  function escapeOverviewText(value){
+    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+
+  function overviewSite(){
+    if(HOUSE_CONTEXT && typeof HOUSE_CONTEXT === 'object') return HOUSE_CONTEXT;
+    try{
+      const stored = JSON.parse(localStorage.getItem(HOUSE_STORAGE_KEY) || 'null');
+      if(stored && typeof stored === 'object') return stored;
+    }catch(_){ }
+    return {id:HOUSE_ID || 'haus_1', name:'Haus 1', units:[]};
+  }
+
+  function overviewCardMeta(id){
+    const meta = {
+      azoren:['Azoren','Gruppe','blue','Gruppenplanung und Dienste öffnen'],
+      bali:['Bali','Gruppe','green','Gruppenplanung und Dienste öffnen'],
+      capri:['Capri','Gruppe','orange','Gruppenplanung und Dienste öffnen'],
+      delos:['Delos','Gruppe','violet','Gruppenplanung und Dienste öffnen'],
+      nachtwache:['Nachtwache','Dienst','slate','Nachtwachen planen und prüfen'],
+      pikett:['Haus-Pikett','Pikett','brown','Pikettplanung öffnen'],
+      hausdienstplan:['Haus-Dienstplan','Hausdienst','teal','Hausdienste und Zuständigkeiten öffnen'],
+      zeiterfassung:['Zeiterfassung','Zeit','amber','Einträge und Zeiten prüfen'],
+      monatsabschluss:['Monatsabschluss','Auswertung','red','Monatswerte und Abschluss öffnen']
+    };
+    if(meta[id]) return meta[id];
+    const ctx = UNIT_CONTEXT_BY_PLANNER[id];
+    if(ctx || labels[id]){
+      const type = String((ctx && ctx.type) || 'bereich');
+      const label = type === 'tageszentrum' ? 'Tageszentrum' : type === 'team' ? 'Team' : type === 'wohngruppe' ? 'Gruppe' : 'Bereich';
+      return [String((ctx && ctx.name) || labels[id] || id), label, 'blue', 'Bereichsplanung öffnen'];
+    }
+    return null;
+  }
+
+  function overviewOrder(site){
+    const order = [];
+    const add = id => { id = normalize(id); if(id !== 'overview' && overviewCardMeta(id) && !order.includes(id)) order.push(id); };
+    if(site && Array.isArray(site.units)){
+      site.units.forEach(unit => add(plannerIdForUnit(unit)));
+    }
+    if(!order.length) ['azoren','bali','capri','delos'].forEach(add);
+    ['nachtwache','pikett','hausdienstplan','zeiterfassung','monatsabschluss'].forEach(add);
+    return order;
+  }
+
+  function renderOverviewCard(id){
+    const item = overviewCardMeta(id);
+    if(!item) return '';
+    return '<button type="button" class="overview-card overview-'+escapeOverviewText(item[2])+'" data-open-planner="'+escapeOverviewText(id)+'">'
+      + '<div class="overview-card-topline"><span class="overview-tag">'+escapeOverviewText(item[1])+'</span><span class="overview-dot" aria-hidden="true"></span></div>'
+      + '<h3>'+escapeOverviewText(item[0])+'</h3>'
+      + '<p>'+escapeOverviewText(item[3])+'</p>'
+      + '<div class="overview-open">Bereich öffnen →</div>'
+      + '</button>';
+  }
+
+  function renderGeneratedOverview(){
+    const site = overviewSite();
+    const name = (site && site.name) ? String(site.name) : 'Haus 1';
+    const cards = overviewOrder(site).map(renderOverviewCard).join('');
+    return '<div class="overview-page">'
+      + '<section class="overview-hero" aria-label="Startbereich">'
+      + '<div class="overview-hero-inner"><div>'
+      + '<div class="overview-eyebrow">ULMIPOINT Startseite</div>'
+      + '<h2>'+escapeOverviewText(name)+'</h2>'
+      + '<p class="overview-lead">Schneller Einstieg in Gruppen, Nachtwache, Pikett und Auswertungen. Ohne Hausbild und ohne alte Haus-Kachel.</p>'
+      + '<div class="overview-meta"><span class="overview-pill blue">Startseite · '+escapeOverviewText(name)+'</span><span class="overview-pill green">Serverfähig</span><span class="overview-pill brown">generiert</span></div>'
+      + '</div><div class="overview-quick" aria-label="Schnellzugriff">'
+      + (labels.nachtwache ? '<button type="button" data-open-planner="nachtwache">Nachtwache öffnen</button>' : '')
+      + (labels.pikett ? '<button type="button" data-open-planner="pikett">Haus-Pikett öffnen</button>' : '')
+      + (labels.hausdienstplan ? '<button type="button" data-open-planner="hausdienstplan">Haus-Dienstplan öffnen</button>' : '')
+      + '</div></div></section>'
+      + '<section><div class="overview-section-head"><div class="overview-section-title">Bereiche</div><div class="overview-section-sub">Antippen öffnet den Bereich oben im Planer</div></div>'
+      + '<div class="overview-grid">'+cards+'</div></section>'
+      + '<section><div class="overview-section-head" style="margin-top:20px"><div class="overview-section-title">Verwaltung</div><div class="overview-section-sub">Schnellzugriff für Admin/Planung</div></div>'
+      + '<div class="overview-admin-row">'
+      + '<button type="button" class="overview-admin-card" data-open-url="organisation-admin.html"><span><strong>Organisation verwalten</strong><span>Häuser, Bereiche und Struktur bearbeiten</span></span><b>Öffnen</b></button>'
+      + '<button type="button" class="overview-admin-card" data-open-url="wunschportal.html"><span><strong>Wunschportal</strong><span>Mitarbeiteransicht in neuem Fenster</span></span><b>Öffnen</b></button>'
+      + '</div></section></div>';
+  }
+
+  function bindGeneratedOverview(div){
+    if(!div || div.dataset.boundOverview === '1') return;
+    div.dataset.boundOverview = '1';
+    div.addEventListener('click', ev => {
+      const target = ev.target.closest && ev.target.closest('[data-open-planner]');
+      if(target){ loadPlanner(target.dataset.openPlanner); return; }
+      const url = ev.target.closest && ev.target.closest('[data-open-url]');
+      if(url){
+        if(url.dataset.openUrl === 'wunschportal.html') window.open(url.dataset.openUrl, '_blank');
+        else location.href = url.dataset.openUrl;
+      }
+    });
+  }
+
   function ensureFrame(id){
     if(frames.has(id)) return frames.get(id);
+    if(id === "overview"){
+      const div = document.createElement('div');
+      div.className = 'planner-frame overview-frame';
+      div.dataset.planner = id;
+      div.setAttribute('role','region');
+      div.setAttribute('aria-label', labels[id]);
+      div.innerHTML = renderGeneratedOverview();
+      bindGeneratedOverview(div);
+      frameWrap.appendChild(div);
+      frames.set(id, div);
+      return div;
+    }
+
     const iframe = document.createElement('iframe');
     iframe.className = 'planner-frame';
     iframe.dataset.planner = id;
     iframe.title = labels[id];
-
-    // Startseite: wieder die schöne Hausbild-Übersicht mit Hotspots verwenden.
-    // Alle Detailseiten bleiben trotzdem einspurig über die dynamischen Planerseiten.
-    if(id === "overview"){
-      iframe.src = "overview.html";
-    } else {
-      iframe.src = genericPageUrl(id);
-    }
+    iframe.src = genericPageUrl(id);
 
     iframe.addEventListener('load', () => { cleanVisibleLocalButtonsInFrame(iframe); if(activeId === id) loader.style.display = 'none'; });
     frameWrap.appendChild(iframe);
@@ -654,7 +848,7 @@
   async function ensureHouseContextFromServer(){
     const q = querySiteId();
     if(!q) return false;
-    if(HOUSE_CONTEXT && Array.isArray(HOUSE_CONTEXT.units) && HOUSE_CONTEXT.units.length) return false;
+    if(HOUSE_CONTEXT && !HOUSE_CONTEXT.__fallback && Array.isArray(HOUSE_CONTEXT.units) && HOUSE_CONTEXT.units.length) return false;
     const s = serverSession();
 
     try{
@@ -817,7 +1011,7 @@
     if(!info) return;
     const snap = localStorageSnapshot();
     const bytes = Object.entries(snap.items).reduce((n,[k,v]) => n + k.length + String(v || '').length, 0);
-    info.textContent = 'Arbeitskopie: ' + snap.count + ' Planungs-Einträge · ca. ' + Math.round(bytes/1024) + ' KB · Hash ' + snap.hash + ' · Notfallkopien lokal: ' + countLocalEmergencyBackups();
+    info.textContent = 'Temporäre Arbeitskopie: ' + snap.count + ' Planungs-Einträge · ca. ' + Math.round(bytes/1024) + ' KB · Hash ' + snap.hash + ' · Notfallkopien temporär: ' + countLocalEmergencyBackups();
   }
   function refreshServerSyncInfo(){
     const el = document.getElementById('serverSyncInfo');
@@ -826,14 +1020,14 @@
     const snap = localStorageSnapshot();
     const same = meta.lastHash && snap.hash === meta.lastHash;
     const last = meta.lastSyncAt ? new Date(meta.lastSyncAt).toLocaleString('de-CH') : 'noch nie';
-    el.textContent = (same ? 'Arbeitskopie entspricht dem letzten Serverstand.' : 'Arbeitskopie hat Änderungen oder Server wurde noch nie geladen.') + ' Letzter Server-Sync: ' + last + (meta.count != null ? ' · ' + meta.count + ' Planungs-Einträge' : '');
+    el.textContent = (same ? 'Temporäre Arbeitskopie entspricht dem letzten Serverstand.' : 'Temporäre Arbeitskopie hat Änderungen oder Server wurde noch nie geladen.') + ' Letzter Server-Sync: ' + last + (meta.count != null ? ' · ' + meta.count + ' Planungs-Einträge' : '');
   }
   function refreshServerButtonFromSession(){
     const s = loadServerSession();
     const snap = localStorageSnapshot();
     const meta = loadServerMeta();
     if(isServerSessionFresh(s)){
-      if(meta.lastHash && snap.hash !== meta.lastHash) setServerButtonState('dirty','Server verbunden · lokale Änderungen noch nicht gespeichert');
+      if(meta.lastHash && snap.hash !== meta.lastHash) setServerButtonState('dirty','Server verbunden · temporäre Änderungen noch nicht gespeichert');
       else setServerButtonState('connected','Server verbunden' + (s.user?.email ? ' · ' + s.user.email : ''));
     } else setServerButtonState('ready','Server bereit, bitte einloggen');
     refreshServerSyncInfo();
@@ -1564,7 +1758,7 @@
       if(!row || !row.data || !row.data.items) throw new Error('Keine Serverdaten für Speicher-ID ' + cfg.store + ' gefunden.');
       const snap = localStorageSnapshot(); const meta = loadServerMeta();
       if(meta.lastHash && snap.hash !== meta.lastHash){
-        if(!confirm('Lokale Änderungen sind noch nicht auf dem Server gespeichert. Trotzdem Serverstand laden? Eine lokale Sicherung wird vorher erstellt.')){ serverStatus('Server laden abgebrochen.', 'bad'); return; }
+        if(!confirm('Temporäre Änderungen sind noch nicht auf dem Server gespeichert. Trotzdem Serverstand laden?')){ serverStatus('Server laden abgebrochen.', 'bad'); return; }
       }
       const backupKey = makeFullLocalBackup('before_server_download', false);
       cacheServerWishesFromData(row.data);
@@ -1611,7 +1805,7 @@
       const conflict = renderServerConflict(row, meta, session, showStatus);
       if(conflict && conflict.neverSyncedHere){ setServerButtonState('error','Konflikt-Schutz: Server zuerst laden'); serverStatus(msg + '\n\nKonflikt-Schutz: Dieser Browser hat den vorhandenen Serverstand noch nie geladen. Erst Serverstand laden.', 'bad'); }
       else if(conflict && conflict.serverChanged){ setServerButtonState('error','Server wurde seit dem letzten Sync verändert'); serverStatus(msg + '\n\nAchtung: Server wurde seit dem letzten Sync verändert. Erst laden oder bewusst überschreiben.', 'bad'); }
-      else if(meta.lastHash && snap.hash !== meta.lastHash){ setServerButtonState('dirty','Lokale Änderungen noch nicht gespeichert'); serverStatus(msg + '\n\nLokale Änderungen sind noch nicht auf Server gespeichert.', ''); }
+      else if(meta.lastHash && snap.hash !== meta.lastHash){ setServerButtonState('dirty','Temporäre Änderungen noch nicht gespeichert'); serverStatus(msg + '\n\nTemporäre Änderungen sind noch nicht auf dem Server gespeichert.', ''); }
       else { setServerButtonState('connected','Server und lokaler Stand passen zum Sync-Merker'); if(showStatus) serverStatus(msg + '\n\nAlles synchron.', 'ok'); }
       refreshServerSyncInfo();
     } catch(e){ setServerButtonState('error','Serverstatus nicht möglich'); serverStatus('Serverstatus nicht möglich: ' + e.message, 'bad'); }
@@ -1639,7 +1833,7 @@
   async function serverLoadPrimaryOnStart(){
     const cfg = saveServerConfig(); if(!cfg) return;
     const session = await getActiveServerSession();
-    if(!session){ serverStatus('Server ist Hauptspeicher. Bitte einloggen; bis dahin wird nur die lokale Arbeitskopie angezeigt.', ''); return; }
+    if(!session){ serverStatus('Server ist Hauptspeicher. Bitte einloggen; bis dahin wird nur eine temporäre Arbeitskopie im Arbeitsspeicher angezeigt.', ''); return; }
     try{
       const row = await fetchServerRow(cfg, session);
       const localSnap = localStorageSnapshot();
@@ -1656,7 +1850,7 @@
         Object.keys(collectUlmipointStorage()).forEach(key => { if(!(key in incoming) && relevantStorageKey(key)) localStorage.removeItem(key); });
         Object.entries(incoming).forEach(([key,val]) => { if(relevantStorageKey(key)) localStorage.setItem(key, String(val ?? '')); });
         reloadSplitFrames();
-        serverStatus('Server-Hauptspeicher automatisch geladen. Vorherige lokale Arbeitskopie als Notfallkopie gesichert: ' + backupKey, 'ok');
+        serverStatus('Server-Hauptspeicher automatisch geladen. Vorherige temporäre Arbeitskopie wurde nur im Arbeitsspeicher gesichert: ' + backupKey, 'ok');
       } else {
         serverStatus('Server-Hauptspeicher verbunden. Arbeitskopie ist aktuell.', 'ok');
       }
@@ -1668,7 +1862,7 @@
       refreshServerLocalInfo(); refreshServerSyncInfo();
     } catch(e){
       setServerButtonState('error','Server-Hauptspeicher nicht erreichbar');
-      serverStatus('Server-Hauptspeicher nicht erreichbar. Lokale Arbeitskopie bleibt sichtbar: ' + e.message, 'bad');
+      serverStatus('Server-Hauptspeicher nicht erreichbar. Temporäre Arbeitskopie bleibt sichtbar: ' + e.message, 'bad');
     }
   }
 

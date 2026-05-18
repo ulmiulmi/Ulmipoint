@@ -1,6 +1,63 @@
 <!doctype html>
 <html lang="de">
 <head>
+<script>
+(function(){
+  'use strict';
+  // ULMIPOINT v63: App-Daten werden nicht mehr dauerhaft im Browser gespeichert.
+  // Erlaubt bleibt nur der Passwortmanager des Browsers über autocomplete="username/current-password".
+  function safeParentStore(){
+    try{
+      if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_STORAGE__){
+        return window.parent.__ULMIPOINT_MEMORY_STORAGE__;
+      }
+    }catch(_){ }
+    return null;
+  }
+  function makeVolatileStorage(name){
+    const mem = Object.create(null);
+    function keys(){ return Object.keys(mem); }
+    function changed(key){
+      try{ if(typeof window.__ULMIPOINT_STORAGE_CHANGED__ === 'function') window.__ULMIPOINT_STORAGE_CHANGED__(String(key||'')); }catch(_){ }
+      try{ if(window.parent && window.parent !== window && typeof window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__ === 'function') window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__(String(key||'')); }catch(_){ }
+    }
+    return {
+      __volatile:true,
+      __name:name||'ulmipoint-memory',
+      getItem(key){ key=String(key); return Object.prototype.hasOwnProperty.call(mem,key) ? mem[key] : null; },
+      setItem(key,value){ key=String(key); mem[key]=String(value); changed(key); },
+      removeItem(key){ key=String(key); if(Object.prototype.hasOwnProperty.call(mem,key)){ delete mem[key]; changed(key); } },
+      clear(){ keys().forEach(k=>delete mem[k]); changed('*'); },
+      key(index){ return keys()[Number(index)] || null; },
+      get length(){ return keys().length; },
+      __dump(){ return Object.assign({}, mem); },
+      __load(items, replace){ if(replace) this.clear(); Object.entries(items||{}).forEach(([k,v])=>{mem[String(k)]=String(v ?? '');}); changed('*'); }
+    };
+  }
+  function shouldRemovePersistedKey(key){
+    key=String(key||'');
+    return /^(polypoint_|ulmipoint_|POLYPOINT_|ULMIPOINT_|sb-|supabase\.)/.test(key) || key.indexOf('supabase.auth.token')>=0;
+  }
+  try{
+    const real = window.localStorage;
+    if(real && !window.__ULMIPOINT_REAL_LOCAL_STORAGE__){ window.__ULMIPOINT_REAL_LOCAL_STORAGE__ = real; }
+    const doomed=[];
+    if(real){ for(let i=0;i<real.length;i++){ const k=real.key(i); if(shouldRemovePersistedKey(k)) doomed.push(k); } }
+    doomed.forEach(k=>{ try{ real.removeItem(k); }catch(_){ } });
+  }catch(_){ }
+  const parentStore = safeParentStore();
+  const appStore = parentStore || window.__ULMIPOINT_MEMORY_STORAGE__ || makeVolatileStorage('ulmipoint-app');
+  const sessionStore = (function(){
+    try{ if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__) return window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__; }catch(_){ }
+    return window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ || makeVolatileStorage('ulmipoint-session');
+  })();
+  window.__ULMIPOINT_MEMORY_STORAGE__ = appStore;
+  window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ = sessionStore;
+  window.__ULMIPOINT_PERSISTENT_BROWSER_STORAGE_DISABLED__ = true;
+  try{ Object.defineProperty(window,'localStorage',{value:appStore, configurable:true}); }catch(_){ }
+  try{ Object.defineProperty(window,'sessionStorage',{value:sessionStore, configurable:true}); }catch(_){ }
+})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ULMIPOINT Nachtwache</title>
@@ -247,7 +304,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
         <div><label>OpenAI API-Key</label><input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" onchange="saveAPISettings(true)" onblur="saveAPISettings(false)"></div>
         <div><label>Modell</label><input id="apiModel" value="gpt-5.2" onchange="saveAPISettings(true)" onblur="saveAPISettings(false)"></div>
       </div>
-      <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input id="apiRememberSession" type="checkbox" checked onchange="saveAPISettings(true)"> API-Key im Browser + Sicherung speichern</label>
+      <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input id="apiRememberSession" type="checkbox" checked onchange="saveAPISettings(true)"> API-Key nicht speichern</label>
       <div class="toolbar" style="margin-top:10px"><button class="primary" onclick="saveAPISettings(true)">API-Daten speichern</button><button class="primary" onclick="askOpenAIDirect()">Externe KI kontrollieren lassen</button><button onclick="forgetApiKey()">API-Key vergessen</button><button onclick="copyAIPayload()">gesendete Daten kopieren</button></div>
       <div id="apiResult" class="issue" style="margin-top:10px"><b>Bereit</b><div>Die externe KI bekommt nur den aktuell gewählten Monat, Regeln, Dienstkatalog, Mitarbeiter und Konflikte. Sie ändert den Plan nicht automatisch.</div></div>
     </details>
@@ -486,7 +543,7 @@ function normalizeAPISettings(){
   if(!state.api||typeof state.api!=='object'||Array.isArray(state.api))state.api={key:'',model:'gpt-5.2',saveInBrowserSicherung:true};
   if(state.api.key==null)state.api.key='';
   if(!state.api.model)state.api.model='gpt-5.2';
-  if(state.api.saveInBrowserSicherung==null)state.api.saveInBrowserSicherung=true;
+  if(state.api.saveInBrowserSicherung==null)state.api.saveInBrowserSicherung=false;
 }
 function normalizeAIReview(){
   if(!state.aiReview||typeof state.aiReview!=='object'||Array.isArray(state.aiReview))state.aiReview={text:'',items:[],createdAt:'',month:''};
@@ -505,12 +562,12 @@ function readAPIFromUI(){
   const keyEl=q('apiKey');
   const modelEl=q('apiModel');
   const rememberEl=q('apiRememberSession');
-  const remember=rememberEl?!!rememberEl.checked:true;
-  state.api.saveInBrowserSicherung=remember;
+  if(rememberEl)rememberEl.checked=false;
+  state.api.saveInBrowserSicherung=false;
   if(modelEl)state.api.model=(modelEl.value||'gpt-5.2').trim()||'gpt-5.2';
   if(keyEl){
-    const key=(keyEl.value||'').trim();
-    state.api.key=remember?key:'';
+    // API-Key bleibt nur im sichtbaren Passwortfeld und wird nicht in state/Sicherung/Server geschrieben.
+    state.api.key='';
   }
 }
 function syncAPIUIFromState(){
@@ -519,14 +576,14 @@ function syncAPIUIFromState(){
   const keyEl=q('apiKey');
   const modelEl=q('apiModel');
   const rememberEl=q('apiRememberSession');
-  if(rememberEl)rememberEl.checked=state.api.saveInBrowserSicherung!==false;
-  if(keyEl)keyEl.value=state.api.key||'';
+  if(rememberEl)rememberEl.checked=false;
+  if(keyEl)keyEl.value='';
   if(modelEl)modelEl.value=state.api.model||'gpt-5.2';
 }
 function saveAPISettings(show=true){
   readAPIFromUI();
   saveState(false);
-  if(show)toast(state.api.saveInBrowserSicherung!==false?'API-Daten gespeichert':'API-Key nicht gespeichert','ok');
+  if(show)toast('API-Modell gespeichert · API-Key wird nicht gespeichert','ok');
   renderSystem();
 }
 
@@ -6261,9 +6318,9 @@ function yearBalance(empId,y,untilM){
   return bal;
 }
 
-function apiKeyFromUI(){return (q('apiKey')?.value||'').trim() || state.api?.key || sessionStorage.getItem('POLYPOINT_OPENAI_API_KEY') || '';}
-function forgetApiKey(){sessionStorage.removeItem('POLYPOINT_OPENAI_API_KEY'); normalizeEmployeeLimits();
-  normalizeAPISettings(); state.api.key=''; if(q('apiKey'))q('apiKey').value=''; saveState(false); if(q('apiResult'))q('apiResult').innerHTML='<b>API-Key vergessen</b><div>Browser-Speicher und künftige Sicherungs enthalten diesen Key nicht mehr.</div>'; renderSystem(); toast('API-Key vergessen','warn');}
+function apiKeyFromUI(){return (q('apiKey')?.value||'').trim();}
+function forgetApiKey(){normalizeEmployeeLimits();
+  normalizeAPISettings(); state.api.key=''; if(q('apiKey'))q('apiKey').value=''; saveState(false); if(q('apiResult'))q('apiResult').innerHTML='<b>API-Key vergessen</b><div>Der API-Key ist aus dem Eingabefeld entfernt.</div>'; renderSystem(); toast('API-Key vergessen','warn');}
 function buildAIPayload(){
   readEmployeesFromTable(false);
   const plan=[];

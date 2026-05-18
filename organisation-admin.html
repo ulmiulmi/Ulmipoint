@@ -1,6 +1,63 @@
 <!doctype html>
 <html lang="de">
 <head>
+<script>
+(function(){
+  'use strict';
+  // ULMIPOINT v63: App-Daten werden nicht mehr dauerhaft im Browser gespeichert.
+  // Erlaubt bleibt nur der Passwortmanager des Browsers über autocomplete="username/current-password".
+  function safeParentStore(){
+    try{
+      if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_STORAGE__){
+        return window.parent.__ULMIPOINT_MEMORY_STORAGE__;
+      }
+    }catch(_){ }
+    return null;
+  }
+  function makeVolatileStorage(name){
+    const mem = Object.create(null);
+    function keys(){ return Object.keys(mem); }
+    function changed(key){
+      try{ if(typeof window.__ULMIPOINT_STORAGE_CHANGED__ === 'function') window.__ULMIPOINT_STORAGE_CHANGED__(String(key||'')); }catch(_){ }
+      try{ if(window.parent && window.parent !== window && typeof window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__ === 'function') window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__(String(key||'')); }catch(_){ }
+    }
+    return {
+      __volatile:true,
+      __name:name||'ulmipoint-memory',
+      getItem(key){ key=String(key); return Object.prototype.hasOwnProperty.call(mem,key) ? mem[key] : null; },
+      setItem(key,value){ key=String(key); mem[key]=String(value); changed(key); },
+      removeItem(key){ key=String(key); if(Object.prototype.hasOwnProperty.call(mem,key)){ delete mem[key]; changed(key); } },
+      clear(){ keys().forEach(k=>delete mem[k]); changed('*'); },
+      key(index){ return keys()[Number(index)] || null; },
+      get length(){ return keys().length; },
+      __dump(){ return Object.assign({}, mem); },
+      __load(items, replace){ if(replace) this.clear(); Object.entries(items||{}).forEach(([k,v])=>{mem[String(k)]=String(v ?? '');}); changed('*'); }
+    };
+  }
+  function shouldRemovePersistedKey(key){
+    key=String(key||'');
+    return /^(polypoint_|ulmipoint_|POLYPOINT_|ULMIPOINT_|sb-|supabase\.)/.test(key) || key.indexOf('supabase.auth.token')>=0;
+  }
+  try{
+    const real = window.localStorage;
+    if(real && !window.__ULMIPOINT_REAL_LOCAL_STORAGE__){ window.__ULMIPOINT_REAL_LOCAL_STORAGE__ = real; }
+    const doomed=[];
+    if(real){ for(let i=0;i<real.length;i++){ const k=real.key(i); if(shouldRemovePersistedKey(k)) doomed.push(k); } }
+    doomed.forEach(k=>{ try{ real.removeItem(k); }catch(_){ } });
+  }catch(_){ }
+  const parentStore = safeParentStore();
+  const appStore = parentStore || window.__ULMIPOINT_MEMORY_STORAGE__ || makeVolatileStorage('ulmipoint-app');
+  const sessionStore = (function(){
+    try{ if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__) return window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__; }catch(_){ }
+    return window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ || makeVolatileStorage('ulmipoint-session');
+  })();
+  window.__ULMIPOINT_MEMORY_STORAGE__ = appStore;
+  window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ = sessionStore;
+  window.__ULMIPOINT_PERSISTENT_BROWSER_STORAGE_DISABLED__ = true;
+  try{ Object.defineProperty(window,'localStorage',{value:appStore, configurable:true}); }catch(_){ }
+  try{ Object.defineProperty(window,'sessionStorage',{value:sessionStore, configurable:true}); }catch(_){ }
+})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ULMIPOINT Organisation verwalten</title>
@@ -14,7 +71,7 @@ h1{margin:3px 0 2px;font-size:clamp(34px,5vw,58px);line-height:.95;letter-spacin
 input,select{width:100%;border:1px solid var(--line);border-radius:13px;background:#fff;padding:9px;font-weight:850;color:var(--text)}
 button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:950;cursor:pointer;color:var(--text)}button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(16,24,40,.08)}
 button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button.ok{background:#e7f7ef;border-color:#b7e4ca;color:var(--green)}button.bad{background:#ffe7e7;border-color:#f2a3a3;color:#c73636}
-.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:10px;font-size:12px;font-weight:850;white-space:pre-wrap}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}
+.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:10px;font-size:12px;font-weight:850;white-space:pre-wrap}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}.notice.warn{border-color:#fed7aa;background:#fff7ed;color:#9a6700}
 .site{background:#fff;border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
 .site-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.site-title{display:flex;gap:9px;align-items:flex-start}.icon{width:42px;height:42px;border-radius:16px;background:#eaf2ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto}
 .pill{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:950;background:#eef2f7;color:#475467}.pill.green{background:#e7f7ef;color:#0f8a5f}.pill.yellow{background:#fff7e6;color:#9a6700}
@@ -284,6 +341,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
       type:site.type,
       canton:site.canton||'BS',
       units:site.units||[],
+      automaticFunctions:site.automaticFunctions||autoFunctions(site),
       selectedAt:new Date().toISOString()
     }));
     window.open('planer.html?site='+encodeURIComponent(site.id),'_blank');
@@ -294,8 +352,30 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   window.__orgRemoveUnit=(si,ui)=>{syncFromInputs(); if(org.sites[si])org.sites[si].units.splice(ui,1); render();};
   window.__orgRemoveSite=si=>{syncFromInputs(); if(confirm('Standort wirklich löschen?')){org.sites.splice(si,1); render();}};
   async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); org=mergeWithDefaultOrganisation(data.organisationStructure||org); saveOrgDraft(data.updatedAt); render(); status((data.seeded?'Organisation geladen – leere Serverstruktur wurde mit Haus 1 repariert.':'Organisation geladen.'),'ok');}catch(e){org=mergeWithDefaultOrganisation(org); saveOrgDraft('local-fallback'); render(); status('Server konnte nicht laden: '+e.message+' — Notfallstruktur lokal aktiv.','bad');}}
-  async function save(){syncFromInputs(); cleanupAutoUnits(); org=mergeWithDefaultOrganisation(org); status('Organisation wird gespeichert …'); try{const data=await api({mode:'save',organisationStructure:org}); org=mergeWithDefaultOrganisation(data.organisationStructure||org); saveOrgDraft(data.updatedAt); render(); status('Organisation gespeichert.','ok');}catch(e){saveOrgDraft('local-only'); render(); status('Server-Speichern fehlgeschlagen: '+e.message+' — lokal gesichert, Häuser bleiben sichtbar.','bad');}}
-  function addSite(type){syncFromInputs(); org.sites=org.sites||[]; org.sites.push(defaultSite(type)); render();}
+  async function save(){
+    syncFromInputs(); cleanupAutoUnits(); org=mergeWithDefaultOrganisation(org);
+    const expectedIds=(org.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
+    status('Organisation wird gespeichert …');
+    try{
+      const data=await api({mode:'save',organisationStructure:org});
+      org=mergeWithDefaultOrganisation(data.organisationStructure||org);
+      saveOrgDraft(data.updatedAt);
+      const verify=await api({mode:'load',verifyAfterSave:Date.now()});
+      const serverOrg=mergeWithDefaultOrganisation(verify.organisationStructure||{});
+      const savedIds=(serverOrg.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
+      const missing=expectedIds.filter(id=>!savedIds.includes(id));
+      if(missing.length){
+        org=serverOrg; saveOrgDraft(verify.updatedAt); render();
+        throw new Error('Server-Bestätigung fehlt für: '+missing.join(', '));
+      }
+      org=serverOrg; saveOrgDraft(verify.updatedAt||data.updatedAt); render();
+      status('Organisation gespeichert und vom Server bestätigt. Standorte: '+savedIds.length+'.','ok');
+    }catch(e){
+      saveOrgDraft('local-only'); render();
+      status('Server-Speichern fehlgeschlagen: '+e.message+' — lokal gesichert, aber noch nicht dauerhaft auf dem Server.','bad');
+    }
+  }
+  function addSite(type){syncFromInputs(); org.sites=org.sites||[]; const site=defaultSite(type); org.sites.push(site); saveOrgDraft('local-draft'); render(); status(typeLabel(site.type)+' erstellt: '+site.name+'. Jetzt Speichern klicken, damit es dauerhaft auf dem Server bleibt.','warn');}
   $('newHouseBtn').onclick=()=>addSite('wohnheim'); $('newDayBtn').onclick=()=>addSite('tageszentrum'); $('newOtherBtn').onclick=()=>addSite('sonstiges');
   $('loadBtn').onclick=()=>load().catch(e=>status('Fehler: '+e.message,'bad')); $('saveBtn').onclick=()=>save().catch(e=>status('Fehler: '+e.message,'bad'));
   $('orgName').oninput=syncBasics; $('payrollProfile').oninput=syncBasics;

@@ -1,6 +1,63 @@
 <!doctype html>
 <html lang="de">
 <head>
+<script>
+(function(){
+  'use strict';
+  // ULMIPOINT v63: App-Daten werden nicht mehr dauerhaft im Browser gespeichert.
+  // Erlaubt bleibt nur der Passwortmanager des Browsers über autocomplete="username/current-password".
+  function safeParentStore(){
+    try{
+      if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_STORAGE__){
+        return window.parent.__ULMIPOINT_MEMORY_STORAGE__;
+      }
+    }catch(_){ }
+    return null;
+  }
+  function makeVolatileStorage(name){
+    const mem = Object.create(null);
+    function keys(){ return Object.keys(mem); }
+    function changed(key){
+      try{ if(typeof window.__ULMIPOINT_STORAGE_CHANGED__ === 'function') window.__ULMIPOINT_STORAGE_CHANGED__(String(key||'')); }catch(_){ }
+      try{ if(window.parent && window.parent !== window && typeof window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__ === 'function') window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__(String(key||'')); }catch(_){ }
+    }
+    return {
+      __volatile:true,
+      __name:name||'ulmipoint-memory',
+      getItem(key){ key=String(key); return Object.prototype.hasOwnProperty.call(mem,key) ? mem[key] : null; },
+      setItem(key,value){ key=String(key); mem[key]=String(value); changed(key); },
+      removeItem(key){ key=String(key); if(Object.prototype.hasOwnProperty.call(mem,key)){ delete mem[key]; changed(key); } },
+      clear(){ keys().forEach(k=>delete mem[k]); changed('*'); },
+      key(index){ return keys()[Number(index)] || null; },
+      get length(){ return keys().length; },
+      __dump(){ return Object.assign({}, mem); },
+      __load(items, replace){ if(replace) this.clear(); Object.entries(items||{}).forEach(([k,v])=>{mem[String(k)]=String(v ?? '');}); changed('*'); }
+    };
+  }
+  function shouldRemovePersistedKey(key){
+    key=String(key||'');
+    return /^(polypoint_|ulmipoint_|POLYPOINT_|ULMIPOINT_|sb-|supabase\.)/.test(key) || key.indexOf('supabase.auth.token')>=0;
+  }
+  try{
+    const real = window.localStorage;
+    if(real && !window.__ULMIPOINT_REAL_LOCAL_STORAGE__){ window.__ULMIPOINT_REAL_LOCAL_STORAGE__ = real; }
+    const doomed=[];
+    if(real){ for(let i=0;i<real.length;i++){ const k=real.key(i); if(shouldRemovePersistedKey(k)) doomed.push(k); } }
+    doomed.forEach(k=>{ try{ real.removeItem(k); }catch(_){ } });
+  }catch(_){ }
+  const parentStore = safeParentStore();
+  const appStore = parentStore || window.__ULMIPOINT_MEMORY_STORAGE__ || makeVolatileStorage('ulmipoint-app');
+  const sessionStore = (function(){
+    try{ if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__) return window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__; }catch(_){ }
+    return window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ || makeVolatileStorage('ulmipoint-session');
+  })();
+  window.__ULMIPOINT_MEMORY_STORAGE__ = appStore;
+  window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ = sessionStore;
+  window.__ULMIPOINT_PERSISTENT_BROWSER_STORAGE_DISABLED__ = true;
+  try{ Object.defineProperty(window,'localStorage',{value:appStore, configurable:true}); }catch(_){ }
+  try{ Object.defineProperty(window,'sessionStorage',{value:sessionStore, configurable:true}); }catch(_){ }
+})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ULMIPOINT Wunschportal</title>
@@ -397,7 +454,7 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
     }catch(e){status('loginStatus','Code-Login nicht möglich: '+e.message,'bad');}
   }
   async function login(){ const email=q('email').value.trim(); const password=q('password').value; if(!email||!password){status('loginStatus','Bitte E-Mail und Passwort eintragen.','bad');return} try{ const data=await supa('/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})}); saveSession(data); status('loginStatus','Eingeloggt als '+(session.user.email||email),'ok'); await loadServer(); }catch(e){status('loginStatus','Login nicht möglich: '+e.message,'bad')} }
-  function logout(){ localStorage.removeItem(SESSION_KEY); session=null; serverRow=null; setLoginPill(); employees=[]; currentWishes={}; renderEmployeeSelect(); status('loginStatus','Abgemeldet. Zugang auf diesem Gerät gelöscht.','ok'); }
+  function logout(){ localStorage.removeItem(SESSION_KEY); session=null; serverRow=null; setLoginPill(); employees=[]; currentWishes={}; renderEmployeeSelect(); status('loginStatus','Abgemeldet. Sitzung beendet.','ok'); }
   async function fetchRow(){ const s=await refreshSession(); if(!s)throw new Error('Bitte zuerst einloggen oder mit Wunsch-Code öffnen.'); const headers={}; if(s.access_token)headers.Authorization='Bearer '+s.access_token; const data=await supa('/rest/v1/planer_store?id=eq.'+encodeURIComponent(STORE_ID)+'&select=id,data,updated_at',{method:'GET',headers}); return Array.isArray(data)?data[0]:null; }
   function parseJsonMaybe(v){ if(!v||typeof v!=='string')return null; try{return JSON.parse(v)}catch(_){return null} }
 

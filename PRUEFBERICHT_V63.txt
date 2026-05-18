@@ -1,0 +1,11 @@
+ULMIPOINT v63 - Browser-Speicher abgeschaltet
+
+Geändert:
+- localStorage/sessionStorage werden in den Web-Dateien durch flüchtigen Arbeitsspeicher ersetzt.
+- Alte ULMIPOINT/POLYPOINT/Supabase-Schlüssel werden beim Laden aus echtem Browser-Storage entfernt.
+- Passwörter werden nicht durch die App gespeichert. Der Browser-Passwortmanager bleibt über autocomplete aktiv.
+- Supabase/Server bleibt der dauerhafte Speicher.
+- API-Key in Bereich/Nachtwache wird nicht mehr in Planungsdaten/Sicherung gespeichert.
+
+Betroffene Dateien:
+planer.html, index.html, organisation-admin.html, wunschportal.html, bereich-dyn.html, nachtwache-dyn.html, pikett-dyn.html, hausdienstplan-dyn.html, zeiterfassung-dyn.html, monatsabschluss-dyn.html
