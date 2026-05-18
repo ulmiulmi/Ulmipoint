@@ -247,17 +247,8 @@
         <button id="serverSyncBtn" class="server-btn" type="button">☁️ Server</button>
       </div>
     </div>
-    <nav class="tabs" aria-label="Bereiche">
-      <button type="button" data-planner="overview" class="active  " aria-pressed="true">🏠 Startseite</button>
-      <button type="button" data-planner="azoren" class="  " aria-pressed="false">Azoren</button>
-      <button type="button" data-planner="bali" class="  " aria-pressed="false">Bali</button>
-      <button type="button" data-planner="capri" class="  closed-tab" aria-pressed="false">Capri</button>
-      <button type="button" data-planner="delos" class="  " aria-pressed="false">Delos</button>
-      <button type="button" data-planner="nachtwache" class="  " aria-pressed="false">Nachtwache</button>
-      <button type="button" data-planner="pikett" class=" pikett " aria-pressed="false">Haus-Pikett</button>
-      <button type="button" data-planner="hausdienstplan" class="  " aria-pressed="false">Haus-Dienstplan</button>
-      <button type="button" data-planner="zeiterfassung" class="  " aria-pressed="false">⏱️ Zeiterfassung</button>
-      <button type="button" data-planner="monatsabschluss" class="  " aria-pressed="false">📊 Monatsabschluss</button>
+    <nav class="tabs" aria-label="Navigation">
+      <button type="button" data-planner="overview" class="active" aria-pressed="true">🏠 Startseite</button>
     </nav>
   </header>
   <main class="frame-wrap" id="frameWrap">
@@ -558,18 +549,20 @@
       else btn.textContent = (id === "overview" ? "🏠 " : "") + labels[id];
     });
 
+    // Obere Navigation bleibt bewusst minimal: nur Startseite.
+    // Alle Bereiche/Funktionen werden über die generierten Karten auf der Startseite geöffnet.
     const tabs = document.querySelector(".tabs");
     if(tabs){
-      Object.keys(labels).forEach(id => {
-        if(document.querySelector('[data-planner="'+id+'"]')) return;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.dataset.planner = id;
-        btn.className = id === "pikett" ? "pikett" : "";
-        btn.setAttribute("aria-pressed","false");
-        btn.textContent = labels[id];
-        tabs.appendChild(btn);
-      });
+      tabs.querySelectorAll('[data-planner]:not([data-planner="overview"])').forEach(btn => btn.remove());
+      let overviewBtn = tabs.querySelector('[data-planner="overview"]');
+      if(!overviewBtn){
+        overviewBtn = document.createElement("button");
+        overviewBtn.type = "button";
+        overviewBtn.dataset.planner = "overview";
+        overviewBtn.setAttribute("aria-pressed","false");
+        tabs.appendChild(overviewBtn);
+      }
+      overviewBtn.textContent = "🏠 " + (labels.overview || "Startseite");
     }
 
     const activeLabelEl = document.getElementById("activeLabel");
