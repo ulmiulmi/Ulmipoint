@@ -103,15 +103,13 @@
   .overview-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
   .overview-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:950;color:#475467}
   .overview-pill.green{background:#e7f7ef;color:#0f8a5f;border-color:#b7e4ca}.overview-pill.blue{background:#eaf2ff;color:#175cd3;border-color:#c9dcff}.overview-pill.brown{background:#fff4ed;color:#7c2d12;border-color:#fed7aa}
-  .overview-quick{position:relative;z-index:1;display:grid;gap:8px;min-width:230px}
-  .overview-quick button{border:1px solid #d8e1ee;background:#fff;color:#175cd3;border-radius:18px;padding:12px 13px;font-weight:950;text-align:left;box-shadow:0 9px 22px rgba(16,24,40,.07);cursor:pointer;white-space:normal}
   .overview-section-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:18px 0 10px;padding:0 2px}
   .overview-section-title{font-size:18px;font-weight:950;letter-spacing:-.04em}.overview-section-sub{font-size:12px;color:var(--muted);font-weight:850}
   .overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
   .overview-card{--accent:#2563eb;--soft:#eaf2ff;position:relative;display:flex;flex-direction:column;text-align:left;min-height:152px;border:1px solid rgba(216,225,238,.98);border-radius:28px;background:linear-gradient(135deg,var(--soft),#fff 58%);box-shadow:0 14px 32px rgba(16,24,40,.09);padding:16px 16px 14px;text-decoration:none;color:inherit;cursor:pointer;overflow:hidden;white-space:normal;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
   .overview-card:before{content:"";position:absolute;right:-28px;top:-32px;width:116px;height:116px;border-radius:999px;background:rgba(37,99,235,.10)}
   .overview-card:after{content:"";position:absolute;left:-46px;bottom:-58px;width:128px;height:128px;border-radius:999px;background:rgba(255,255,255,.45)}
-  .overview-card:hover,.overview-quick button:hover,.overview-admin-card:hover{transform:translateY(-3px);box-shadow:0 20px 42px rgba(16,24,40,.14);border-color:#b8c7db}
+  .overview-card:hover,.overview-admin-card:hover{transform:translateY(-3px);box-shadow:0 20px 42px rgba(16,24,40,.14);border-color:#b8c7db}
   .overview-card-topline{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:13px}
   .overview-icon{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:18px;background:#fff;border:1px solid rgba(255,255,255,.78);box-shadow:0 8px 18px rgba(16,24,40,.10);font-size:25px;line-height:1}
   .overview-tag{display:inline-flex;border-radius:999px;padding:5px 9px;background:rgba(255,255,255,.72);color:#475467;font-size:11px;font-weight:950;border:1px solid rgba(255,255,255,.9)}
@@ -122,8 +120,8 @@
   .overview-admin-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
   .overview-admin-card{border:1px solid var(--line);border-radius:24px;background:rgba(255,255,255,.86);box-shadow:0 10px 26px rgba(16,24,40,.06);padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;text-align:left;white-space:normal}
   .overview-admin-card strong{font-size:17px;letter-spacing:-.03em}.overview-admin-card span{display:block;color:var(--muted);font-size:12px;font-weight:800;margin-top:3px}.overview-admin-card b{color:#175cd3;font-size:12px}
-  @media(max-width:980px){.overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-hero-inner{grid-template-columns:1fr}.overview-quick{grid-template-columns:repeat(3,minmax(0,1fr));min-width:0}.overview-quick button{text-align:center}.overview-admin-row{grid-template-columns:1fr}}
-  @media(max-width:620px){.overview-frame{padding:14px 10px 24px}.overview-hero{border-radius:24px;padding:16px}.overview-grid{grid-template-columns:1fr}.overview-quick{grid-template-columns:1fr}.overview-card{min-height:132px;border-radius:22px}.overview-admin-card{border-radius:20px}.overview-section-head{display:block}.overview-section-sub{margin-top:4px}.overview-meta{gap:6px}.overview-pill{font-size:11px;padding:6px 8px}.overview-card h3{font-size:22px}}
+  @media(max-width:980px){.overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-hero-inner{grid-template-columns:1fr}.overview-admin-row{grid-template-columns:1fr}}
+  @media(max-width:620px){.overview-frame{padding:14px 10px 24px}.overview-hero{border-radius:24px;padding:16px}.overview-grid{grid-template-columns:1fr}.overview-card{min-height:132px;border-radius:22px}.overview-admin-card{border-radius:20px}.overview-section-head{display:block}.overview-section-sub{margin-top:4px}.overview-meta{gap:6px}.overview-pill{font-size:11px;padding:6px 8px}.overview-card h3{font-size:22px}}
   .loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f6f8fc;color:#667085;font-weight:950}
   @media(max-width:740px){.top{padding:6px 8px}.head{grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;margin-bottom:6px}.brand-logo{height:60px;max-width:min(295px,58vw);border-radius:14px}.brand-copy{display:block}.head .mini{display:none}h1{font-size:20px}button{padding:7px 10px;font-size:12px}.pill{font-size:11px;padding:4px 8px}.top-actions{grid-column:1/-1;grid-row:2;flex-wrap:nowrap;overflow-x:auto;margin-top:2px}}
 
@@ -686,14 +684,8 @@
     return '<div class="overview-page">'
       + '<section class="overview-hero" aria-label="Startbereich">'
       + '<div class="overview-hero-inner"><div>'
-      + '<div class="overview-eyebrow">✨ ULMIPOINT Startseite · generiert</div>'
-      + '<h2>'+escapeOverviewText(name)+'</h2>'
-      + '<p class="overview-lead">Schneller Einstieg über farbige Bereichs-Buttons mit kleinen Symbolen. Keine Hausgrafik, keine alte Kachel-Startseite.</p>'
-      + '<div class="overview-meta"><span class="overview-pill blue">🏠 '+escapeOverviewText(name)+'</span><span class="overview-pill green">✓ Server verbunden</span><span class="overview-pill brown">☁ Daten vom Server</span></div>'
-      + '</div><div class="overview-quick" aria-label="Schnellzugriff">'
-      + '<button type="button" data-open-planner="nachtwache">🌙 Nachtwache</button>'
-      + '<button type="button" data-open-planner="pikett">🛎️ Haus-Pikett</button>'
-      + '<button type="button" data-open-planner="hausdienstplan">📅 Haus-Dienstplan</button>'
+      + '<div class="overview-eyebrow">✨ ULMIPOINT Startseite</div>'
+      + '<h2>'+escapeOverviewText(titleCase(name))+'</h2>'
       + '</div></div></section>'
       + '<section><div class="overview-section-head"><div class="overview-section-title">Bereiche und Funktionen</div><div class="overview-section-sub">Tippen oder klicken zum Öffnen</div></div>'
       + '<div class="overview-grid">'+cards+'</div></section>'
