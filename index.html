@@ -156,8 +156,8 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
 
   const $ = id => document.getElementById(id);
 
-  function defaultOrg(){return {version:'1.0',organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',sites:[{id:'haus_1',name:'Haus 1',type:'wohnheim',canton:'BS',active:true,automaticFunctions:{nachtwache:true,pikett:true,hausdienstplan:true},units:[{id:'azoren',name:'Azoren',type:'wohngruppe',plannerKey:'azoren',active:true},{id:'bali',name:'Bali',type:'wohngruppe',plannerKey:'bali',active:true},{id:'capri',name:'Capri',type:'wohngruppe',plannerKey:'capri',active:false},{id:'delos',name:'Delos',type:'wohngruppe',plannerKey:'delos',active:true}]}]};}
-  function ensureOrg(org){return org&&Array.isArray(org.sites)&&org.sites.length?org:defaultOrg();}
+  function defaultOrg(){return {version:'1.0',organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',sites:[]};}
+  function ensureOrg(org){if(!org||typeof org!=='object')return defaultOrg(); if(!Array.isArray(org.sites))org.sites=[]; return org;}
   function option(label, href, site, target){ return {label, href, site, target}; }
 
   function getOrg(){
@@ -209,18 +209,23 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
       ));
     });
 
-    if(!options.length){
-      options.push(option('Haus 1 · Startseite', 'planer.html#overview', null, 'overview'));
-    }
-
     return options;
   }
 
   function fillSelect(){
     const select = $('plannerSelect');
     const options = buildOptions();
+    if(!options.length){
+      select.innerHTML = '<option value="">Noch kein Haus gespeichert</option>';
+      select.__options = [];
+      const open = $('plannerOpenBtn');
+      if(open) open.textContent = 'Organisation öffnen';
+      return;
+    }
     select.innerHTML = options.map((o,i)=>'<option value="'+i+'">'+o.label+'</option>').join('');
     select.__options = options;
+    const open = $('plannerOpenBtn');
+    if(open) open.textContent = 'Startseite öffnen';
   }
 
   function openSelected(){
@@ -228,6 +233,7 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
     const options = select.__options || buildOptions();
     const choice = options[Number(select.value)] || options[0];
     if(choice && choice.href) location.href = choice.href;
+    else location.href = 'organisation-admin.html';
   }
 
   $('plannerChooseBtn').onclick = () => {

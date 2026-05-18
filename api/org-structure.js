@@ -46,22 +46,7 @@ function defaultOrganisation(){
     version:'1.0',
     organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},
     payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',
-    sites:[
-      {
-        id:'haus_1',
-        name:'Haus 1',
-        type:'wohnheim',
-        canton:'BS',
-        active:true,
-        automaticFunctions:{nachtwache:true,pikett:true,hausdienstplan:true},
-        units:[
-          {id:'azoren',name:'Azoren',type:'wohngruppe',plannerKey:'azoren',active:true},
-          {id:'bali',name:'Bali',type:'wohngruppe',plannerKey:'bali',active:true},
-          {id:'capri',name:'Capri',type:'wohngruppe',plannerKey:'capri',active:false},
-          {id:'delos',name:'Delos',type:'wohngruppe',plannerKey:'delos',active:true}
-        ]
-      }
-    ],
+    sites:[],
     createdAt:new Date().toISOString(),
     updatedAt:new Date().toISOString()
   };

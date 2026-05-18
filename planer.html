@@ -126,6 +126,7 @@
   @media(max-width:740px){.top{padding:6px 8px}.head{grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;margin-bottom:6px}.brand-logo{height:60px;max-width:min(295px,58vw);border-radius:14px}.brand-copy{display:block}.head .mini{display:none}h1{font-size:20px}button{padding:7px 10px;font-size:12px}.pill{font-size:11px;padding:4px 8px}.top-actions{grid-column:1/-1;grid-row:2;flex-wrap:nowrap;overflow-x:auto;margin-top:2px}}
 
   .top-actions{grid-column:2;grid-row:1;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-start;min-width:0}
+  body.overview-active .overview-duplicate-action{display:none!important}
   @media(max-width:740px){.top-actions{grid-column:1/-1!important;grid-row:2!important;flex-wrap:nowrap;overflow-x:auto;margin-top:2px}}
   .server-btn{background:#eef7ff!important;color:#175cd3!important;border-color:#bcd3ff!important}
   .server-btn.server-connected{background:#e7f7ef!important;color:#0f8a5f!important;border-color:#64c59a!important;box-shadow:0 0 0 2px rgba(15,138,95,.12)!important}
@@ -241,8 +242,8 @@
         <span class="pill blue" id="activeLabel">geladen: Startseite</span>
         <span class="pill green">GitHub Pages</span>
         <span class="pill brown">aufgeteilt</span>
-        <button type="button" onclick="window.open('wunschportal.html','_blank')">👤 Wunschportal</button>
-        <button type="button" onclick="location.href='organisation-admin.html'">🏢 Organisation verwalten</button>
+        <button type="button" class="overview-duplicate-action" onclick="window.open('wunschportal.html','_blank')">👤 Wunschportal</button>
+        <button type="button" class="overview-duplicate-action" onclick="location.href='organisation-admin.html'">🏢 Organisation verwalten</button>
         <button id="serverSyncBtn" class="server-btn" type="button">☁️ Server</button>
       </div>
     </div>
@@ -405,6 +406,7 @@
 <script>
 (function(){
   const labels = {"overview": "Startseite", "azoren": "Azoren", "bali": "Bali", "capri": "Capri", "delos": "Delos", "nachtwache": "Nachtwache", "pikett": "Haus-Pikett", "hausdienstplan": "Haus-Dienstplan", "zeiterfassung": "Zeiterfassung", "monatsabschluss": "Monatsabschluss"};
+  const BASE_LABELS = Object.assign({}, labels);
 
   const EXISTING_PLAN_PAGES = new Set(["azoren","bali","capri","delos","nachtwache","pikett","hausdienstplan","zeiterfassung","monatsabschluss"]);
   const HOUSE_STORAGE_KEY = "ulmipoint_selected_site_v1";
@@ -419,31 +421,39 @@
     try{ return new URLSearchParams(location.search || "").get("site") || ""; }catch(_){ return ""; }
   }
   function currentHouseContext(){
-    const stored = safeJsonParse(localStorage.getItem(HOUSE_STORAGE_KEY));
     const q = querySiteId();
-
-    if(stored && stored.id && (!q || String(stored.id) === String(q))) return stored;
-
     if(q){
-      const draft = safeJsonParse(localStorage.getItem(ORG_DRAFT_KEY));
-      const org = draft && draft.organisationStructure ? draft.organisationStructure : null;
-      const sites = org && Array.isArray(org.sites) ? org.sites : [];
-      const found = sites.find(s => String(s.id) === String(q));
-      if(found){
-        try{
-          localStorage.setItem(HOUSE_STORAGE_KEY, JSON.stringify(Object.assign({}, found, {selectedAt:new Date().toISOString()})));
-        }catch(_){}
-        return found;
-      }
-      return defaultSite(q);
+      return {
+        __loading:true,
+        id:q,
+        name:q.replace(/[_-]+/g,' '),
+        type:'wohnheim',
+        canton:'BS',
+        active:true,
+        automaticFunctions:{},
+        units:[]
+      };
     }
-
-    if(stored && stored.id) return stored;
-    return defaultSite("haus_1");
+    return {__missing:true,id:'',name:'Kein Standort gewählt',type:'',canton:'BS',active:false,automaticFunctions:{},units:[]};
   }
-  const HOUSE_CONTEXT = currentHouseContext();
-  const HOUSE_ID = HOUSE_CONTEXT && HOUSE_CONTEXT.id ? String(HOUSE_CONTEXT.id) : "haus_1";
-  const IS_HAUS_1 = !HOUSE_CONTEXT || HOUSE_ID === "haus_1" || HOUSE_ID === "haus1";
+  let HOUSE_CONTEXT = currentHouseContext();
+  let HOUSE_ID = HOUSE_CONTEXT && HOUSE_CONTEXT.id ? String(HOUSE_CONTEXT.id) : "";
+  let IS_HAUS_1 = !HOUSE_CONTEXT || HOUSE_ID === "haus_1" || HOUSE_ID === "haus1";
+
+  function setHouseContext(site){
+    HOUSE_CONTEXT = site && typeof site === 'object' ? site : {__missing:true,id:'',name:'Kein Standort gewählt',type:'',canton:'BS',active:false,automaticFunctions:{},units:[]};
+    HOUSE_ID = HOUSE_CONTEXT && HOUSE_CONTEXT.id ? String(HOUSE_CONTEXT.id) : "";
+    IS_HAUS_1 = !HOUSE_CONTEXT || HOUSE_ID === "haus_1" || HOUSE_ID === "haus1";
+    applyHouseContextToLabels();
+    try{
+      const ov = frames && frames.get && frames.get('overview');
+      if(ov) refreshGeneratedOverviewFrame(ov);
+    }catch(_){ }
+    try{
+      const activeLabelEl = document.getElementById("activeLabel");
+      if(activeLabelEl && HOUSE_CONTEXT && HOUSE_CONTEXT.name) activeLabelEl.textContent = "aktiv: " + HOUSE_CONTEXT.name;
+    }catch(_){ }
+  }
 
   function realHouseUnits(){
     const units = HOUSE_CONTEXT && Array.isArray(HOUSE_CONTEXT.units) ? HOUSE_CONTEXT.units : [];
@@ -473,23 +483,24 @@
   }
   function defaultSite(id){
     return {
-      __fallback:true,
-      id:id || "haus_1",
-      name:(id && id!=="haus_1") ? id.replace(/_/g," ") : "Haus 1",
+      __missing:true,
+      id:id || "",
+      name:id ? id.replace(/[_-]+/g," ") : "Kein Standort gewählt",
       type:"wohnheim",
       canton:"BS",
-      active:true,
-      automaticFunctions:{nachtwache:true,pikett:true,hausdienstplan:true},
-      units:[
-        {id:"azoren",name:"Azoren",type:"wohngruppe",plannerKey:"azoren",active:true},
-        {id:"bali",name:"Bali",type:"wohngruppe",plannerKey:"bali",active:true},
-        {id:"capri",name:"Capri",type:"wohngruppe",plannerKey:"capri",active:false},
-        {id:"delos",name:"Delos",type:"wohngruppe",plannerKey:"delos",active:true}
-      ]
+      active:false,
+      automaticFunctions:{},
+      units:[]
     };
   }
-  function defaultOrg(){return {version:"1.0",organisation:{id:"liv",name:"LIV – Leben in Vielfalt"},payrollProfileDefault:"CH_BS_PERSONALRECHT_DEFAULT",sites:[defaultSite("haus_1")]};}
-  function ensureOrg(org){return org&&Array.isArray(org.sites)&&org.sites.length?org:defaultOrg();}
+  function defaultOrg(){return {version:"1.0",organisation:{id:"liv",name:"LIV – Leben in Vielfalt"},payrollProfileDefault:"CH_BS_PERSONALRECHT_DEFAULT",sites:[]};}
+  function ensureOrg(org){
+    if(!org || typeof org !== 'object') return defaultOrg();
+    if(!Array.isArray(org.sites)) org.sites=[];
+    if(!org.organisation || typeof org.organisation !== 'object') org.organisation={id:"liv",name:"LIV – Leben in Vielfalt"};
+    if(!org.payrollProfileDefault) org.payrollProfileDefault="CH_BS_PERSONALRECHT_DEFAULT";
+    return org;
+  }
 
   const UNIT_CONTEXT_BY_PLANNER = {};
   function plannerIdForUnit(unit){
@@ -499,6 +510,8 @@
 
   function applyHouseContextToLabels(){
     if(!HOUSE_CONTEXT) return;
+    Object.keys(labels).forEach(k => delete labels[k]);
+    Object.assign(labels, BASE_LABELS);
 
     const allowed = new Set(["overview"]);
     const units = realHouseUnits();
@@ -518,24 +531,22 @@
       };
     });
 
-    // Hausfunktionen sind je nach Standorttyp optional.
-    if(autoFunctionEnabled("nachtwache") && labels.nachtwache) allowed.add("nachtwache");
-    if(autoFunctionEnabled("pikett") && labels.pikett) allowed.add("pikett");
-    if(autoFunctionEnabled("hausdienstplan") && labels.hausdienstplan) allowed.add("hausdienstplan");
-
-    // Zeiterfassung und Monatsabschluss bleiben für berechtigte Planung verfügbar.
-    ["zeiterfassung","monatsabschluss"].forEach(id => {
-      if(labels[id]) allowed.add(id);
-    });
-
-    // Kein zweites altes Haus-1-Schema mehr: die Bereiche kommen aus der Organisation.
-    // Falls ausnahmsweise noch keine Einheiten im Browser gespeichert sind, liefert defaultSite() Azoren/Bali/Capri/Delos.
-    if(!units.length){
-      ["azoren","bali","capri","delos"].forEach(id => allowed.add(id));
-      if(autoFunctionEnabled("nachtwache")) allowed.add("nachtwache");
-      if(autoFunctionEnabled("pikett")) allowed.add("pikett");
-      if(autoFunctionEnabled("hausdienstplan")) allowed.add("hausdienstplan");
+    // Hausfunktionen sind je nach Standorttyp optional, aber nur für einen wirklich vorhandenen Standort.
+    if(HOUSE_CONTEXT && !HOUSE_CONTEXT.__missing && !HOUSE_CONTEXT.__loading){
+      if(autoFunctionEnabled("nachtwache") && labels.nachtwache) allowed.add("nachtwache");
+      if(autoFunctionEnabled("pikett") && labels.pikett) allowed.add("pikett");
+      if(autoFunctionEnabled("hausdienstplan") && labels.hausdienstplan) allowed.add("hausdienstplan");
     }
+
+    // Zeiterfassung und Monatsabschluss bleiben für berechtigte Planung verfügbar, aber nur für einen wirklich vorhandenen Standort.
+    if(HOUSE_CONTEXT && !HOUSE_CONTEXT.__missing && !HOUSE_CONTEXT.__loading){
+      ["zeiterfassung","monatsabschluss"].forEach(id => {
+        if(labels[id]) allowed.add(id);
+      });
+    }
+
+    // Keine automatisch erfundenen Gruppen mehr.
+    // Wenn die Organisation noch keine Einheiten enthält, bleibt die Startseite leer und fordert zum Anlegen auf.
 
     Object.keys(labels).forEach(id => {
       if(!allowed.has(id)) delete labels[id];
@@ -641,11 +652,7 @@
 
   function overviewSite(){
     if(HOUSE_CONTEXT && typeof HOUSE_CONTEXT === 'object') return HOUSE_CONTEXT;
-    try{
-      const stored = JSON.parse(localStorage.getItem(HOUSE_STORAGE_KEY) || 'null');
-      if(stored && typeof stored === 'object') return stored;
-    }catch(_){ }
-    return {id:HOUSE_ID || 'haus_1', name:'Haus 1', units:[]};
+    return {__missing:true,id:'',name:'Kein Standort gewählt',units:[]};
   }
 
   function overviewCardMeta(id){
@@ -671,8 +678,12 @@
     if(site && Array.isArray(site.units)){
       site.units.forEach(unit => add(plannerIdForUnit(unit)));
     }
-    if(!order.length) ['azoren','bali','capri','delos'].forEach(add);
-    ['nachtwache','pikett','hausdienstplan','zeiterfassung','monatsabschluss'].forEach(add);
+    if(site && !site.__missing && !site.__loading){
+      if(autoFunctionEnabled('nachtwache')) add('nachtwache');
+      if(autoFunctionEnabled('pikett')) add('pikett');
+      if(autoFunctionEnabled('hausdienstplan')) add('hausdienstplan');
+      ['zeiterfassung','monatsabschluss'].forEach(add);
+    }
     return order;
   }
 
@@ -690,7 +701,11 @@
   function renderGeneratedOverview(){
     const site = overviewSite();
     const name = (site && site.name) ? String(site.name) : 'Haus 1';
-    const cards = overviewOrder(site).map(renderOverviewCard).join('');
+    const order = overviewOrder(site);
+    const cards = order.map(renderOverviewCard).join('');
+    const empty = !order.length
+      ? '<div class="overview-admin-card" style="grid-column:1/-1;cursor:default"><span><strong>Noch keine Bereiche vorhanden</strong><span>Bitte zuerst in der Organisation ein Haus und die Gruppen/Bereiche anlegen. Es wird nichts automatisch mit Azoren, Bali, Capri oder Delos erzeugt.</span></span><b></b></div>'
+      : '';
     return '<div class="overview-page">'
       + '<section class="overview-hero" aria-label="Startbereich">'
       + '<div class="overview-hero-inner"><div>'
@@ -698,7 +713,7 @@
       + '<h2>'+escapeOverviewText(titleCase(name))+'</h2>'
       + '</div></div></section>'
       + '<section><div class="overview-section-head"><div class="overview-section-title">Bereiche und Funktionen</div></div>'
-      + '<div class="overview-grid">'+cards+'</div></section>'
+      + '<div class="overview-grid">'+cards+empty+'</div></section>'
       + '<section><div class="overview-section-head" style="margin-top:20px"><div class="overview-section-title">Verwaltung</div><div class="overview-section-sub">Admin und Portal</div></div>'
       + '<div class="overview-admin-row">'
       + '<button type="button" class="overview-admin-card" data-open-url="organisation-admin.html"><span><strong>🏢 Organisation verwalten</strong><span>Häuser, Bereiche und Struktur bearbeiten</span></span><b>Öffnen</b></button>'
@@ -805,22 +820,14 @@
   function loadPlanner(id, pushHash=true){
     id = normalize(id);
     activeId = id;
+    document.body.classList.toggle('overview-active', id === 'overview');
     loader.style.display = 'flex';
     frames.forEach(frame => frame.classList.remove('active'));
     const frame = ensureFrame(id);
     frame.classList.add('active');
     setActiveButton(id);
     activeLabel.textContent = 'geladen: ' + labels[id];
-    try{
-      localStorage.setItem(PLANNER_LAST_TARGET_KEY, JSON.stringify({
-        siteId: HOUSE_ID,
-        siteName: (HOUSE_CONTEXT && HOUSE_CONTEXT.name) || HOUSE_ID,
-        plannerId: id,
-        label: labels[id] || id,
-        href: 'planer.html?site=' + encodeURIComponent(HOUSE_ID) + '#' + encodeURIComponent(id),
-        savedAt: new Date().toISOString()
-      }));
-    }catch(_){}
+    // Keine dauerhafte lokale Merkung des letzten Bereichs. Die URL/Hash reicht für die aktuelle Navigation.
     if(pushHash && location.hash.replace('#','') !== id) history.replaceState(null, '', '#' + id);
     setTimeout(() => { if(activeId === id) loader.style.display = 'none'; }, 900);
   }
@@ -844,21 +851,9 @@
     }catch(_){}
     return null;
   }
-  function saveOrgDraft(org, updatedAt){
-    if(!org || !Array.isArray(org.sites)) return false;
-    try{
-      localStorage.setItem(ORG_DRAFT_KEY, JSON.stringify({
-        organisationStructure: ensureOrg(org),
-        savedAt: new Date().toISOString(),
-        serverUpdatedAt: updatedAt || ''
-      }));
-    }catch(_){}
-    return true;
-  }
+  function saveOrgDraft(org, updatedAt){ return !!(org && Array.isArray(org.sites)); }
   async function ensureHouseContextFromServer(){
     const q = querySiteId();
-    if(!q) return false;
-    if(HOUSE_CONTEXT && !HOUSE_CONTEXT.__fallback && Array.isArray(HOUSE_CONTEXT.units) && HOUSE_CONTEXT.units.length) return false;
     const s = serverSession();
 
     try{
@@ -872,18 +867,30 @@
       const txt = await resp.text();
       let data = {};
       try{ data = txt ? JSON.parse(txt) : {}; }catch(_){ data = {message:txt}; }
-      if(!resp.ok || data.ok===false || !data.organisationStructure) return false;
+      if(!resp.ok || data.ok===false || !data.organisationStructure){
+        if(q) setHouseContext(Object.assign(defaultSite(q), {__missing:true, name:titleCase(q)}));
+        return false;
+      }
 
       const safeOrg = ensureOrg(data.organisationStructure);
-      saveOrgDraft(safeOrg, data.updatedAt);
       const sites = Array.isArray(safeOrg.sites) ? safeOrg.sites : [];
-      const found = sites.find(site => String(site.id) === String(q));
-      if(found && Array.isArray(found.units) && found.units.length){
-        localStorage.setItem(HOUSE_STORAGE_KEY, JSON.stringify(Object.assign({}, found, {selectedAt:new Date().toISOString()})));
-        location.replace('planer.html?site=' + encodeURIComponent(found.id) + (location.hash || '#overview'));
-        return true;
+      if(q){
+        const found = sites.find(site => String(site.id) === String(q));
+        if(found){
+          setHouseContext(Object.assign({}, found, {__missing:false,__loading:false}));
+          return false;
+        }
+        setHouseContext(Object.assign(defaultSite(q), {__missing:true, name:titleCase(q)}));
+        return false;
       }
-    }catch(_){}
+      if(sites.length){
+        setHouseContext(Object.assign({}, sites[0], {__missing:false,__loading:false}));
+        return false;
+      }
+      setHouseContext({__missing:true,id:'',name:'Kein Standort gewählt',type:'',canton:'BS',active:false,automaticFunctions:{},units:[]});
+    }catch(_){
+      if(q) setHouseContext(Object.assign(defaultSite(q), {__missing:true, name:titleCase(q)}));
+    }
     return false;
   }
 
