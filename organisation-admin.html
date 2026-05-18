@@ -79,6 +79,8 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
 .edit-panel{display:none;border:1px solid #c9dcff;background:#f7fbff;border-radius:18px;padding:10px}.edit-panel.show{display:block}.edit-grid{display:grid;grid-template-columns:1fr 150px 110px;gap:8px;margin-bottom:8px}.unit-row{display:grid;grid-template-columns:1fr 150px 150px auto;gap:8px;align-items:center;margin-top:6px}
 .empty{border:1px dashed #c9dcff;background:#f7fbff;border-radius:24px;padding:24px;text-align:center;color:#175cd3;font-weight:900}
 @media(max-width:760px){.app{padding:10px}.hero{border-radius:0 0 24px 24px;margin:-10px -10px 10px}.edit-grid,.unit-row{grid-template-columns:1fr}.site-head{display:block}.actions{margin-top:8px}}
+.user-panel{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:start}.user-form{background:#f7fbff;border:1px solid #c9dcff;border-radius:22px;padding:12px}.user-list{display:grid;gap:10px}.user-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:12px;box-shadow:0 8px 20px rgba(16,24,40,.06)}.user-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.user-role{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#eaf2ff;color:#175cd3}.user-role.admin{background:#fff4ed;color:#9a6700}.user-role.hausleitung{background:#e7f7ef;color:#0f8a5f}.user-role.tko{background:#f5f3ff;color:#6941c6}.user-scope{font-size:12px;color:var(--muted);font-weight:850;margin-top:4px}.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-top:6px}.check-pill{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px;font-size:12px;font-weight:900}.check-pill input{width:auto}.site-access{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:7px}.site-access-row{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--line);border-radius:14px;background:#fbfcfe;padding:8px}.site-access-empty{font-size:12px;color:var(--muted);font-weight:850}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.form-row.one{grid-template-columns:1fr}@media(max-width:900px){.user-panel{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
+
 
 .lock{position:fixed;inset:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
 .lock-card{max-width:520px;width:100%;background:#fff;border:1px solid var(--line);border-radius:28px;padding:18px;box-shadow:var(--shadow)}
@@ -129,7 +131,54 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
       <h2 style="margin:0">Häuser und Bereiche</h2>
       <span class="pill" id="countPill">0 Standorte</span>
     </div>
+    <div class="toolbar" style="margin-bottom:12px">
+      <button type="button" class="primary" id="newHouseBtn2">+ Haus hinzufügen</button>
+      <button type="button" id="newDayBtn2">+ Tageszentrum hinzufügen</button>
+      <button type="button" id="newOtherBtn2">+ Sonstigen Standort hinzufügen</button>
+    </div>
     <div id="sites" class="grid"></div>
+  </section>
+  <section class="card" id="usersCard">
+    <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
+      <div>
+        <h2 style="margin:0">Benutzer und Rechte</h2>
+        <div class="mini">Passwort wird an Supabase Auth übergeben. In ULMIPOINT wird nur Rolle und Zugriff gespeichert.</div>
+      </div>
+      <button type="button" id="reloadUsersBtn">Benutzer laden</button>
+    </div>
+    <div id="userStatus" class="notice" style="margin-bottom:10px">Benutzer noch nicht geladen.</div>
+    <div class="user-panel">
+      <div class="user-form">
+        <h3>Benutzer hinzufügen / ändern</h3>
+        <div class="form-row">
+          <label><span class="mini">Name</span><input id="userName" autocomplete="name" placeholder="Name"></label>
+          <label><span class="mini">E-Mail</span><input id="userEmail" autocomplete="username" placeholder="name@example.ch"></label>
+        </div>
+        <div class="form-row">
+          <label><span class="mini">Passwort</span><input id="userPassword" type="password" autocomplete="new-password" placeholder="Nur beim Erstellen/Ändern eingeben"></label>
+          <label><span class="mini">Rolle</span><select id="userRole">
+            <option value="admin">Admin / Verwaltung</option>
+            <option value="planner">Planer</option>
+            <option value="hausleitung">Hausleitung</option>
+            <option value="tko">TKO</option>
+            <option value="employee">Mitarbeiter</option>
+          </select></label>
+        </div>
+        <div class="form-row one">
+          <label><span class="mini">Haus / Standort</span><select id="userSite"></select></label>
+        </div>
+        <div class="mini">Gruppen-Zugriff</div>
+        <div id="userGroupChecks" class="check-grid"></div>
+        <div class="actions" style="margin-top:10px">
+          <button type="button" class="primary" id="saveUserBtn">Benutzer speichern</button>
+          <button type="button" id="clearUserFormBtn">Formular leeren</button>
+        </div>
+      </div>
+      <div>
+        <h3>Aktuelle Benutzer</h3>
+        <div id="userList" class="user-list"><div class="empty">Noch keine Benutzer geladen.</div></div>
+      </div>
+    </div>
   </section>
 </div>
 <script>
@@ -138,13 +187,14 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   const ORG_ADMIN_TOKEN_KEY='ulmipoint_org_admin_token_v1';
   const ORG_DRAFT_KEY='ulmipoint_org_structure_draft_v1';
   let org=defaultOrg();
+  let users=[];
   const $=id=>document.getElementById(id);
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const slug=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'default';
   function defaultOrg(){return {version:'1.0',organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',sites:[{id:'haus_1',name:'Haus 1',type:'wohnheim',canton:'BS',active:true,automaticFunctions:{nachtwache:true,pikett:true,hausdienstplan:true},units:[{id:'azoren',name:'Azoren',type:'wohngruppe',plannerKey:'azoren',active:true},{id:'bali',name:'Bali',type:'wohngruppe',plannerKey:'bali',active:true},{id:'capri',name:'Capri',type:'wohngruppe',plannerKey:'capri',active:false},{id:'delos',name:'Delos',type:'wohngruppe',plannerKey:'delos',active:true}]}],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};}
   function mergeWithDefaultOrganisation(value){const def=defaultOrg(); const incoming=(value&&typeof value==='object')?value:{}; const sites=Array.isArray(incoming.sites)?incoming.sites:(incoming.sites===undefined?def.sites:[]); return Object.assign({},def,incoming,{organisation:Object.assign({},def.organisation,incoming.organisation||{}),payrollProfileDefault:incoming.payrollProfileDefault||def.payrollProfileDefault,sites});}
   function emptyOrganisation(){const def=defaultOrg(); return Object.assign({},def,{sites:[],updatedAt:new Date().toISOString()});}
-  function saveOrgDraft(updatedAt){try{localStorage.setItem(ORG_DRAFT_KEY,JSON.stringify({organisationStructure:org,savedAt:new Date().toISOString(),serverUpdatedAt:updatedAt||''}));}catch(_){}}
+  function saveOrgDraft(updatedAt){ /* v72: keine Organisationsdaten lokal speichern. Nur Arbeitsspeicher während der offenen Seite. */ }
   function status(t,k=''){const el=$('status');el.textContent=t;el.className='notice'+(k?' '+k:'')}
   function icon(type){return type==='tageszentrum'?'☀️':type==='verwaltung'?'🗂️':type==='zentrale_dienste'?'⚙️':'🏠'}
   function typeLabel(t){return ({wohnheim:'Haus',tageszentrum:'Tageszentrum',verwaltung:'Verwaltung',zentrale_dienste:'Zentrale Dienste',sonstiges:'Sonstiges'})[t]||t}
@@ -203,6 +253,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     unlockOrgAdmin();
     status('Admin-Zugriff aktiv. Organisation kann gespeichert werden.','ok');
     await load();
+    await loadUsers(false);
   }
   async function checkOrgAdmin(){
     const tok=localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'';
@@ -256,6 +307,110 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     org.organisation.id=slug(org.organisation.name);
     org.payrollProfileDefault=$('payrollProfile').value.trim()||'CH_BS_PERSONALRECHT_DEFAULT';
   }
+
+  function userStatus(t,k=''){const el=$('userStatus'); if(el){el.textContent=t; el.className='notice'+(k?' '+k:'');}}
+  function roleLabel(role){return ({admin:'Admin',planner:'Planer',hausleitung:'Hausleitung',tko:'TKO',employee:'Mitarbeiter'})[String(role||'').toLowerCase()]||String(role||'Benutzer');}
+  function selectedUserSite(){return $('userSite')?.value || ''}
+  function findSiteById(id){return (org.sites||[]).find(s=>String(s.id)===String(id))||null;}
+  function userMatchesSite(u,site){
+    if(!u||!site)return false;
+    const role=String(u.role||'').toLowerCase();
+    if(role==='admin'||role==='planner')return true;
+    const siteIds=Array.isArray(u.siteIds)?u.siteIds:[];
+    if(siteIds.includes(site.id))return true;
+    if(String(u.siteId||'')===String(site.id))return true;
+    return false;
+  }
+  function scopeText(u){
+    const role=String(u.role||'').toLowerCase();
+    if(role==='admin'||role==='planner')return 'alle Häuser und alle Gruppen';
+    const siteNames=(Array.isArray(u.siteIds)?u.siteIds:[]).map(id=>findSiteById(id)?.name||id).filter(Boolean);
+    const groups=(Array.isArray(u.groupKeys)?u.groupKeys:[]).map(g=>String(g)).filter(Boolean);
+    if(role==='hausleitung')return (siteNames.length?siteNames.join(', '):'Haus nicht gewählt')+' · alle Gruppen';
+    if(role==='tko')return (siteNames.length?siteNames.join(', '):'Haus nicht gewählt')+' · '+(groups.length?groups.join(', '):'keine Gruppe gewählt');
+    if(role==='employee')return (siteNames.length?siteNames.join(', '):'')+(groups.length?' · '+groups.join(', '):'');
+    return siteNames.concat(groups).join(' · ')||'kein Zugriff gesetzt';
+  }
+  function renderUserSiteOptions(){
+    const sel=$('userSite'); if(!sel)return;
+    const current=sel.value;
+    sel.innerHTML='<option value="">kein Haus gewählt</option>'+ (org.sites||[]).map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+    if(current && [...sel.options].some(o=>o.value===current))sel.value=current;
+  }
+  function renderUserGroupChecks(){
+    const box=$('userGroupChecks'); if(!box)return;
+    const site=findSiteById(selectedUserSite());
+    const units=site?realUnits(site):[];
+    if(!site){box.innerHTML='<div class="site-access-empty">Zuerst Haus/Standort wählen.</div>';return;}
+    if(!units.length){box.innerHTML='<div class="site-access-empty">Dieser Standort hat noch keine Gruppen.</div>';return;}
+    box.innerHTML=units.map(u=>`<label class="check-pill"><input type="checkbox" value="${esc(u.id||u.plannerKey||u.name)}"> ${esc(u.name)}</label>`).join('');
+  }
+  function clearUserForm(){
+    ['userName','userEmail','userPassword'].forEach(id=>{const el=$(id); if(el)el.value='';});
+    if($('userRole'))$('userRole').value='hausleitung';
+    if($('userSite'))$('userSite').value=(org.sites&&org.sites[0]?.id)||'';
+    renderUserGroupChecks();
+  }
+  function renderUsers(){
+    renderUserSiteOptions(); renderUserGroupChecks();
+    const list=$('userList'); if(!list)return;
+    if(!users.length){list.innerHTML='<div class="empty">Noch keine Benutzer angelegt.</div>'; return;}
+    list.innerHTML=users.map(u=>{
+      const cls=String(u.role||'').toLowerCase();
+      return `<div class="user-card"><div class="user-card-head"><div><b>${esc(u.name||u.email)}</b><div class="mini">${esc(u.email||'')}</div><div class="user-scope">${esc(scopeText(u))}</div></div><span class="user-role ${esc(cls)}">${esc(roleLabel(u.role))}</span></div><div class="actions" style="margin-top:9px"><button type="button" onclick="window.__orgEditUser('${esc(u.email||'')}')">bearbeiten</button><button type="button" class="bad" onclick="window.__orgRemoveUser('${esc(u.email||'')}')">Recht entfernen</button></div></div>`;
+    }).join('');
+  }
+  async function usersApi(body){
+    const resp=await fetch('/api/org-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},body,{orgAdminToken:localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||''}))});
+    const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
+    return data;
+  }
+  async function loadUsers(show=true){
+    try{const data=await usersApi({mode:'load'}); users=Array.isArray(data.users)?data.users:[]; renderUsers(); if(show)userStatus('Benutzer geladen: '+users.length+'.','ok');}
+    catch(e){userStatus('Benutzer konnten nicht geladen werden: '+e.message,'bad');}
+  }
+  function collectUserForm(){
+    const siteId=selectedUserSite();
+    const role=String($('userRole')?.value||'employee').toLowerCase();
+    const checked=[...document.querySelectorAll('#userGroupChecks input:checked')].map(x=>x.value);
+    const user={
+      name:($('userName')?.value||'').trim(),
+      email:($('userEmail')?.value||'').trim().toLowerCase(),
+      password:$('userPassword')?.value||'',
+      role,
+      siteIds:siteId?[siteId]:[],
+      groupKeys:role==='tko'||role==='employee'?checked:[],
+      scope:(role==='admin'||role==='planner')?'all':(role==='hausleitung'?'site':'groups')
+    };
+    return user;
+  }
+  async function saveUserFromForm(){
+    const user=collectUserForm();
+    if(!user.email){userStatus('Bitte E-Mail eintragen.','bad');return;}
+    if((user.role==='hausleitung'||user.role==='tko'||user.role==='employee')&&!user.siteIds.length){userStatus('Bitte Haus/Standort wählen.','bad');return;}
+    if(user.role==='tko'&&!user.groupKeys.length){userStatus('TKO braucht mindestens eine ausgewählte Gruppe.','bad');return;}
+    userStatus('Benutzer wird gespeichert …');
+    try{const data=await usersApi({mode:'saveUser',user}); users=Array.isArray(data.users)?data.users:[]; renderUsers(); $('userPassword').value=''; userStatus(data.message||'Benutzer gespeichert.','ok');}
+    catch(e){userStatus('Benutzer konnte nicht gespeichert werden: '+e.message,'bad');}
+  }
+  window.__orgEditUser=email=>{
+    const u=users.find(x=>String(x.email||'').toLowerCase()===String(email||'').toLowerCase()); if(!u)return;
+    $('userName').value=u.name||''; $('userEmail').value=u.email||''; $('userPassword').value=''; $('userRole').value=u.role||'employee';
+    const siteId=(Array.isArray(u.siteIds)&&u.siteIds[0])||u.siteId||''; $('userSite').value=siteId; renderUserGroupChecks();
+    const set=new Set(Array.isArray(u.groupKeys)?u.groupKeys:[]); document.querySelectorAll('#userGroupChecks input').forEach(x=>{x.checked=set.has(x.value);});
+    document.getElementById('usersCard')?.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  window.__orgRemoveUser=async email=>{
+    if(!confirm('Zugriff für '+email+' entfernen? Der Supabase-Login selbst bleibt bestehen.'))return;
+    try{const data=await usersApi({mode:'deleteUser',email}); users=Array.isArray(data.users)?data.users:[]; renderUsers(); userStatus('Zugriff entfernt.','ok');}
+    catch(e){userStatus('Zugriff konnte nicht entfernt werden: '+e.message,'bad');}
+  };
+  window.__orgPrepareUserForSite=(si,role)=>{
+    const site=org.sites[si]; if(!site)return;
+    $('userRole').value=role||'hausleitung'; $('userSite').value=site.id; renderUserGroupChecks(); document.getElementById('usersCard')?.scrollIntoView({behavior:'smooth',block:'start'}); userStatus('Benutzer für '+site.name+' vorbereiten. E-Mail, Name und Passwort eintragen.','warn');
+  };
+
   function render(){
     cleanupAutoUnits();
     $('orgName').value=org.organisation?.name||'LIV – Leben in Vielfalt';
@@ -289,6 +444,12 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
             </select></label>
             <label><span class="mini">Kanton</span><input data-site="${si}" data-field="canton" value="${esc(site.canton||'BS')}"></label>
           </div>
+
+          <div class="mini" style="margin-top:6px">Zugriff für diesen Standort</div>
+          <div class="site-access">
+            ${(users||[]).filter(u=>userMatchesSite(u,site)).map(u=>`<div class="site-access-row"><div><b>${esc(u.name||u.email)}</b><div class="mini">${esc(roleLabel(u.role))} · ${esc(scopeText(u))}</div></div><button type="button" onclick="window.__orgEditUser('${esc(u.email||'')}')">ändern</button></div>`).join('') || '<div class="site-access-empty">Noch kein Benutzer für diesen Standort zugewiesen.</div>'}
+            <div class="actions"><button type="button" onclick="window.__orgPrepareUserForSite(${si},'hausleitung')">+ Hausleitung</button><button type="button" onclick="window.__orgPrepareUserForSite(${si},'tko')">+ TKO für Gruppen</button></div>
+          </div>
           <div class="mini">Hausfunktionen für diesen Standort</div>
           <div class="auto-grid">
             <label class="auto-toggle"><input type="checkbox" data-site="${si}" data-auto="nachtwache" ${autoFunctions(site).nachtwache?'checked':''}> Nachtwache</label>
@@ -311,8 +472,9 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
           `).join('')}
         </div>
       </article>
-    `).join('') || '<div class="empty">Noch keine Häuser oder Tageszentren erstellt.</div>';
+    `).join('') || '<div class="empty">Noch keine Häuser oder Tageszentren erstellt.<br><br><button type="button" class="primary" onclick="window.__orgAddSiteQuick && window.__orgAddSiteQuick(\'wohnheim\')">+ Haus hinzufügen</button> <button type="button" onclick="window.__orgAddSiteQuick && window.__orgAddSiteQuick(\'tageszentrum\')">+ Tageszentrum</button></div>';
     document.querySelectorAll('[data-site]').forEach(el=>{el.oninput=syncFromInputs;el.onchange=syncFromInputs;});
+    renderUserSiteOptions();
   }
   function syncFromInputs(){
     cleanupAutoUnits();
@@ -353,7 +515,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   window.__orgAddDayUnit=si=>{syncFromInputs(); const s=org.sites[si]; if(!s)return; s.units=s.units||[]; if(realUnits(s).length>=4){status('Pro Haus sind maximal 4 Gruppen/Räume vorgesehen.','bad'); return;} s.units.push(defaultUnit(s,'tageszentrum')); render(); $('edit-'+si)?.classList.add('show')};
   window.__orgRemoveUnit=(si,ui)=>{syncFromInputs(); if(org.sites[si])org.sites[si].units.splice(ui,1); render();};
   window.__orgRemoveSite=si=>{syncFromInputs(); if(confirm('Standort wirklich löschen?')){org.sites.splice(si,1); render();}};
-  async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); if(data.empty || !data.organisationStructure){org=emptyOrganisation(); saveOrgDraft(data.updatedAt); render(); status('Server enthält aktuell keine gespeicherten Häuser. Es wurde nichts automatisch mit Haus 1 repariert oder überschrieben.','warn'); return;} org=mergeWithDefaultOrganisation(data.organisationStructure); saveOrgDraft(data.updatedAt); render(); status('Organisation geladen.','ok');}catch(e){org=emptyOrganisation(); saveOrgDraft('local-fallback'); render(); status('Server konnte nicht laden: '+e.message+' — keine automatische Reparatur ausgeführt.','bad');}}
+  async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); if(data.empty || !data.organisationStructure){org=emptyOrganisation(); render(); status('Server enthält aktuell keine gespeicherten Häuser. Bitte Haus hinzufügen und danach Speichern klicken. Es wurde nichts automatisch mit Haus 1 repariert oder überschrieben.','warn'); return;} org=mergeWithDefaultOrganisation(data.organisationStructure); render(); status('Organisation geladen.','ok');}catch(e){org=emptyOrganisation(); render(); status('Server konnte nicht laden: '+e.message+' — keine automatische Reparatur ausgeführt.','bad');}}
   async function save(){
     syncFromInputs(); cleanupAutoUnits(); org=mergeWithDefaultOrganisation(org);
     const expectedIds=(org.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
@@ -367,18 +529,20 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
       const savedIds=(serverOrg.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
       const missing=expectedIds.filter(id=>!savedIds.includes(id));
       if(missing.length){
-        org=serverOrg; saveOrgDraft(verify.updatedAt); render();
+        org=serverOrg; render();
         throw new Error('Server-Bestätigung fehlt für: '+missing.join(', '));
       }
-      org=serverOrg; saveOrgDraft(verify.updatedAt||data.updatedAt); render();
+      org=serverOrg; render();
       status('Organisation gespeichert und vom Server bestätigt. Standorte: '+savedIds.length+'.','ok');
     }catch(e){
-      saveOrgDraft('local-only'); render();
-      status('Server-Speichern fehlgeschlagen: '+e.message+' — lokal gesichert, aber noch nicht dauerhaft auf dem Server.','bad');
+      render();
+      status('Server-Speichern fehlgeschlagen: '+e.message+' — es wurde nichts lokal oder auf dem Server überschrieben.','bad');
     }
   }
-  function addSite(type){syncFromInputs(); org.sites=org.sites||[]; const site=defaultSite(type); org.sites.push(site); saveOrgDraft('local-draft'); render(); status(typeLabel(site.type)+' erstellt: '+site.name+'. Jetzt Speichern klicken, damit es dauerhaft auf dem Server bleibt.','warn');}
-  $('newHouseBtn').onclick=()=>addSite('wohnheim'); $('newDayBtn').onclick=()=>addSite('tageszentrum'); $('newOtherBtn').onclick=()=>addSite('sonstiges');
+  function addSite(type){syncFromInputs(); org.sites=org.sites||[]; const site=defaultSite(type); org.sites.push(site); render(); status(typeLabel(site.type)+' erstellt: '+site.name+'. Jetzt Name/Bereiche prüfen und Speichern klicken, damit es dauerhaft auf dem Server bleibt.','warn');}
+  window.__orgAddSiteQuick=addSite;
+  ['newHouseBtn','newHouseBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('wohnheim');}); ['newDayBtn','newDayBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('tageszentrum');}); ['newOtherBtn','newOtherBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('sonstiges');});
+  $('reloadUsersBtn').onclick=()=>loadUsers(true); $('saveUserBtn').onclick=()=>saveUserFromForm(); $('clearUserFormBtn').onclick=()=>clearUserForm(); $('userSite').onchange=renderUserGroupChecks; $('userRole').onchange=renderUserGroupChecks;
   $('loadBtn').onclick=()=>load().catch(e=>status('Fehler: '+e.message,'bad')); $('saveBtn').onclick=()=>save().catch(e=>status('Fehler: '+e.message,'bad'));
   $('orgName').oninput=syncBasics; $('payrollProfile').oninput=syncBasics;
   render();
@@ -386,7 +550,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   if(loginBtn) loginBtn.onclick=()=>orgAdminLogin().catch(e=>lockStatus('Fehler: '+e.message,'bad'));
   const pwInput=$('orgAdminPassword');
   if(pwInput) pwInput.addEventListener('keydown',e=>{if(e.key==='Enter')orgAdminLogin().catch(err=>lockStatus('Fehler: '+err.message,'bad'));});
-  checkOrgAdmin().then(ok=>{ if(ok) load().catch(e=>status('Fehler: '+e.message,'bad')); });
+  checkOrgAdmin().then(ok=>{ if(ok){ load().catch(e=>status('Fehler: '+e.message,'bad')); loadUsers(false); } });
 })();
 </script>
 </body>
