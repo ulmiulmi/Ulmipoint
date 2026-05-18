@@ -1,0 +1,36 @@
+plugins { id 'com.android.application' }
+
+def keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+def storePass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def aliasName = System.getenv("ANDROID_KEY_ALIAS")
+def keyPass = System.getenv("ANDROID_KEY_PASSWORD")
+def canSign = keystorePath && storePass && aliasName && keyPass && file(keystorePath).exists()
+
+android {
+    namespace 'ch.ulmipoint.wunschportal'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'ch.ulmipoint.wunschportal'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+    signingConfigs {
+        release {
+            if (canSign) {
+                storeFile file(keystorePath)
+                storePassword storePass
+                keyAlias aliasName
+                keyPassword keyPass
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            if (canSign) signingConfig signingConfigs.release
+        }
+    }
+}

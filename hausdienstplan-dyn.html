@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="de">
+<head>
+<script>
+(function(){
+  function param(name,fallback=''){
+    try{return new URLSearchParams(location.search||'').get(name)||fallback;}catch(_){return fallback;}
+  }
+  function slug(value){
+    return String(value||'')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'_')
+      .replace(/^_+|_+$/g,'')||'hausdienstplan';
+  }
+  const ctx={
+    siteId:param('siteId','haus'),
+    siteName:param('siteName','Haus'),
+    unitId:param('unitId','hausdienstplan'),
+    unitName:param('unitName','Haus-Dienstplan'),
+    plannerKey:param('plannerKey',param('functionType','hausdienstplan')),
+    functionType:param('functionType','hausdienstplan'),
+    kind:'hausfunktion',
+    slug
+  };
+  window.__ULMI_DYNAMIC_CONTEXT__=ctx;
+  const PREFIX='ulmipoint_site_'+slug(ctx.siteId)+'__page_'+slug(ctx.plannerKey||ctx.functionType||ctx.unitId)+'__';
+  const SHARED=[
+    'polypoint_server_config_v2',
+    'polypoint_server_session_v1',
+    'polypoint_server_sync_meta_v1',
+    'polypoint_server_autosave_v1',
+    'polypoint_employee_wishes_v1',
+    'ulmipoint_selected_site_v1',
+    'ulmipoint_org_structure_draft_v1',
+    'ulmipoint_org_admin_token_v1'
+  ];
+  function isShared(k){return SHARED.indexOf(String(k||''))>=0;}
+  const real=window.localStorage;
+  function mapKey(k){k=String(k||'');return isShared(k)?k:PREFIX+k;}
+  function keys(){
+    const out=[];const seen={};
+    for(let i=0;i<real.length;i++){
+      const k=real.key(i);
+      if(!k) continue;
+      if(k.indexOf(PREFIX)===0){const c=k.slice(PREFIX.length);if(!seen[c]){seen[c]=1;out.push(c);}}
+      else if(isShared(k)&&!seen[k]){seen[k]=1;out.push(k);}
+    }
+    return out;
+  }
+  const proxy={
+    getItem(k){return real.getItem(mapKey(k));},
+    setItem(k,v){return real.setItem(mapKey(k),String(v));},
+    removeItem(k){return real.removeItem(mapKey(k));},
+    clear(){keys().forEach(k=>real.removeItem(mapKey(k)));},
+    key(i){return keys()[i]||null;},
+    get length(){return keys().length;}
+  };
+  try{Object.defineProperty(window,'localStorage',{value:proxy,configurable:true});}catch(_){}
+})();
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ULMIPOINT Haus-Dienstplan</title>
+<style>
+  :root{--bg:#f6f8fc;--card:#fff;--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--brown:#7c2d12;--red:#c73636;--yellow:#9a6700;--shadow:0 12px 30px rgba(16,24,40,.08)}
+  *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);color:var(--text)}
+  body{padding:14px}.wrap{max-width:1600px;margin:0 auto}.head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}.title h1{font-size:28px;letter-spacing:-.05em;margin:0 0 4px}.mini{font-size:12px;color:var(--muted);font-weight:850;line-height:1.4}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:14px;margin:12px 0}.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:950;background:#eef2f7;color:#475467;white-space:nowrap}.pill.blue{background:#eaf2ff;color:var(--blue)}.pill.green{background:#e7f7ef;color:var(--green)}.pill.brown{background:#fff4ed;color:var(--brown)}.pill.red{background:#ffe7e7;color:var(--red)}.pill.yellow{background:#fff7da;color:var(--yellow)}
+  button,select{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:8px 12px;font-weight:950;cursor:pointer;white-space:nowrap}button.primary{background:var(--blue);border-color:var(--blue);color:#fff}select{cursor:default;border-radius:14px}.source-grid{display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:8px;margin-top:10px}.source{border:1px solid var(--line);border-radius:16px;background:#fbfcfe;padding:10px}.source b{display:block}.source small{display:block;color:var(--muted);font-weight:850;margin-top:3px;line-height:1.25}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:18px;background:#fff}.haus-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:12px}.haus-table th,.haus-table td{border-bottom:1px solid #edf1f6;border-right:1px solid #edf1f6;padding:6px 7px;text-align:center;white-space:nowrap;vertical-align:middle}.haus-table th{background:#f8fafc;color:#475467;font-size:10px;text-transform:uppercase;position:sticky;top:0;z-index:4}.haus-table th.sticky,.haus-table td.sticky{position:sticky;left:0;z-index:3;text-align:left;background:#fff}.haus-table th.sticky{background:#f8fafc;z-index:5}.haus-table th.name,.haus-table td.name{left:96px;min-width:220px;text-align:left}.haus-table th.group,.haus-table td.group{left:316px;min-width:90px;text-align:left}.haus-table th.pct,.haus-table td.pct{left:406px;min-width:70px}.role-row td{position:sticky;left:0;background:#eef4ff!important;color:#1d4ed8;font-weight:1000;text-align:left!important;font-size:13px;z-index:2}.night-title{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}.cell{font-weight:950;border-radius:8px;display:inline-flex;min-width:30px;justify-content:center;padding:3px 5px;background:#f4f7fb}.cell.work{background:#eaf2ff;color:#1d4ed8}.cell.abs{background:#ffe7e7;color:#c73636}.cell.free{background:#e7f7ef;color:#0f8a5f}.cell.p{background:#fff4ed;color:#7c2d12}.weekend{background:#fffdf5!important}.today{outline:2px solid #2563eb;outline-offset:-2px}.empty{color:#c1cad7}.summary{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:8px}.sum{border:1px solid var(--line);border-radius:16px;background:#fbfcfe;padding:10px}.sum strong{font-size:22px;display:block;letter-spacing:-.04em}.warn{border:1px solid #f3d28f;background:#fffdf5;color:#9a6700;border-radius:16px;padding:10px;font-weight:850;font-size:12px;margin-top:10px;white-space:pre-wrap}.hidden-print{display:block}@media(max-width:760px){body{padding:8px}.title h1{font-size:22px}.source-grid,.summary{grid-template-columns:1fr}.haus-table{font-size:11px}.haus-table th.name,.haus-table td.name{left:76px;min-width:190px}.haus-table th.group,.haus-table td.group{left:266px}.haus-table th.pct,.haus-table td.pct{left:356px}}@media print{body{background:#fff;padding:0}.hidden-print,.actions{display:none!important}.card{box-shadow:none;border:0;padding:6px;margin:0}.table-wrap{border:0;overflow:visible}.haus-table{font-size:9px}.haus-table th,.haus-table td{padding:3px}.haus-table th{position:static}.haus-table th.sticky,.haus-table td.sticky,.haus-table th.name,.haus-table td.name,.haus-table th.group,.haus-table td.group,.haus-table th.pct,.haus-table td.pct{position:static}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="title">
+      <h1>Haus-Dienstplan</h1>
+      <div class="mini">Zentrale Ansicht aus Azoren, Bali, Capri und Delos – sortiert nach Funktion. Nachtwache steht separat darunter.</div>
+    </div>
+    <div class="actions hidden-print">
+      <button class="primary" onclick="reloadAll(true)">neu laden</button>
+      <button onclick="window.print()">drucken</button>
+      <button onclick="copyPlanText()">kopieren</button>
+      <button onclick="downloadCSV()">CSV</button>
+    </div>
+  </div>
+
+  <section class="card hidden-print">
+    <div class="bar">
+      <span class="pill blue">Monat</span>
+      <select id="monthSelect" onchange="setMonthYear()"></select>
+      <select id="yearSelect" onchange="setMonthYear()"></select>
+      <span class="pill green" id="loadedInfo">bereit</span>
+      <span class="pill brown">Nachtwache separat</span>
+    </div>
+    <div class="source-grid" id="sourceGrid"></div>
+    <div class="warn" id="warnBox" style="display:none"></div>
+  </section>
+
+  <section class="card">
+    <div class="summary" id="summaryCards"></div>
+  </section>
+
+  <section class="card">
+    <div class="bar" style="justify-content:space-between;margin-bottom:10px">
+      <div><span class="pill blue">Haus</span> <b>Azoren · Bali · Capri · Delos</b></div>
+      <span class="mini" id="normalCount"></span>
+    </div>
+    <div class="table-wrap" id="normalTable"></div>
+  </section>
+
+  <section class="card">
+    <div class="night-title" style="margin-bottom:10px">
+      <div><span class="pill brown">separat</span> <b>Nachtwache</b></div>
+      <span class="mini" id="nightCount"></span>
+    </div>
+    <div class="table-wrap" id="nightTable"></div>
+  </section>
+</div>
+<script>
+'use strict';
+const VERSION='13.0.187';
+const MONTHS=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const WEEKDAYS=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const BASE='polypoint_ki_planer_v13_clean__';
+const NORMAL_GROUPS=[{id:'azoren',name:'Azoren'},{id:'bali',name:'Bali'},{id:'capri',name:'Capri'},{id:'delos',name:'Delos'}];
+const NIGHT_GROUP={id:'nachtwache',name:'Nachtwache'};
+const ROLE_ORDER=['Leitung','TKO','Fachperson','FABE','Assistenz','Ausbildung','Schüler','Schueler','Lernende','Praktikum','ohne Funktion'];
+let selectedMonth=new Date().getMonth()+1;
+let selectedYear=new Date().getFullYear();
+let loaded={};
+function q(id){return document.getElementById(id)}
+function esc(s){return String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));}
+function pad(n){return String(n).padStart(2,'0')}
+function iso(y,m,d){return `${y}-${pad(m)}-${pad(d)}`}
+function parseDate(s){const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)}
+function daysInMonth(y,m){return new Date(y,m,0).getDate()}
+function entryKey(empId,date){return `${date}__${empId}`}
+function monthKey(y=selectedYear,m=selectedMonth){return `${y}-${pad(m)}`}
+function profileKey(groupId,profile){return `${BASE}${groupId}${profile&&profile!=='default'?`__${profile}`:''}`}
+function profileLabel(p){return !p||p==='default'?'dieses Gerät':p}
+function candidateProfiles(groupId){const out=['default'];try{const stored=localStorage.getItem(`${BASE}${groupId}_device_profile`);if(stored&&!out.includes(stored))out.push(stored);}catch(e){}['pc','handy'].forEach(p=>{if(!out.includes(p))out.push(p)});return out}
+function readGroup(group){
+  let fallback=null;
+  for(const profile of candidateProfiles(group.id)){
+    const key=profileKey(group.id,profile);
+    try{
+      const raw=localStorage.getItem(key);
+      if(!raw)continue;
+      const obj=JSON.parse(raw);
+      if(!fallback)fallback={group,key,profile,state:obj,found:true};
+      if(Array.isArray(obj.employees)&&obj.employees.length)return {group,key,profile,state:obj,found:true};
+    }catch(e){console.warn('readGroup',group.id,e)}
+  }
+  return fallback||{group,key:profileKey(group.id,'default'),profile:'default',state:null,found:false};
+}
+function initSelectors(){
+  const m=q('monthSelect'),y=q('yearSelect');
+  m.innerHTML=MONTHS.map((x,i)=>`<option value="${i+1}">${x}</option>`).join('');
+  const now=new Date().getFullYear();
+  y.innerHTML=Array.from({length:9},(_,i)=>now-3+i).map(v=>`<option value="${v}">${v}</option>`).join('');
+  m.value=selectedMonth;y.value=selectedYear;
+}
+function setMonthYear(){selectedMonth=parseInt(q('monthSelect').value)||selectedMonth;selectedYear=parseInt(q('yearSelect').value)||selectedYear;renderAll()}
+function inferMonthYear(){
+  const all=[...NORMAL_GROUPS,NIGHT_GROUP].map(g=>loaded[g.id]?.state).filter(Boolean);
+  const first=all.find(s=>s&&s.selectedMonth&&s.selectedYear);
+  if(first){selectedMonth=parseInt(first.selectedMonth)||selectedMonth;selectedYear=parseInt(first.selectedYear)||selectedYear;}
+  if(q('monthSelect')){q('monthSelect').value=selectedMonth;q('yearSelect').value=selectedYear;}
+}
+function reloadAll(show=false){
+  [...NORMAL_GROUPS,NIGHT_GROUP].forEach(g=>loaded[g.id]=readGroup(g));
+  inferMonthYear();
+  renderAll();
+  if(show)q('loadedInfo').textContent='neu gelesen '+new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit'});
+}
+function roleName(emp){const raw=String(emp?.role||emp?.funktion||'ohne Funktion').trim();if(/fabe|fa\s*be|sozialpäd|sozialpaed|sozialp|fachperson/i.test(raw))return 'Fachperson';return raw||'ohne Funktion'}
+function roleRank(role){const r=String(role||'');const ix=ROLE_ORDER.findIndex(x=>r.toLowerCase().includes(x.toLowerCase()));return ix>=0?ix:ROLE_ORDER.length}
+function empActiveInMonth(emp){
+  if(emp?.active===false)return false;
+  const start=emp?.activeFrom||'',end=emp?.activeUntil||'';
+  const first=iso(selectedYear,selectedMonth,1),last=iso(selectedYear,selectedMonth,daysInMonth(selectedYear,selectedMonth));
+  if(start&&start>last)return false;if(end&&end<first)return false;return true;
+}
+function dutyLabel(state,code){
+  const d=(state?.duties||[]).find(x=>String(x.code||'')===String(code||''));
+  return d?.name||d?.meaning||'';
+}
+function cellClass(code){
+  code=String(code||'').toUpperCase();
+  if(!code)return '';
+  if(['FR','WF','KGL','KF'].includes(code))return 'free';
+  if(['FER','KR','KA','SCH','SCHF','ÜK','UEK','ABW'].includes(code))return 'abs';
+  if(code==='P')return 'p';
+  return 'work';
+}
+function entryText(e){
+  if(!e||e.removed)return '';
+  if(e.code)return String(e.code);
+  if(e.pikett)return 'P';
+  if(e.status)return String(e.status);
+  return '';
+}
+function rowsFor(groups){
+  const rows=[];
+  groups.forEach(group=>{
+    const info=loaded[group.id]||readGroup(group);
+    const st=info.state||{};
+    (Array.isArray(st.employees)?st.employees:[]).filter(empActiveInMonth).forEach(emp=>rows.push({group,info,state:st,emp,role:roleName(emp)}));
+  });
+  rows.sort((a,b)=>roleRank(a.role)-roleRank(b.role)||a.role.localeCompare(b.role,'de')||String(a.emp.name||'').localeCompare(String(b.emp.name||''),'de')||a.group.name.localeCompare(b.group.name,'de'));
+  return rows;
+}
+function renderTable(elId,groups,emptyText){
+  const rows=rowsFor(groups);
+  const days=daysInMonth(selectedYear,selectedMonth);
+  if(!rows.length){q(elId).innerHTML=`<div style="padding:14px" class="mini">${esc(emptyText)}</div>`;return 0;}
+  const today=new Date().toISOString().slice(0,10);
+  let html='<table class="haus-table"><thead><tr><th class="sticky">Funktion</th><th class="sticky name">Mitarbeiter</th><th class="sticky group">Gruppe</th><th class="sticky pct">%</th>';
+  for(let d=1;d<=days;d++){const date=iso(selectedYear,selectedMonth,d),wd=parseDate(date).getDay();html+=`<th class="${wd===0||wd===6?'weekend':''} ${date===today?'today':''}">${d}<br>${WEEKDAYS[wd].slice(0,2)}</th>`;}
+  html+='</tr></thead><tbody>';
+  let lastRole='';
+  rows.forEach(r=>{
+    if(r.role!==lastRole){lastRole=r.role;html+=`<tr class="role-row"><td colspan="${4+days}">${esc(lastRole)}</td></tr>`;}
+    html+=`<tr><td class="sticky">${esc(r.role)}</td><td class="sticky name"><b>${esc(r.emp.name||'')}</b></td><td class="sticky group">${esc(r.group.name)}</td><td class="sticky pct">${Number(r.emp.pct||0)||''}</td>`;
+    for(let d=1;d<=days;d++){
+      const date=iso(selectedYear,selectedMonth,d),wd=parseDate(date).getDay();
+      const e=r.state.plan?.[entryKey(r.emp.id,date)];
+      const txt=entryText(e),cls=cellClass(txt),title=[r.emp.name,r.group.name,date,txt,dutyLabel(r.state,txt),e?.reason||''].filter(Boolean).join(' · ');
+      html+=`<td class="${wd===0||wd===6?'weekend':''} ${date===today?'today':''}" title="${esc(title)}">${txt?`<span class="cell ${cls}">${esc(txt)}</span>`:'<span class="empty">·</span>'}</td>`;
+    }
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  q(elId).innerHTML=html;
+  return rows.length;
+}
+function renderSources(){
+  const groups=[...NORMAL_GROUPS,NIGHT_GROUP];
+  q('sourceGrid').innerHTML=groups.map(g=>{const i=loaded[g.id]||{};const st=i.state||{};const emp=Array.isArray(st.employees)?st.employees.length:0;const saved=st.savedAt?new Date(st.savedAt).toLocaleString('de-CH'):'';return `<div class="source"><b>${esc(g.name)}</b><small>${i.found?`${emp} Mitarbeitende · ${profileLabel(i.profile)}${saved?' · '+esc(saved):''}`:'kein Speicher auf diesem Gerät gefunden'}</small></div>`}).join('');
+  const missing=groups.filter(g=>!(loaded[g.id]?.found));
+  const warn=q('warnBox');
+  if(missing.length){warn.style.display='block';warn.textContent='Nicht gefunden: '+missing.map(g=>g.name).join(', ')+'. Der Haus-Dienstplan liest nur gespeicherte Gruppenstände von diesem Gerät.';}else{warn.style.display='none';warn.textContent='';}
+}
+function renderSummary(normalRows,nightRows){
+  const allNormal=rowsFor(NORMAL_GROUPS);const allNight=rowsFor([NIGHT_GROUP]);
+  const days=daysInMonth(selectedYear,selectedMonth);
+  let entries=0,p=0,abs=0;
+  [...allNormal,...allNight].forEach(r=>{for(let d=1;d<=days;d++){const txt=entryText(r.state.plan?.[entryKey(r.emp.id,iso(selectedYear,selectedMonth,d))]);if(txt){entries++;if(txt==='P')p++;if(['FER','KR','KA','SCH','SCHF','ÜK','UEK','ABW'].includes(String(txt).toUpperCase()))abs++;}}});
+  q('summaryCards').innerHTML=`<div class="sum"><strong>${allNormal.length}</strong><span class="mini">Mitarbeitende Hausgruppen</span></div><div class="sum"><strong>${allNight.length}</strong><span class="mini">Mitarbeitende Nachtwache</span></div><div class="sum"><strong>${entries}</strong><span class="mini">geplante Einträge im Monat</span></div><div class="sum"><strong>${p}</strong><span class="mini">Pikett-Einträge sichtbar</span></div>`;
+  q('normalCount').textContent=`${normalRows} Mitarbeitende · ${MONTHS[selectedMonth-1]} ${selectedYear}`;
+  q('nightCount').textContent=`${nightRows} Mitarbeitende · separat`;
+}
+function renderAll(){renderSources();const n=renderTable('normalTable',NORMAL_GROUPS,'Keine Hausgruppen-Daten gefunden. Bitte Gruppenpläne speichern und hier neu laden.');const nw=renderTable('nightTable',[NIGHT_GROUP],'Keine Nachtwache-Daten gefunden.');renderSummary(n,nw);document.title=`Haus-Dienstplan · ${MONTHS[selectedMonth-1]} ${selectedYear} · V${VERSION}`;}
+function planText(){
+  const rows=[['Bereich','Funktion','Name','Gruppe','Prozent']];
+  for(let d=1;d<=daysInMonth(selectedYear,selectedMonth);d++)rows[0].push(String(d));
+  function add(section,groups){rowsFor(groups).forEach(r=>{const line=[section,r.role,r.emp.name||'',r.group.name,String(r.emp.pct||'')];for(let d=1;d<=daysInMonth(selectedYear,selectedMonth);d++)line.push(entryText(r.state.plan?.[entryKey(r.emp.id,iso(selectedYear,selectedMonth,d))]));rows.push(line);});}
+  add('Hausgruppen',NORMAL_GROUPS);add('Nachtwache',[NIGHT_GROUP]);return rows.map(r=>r.join('\t')).join('\n');
+}
+function copyPlanText(){navigator.clipboard?.writeText(planText()).then(()=>{q('loadedInfo').textContent='kopiert';}).catch(()=>{q('loadedInfo').textContent='Kopieren nicht möglich';});}
+function downloadCSV(){const csv=planText().replace(/\t/g,';');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`haus-dienstplan_${monthKey()}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function openPrintPDFPage(){window.print()}
+
+
+// Zentraler Export-Dialog: Haus-Dienstplan-Sicherung aller sichtbaren Gruppenstände
+function hausBackupDownload(name,content,type){
+  const blob=new Blob([content],{type:type||'application/json;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+function exportBackup(){
+  try{
+    reloadAll(false);
+    const payload={kind:'polypoint-hausdienstplan-backup',version:VERSION,exportedAt:new Date().toISOString(),month:selectedMonth,year:selectedYear,states:{}};
+    [...NORMAL_GROUPS,NIGHT_GROUP].forEach(g=>{
+      const info=loaded[g.id]||readGroup(g);
+      if(info&&info.state)payload.states[g.id]={group:g,profile:info.profile||'default',key:info.key||profileKey(g.id,'default'),state:info.state};
+    });
+    hausBackupDownload(`polypoint_haus_dienstplan_${monthKey()}_sicherung.json`,JSON.stringify(payload,null,2),'application/json;charset=utf-8');
+    if(q('loadedInfo'))q('loadedInfo').textContent='Sicherung heruntergeladen';
+  }catch(e){console.warn(e);if(q('loadedInfo'))q('loadedInfo').textContent='Sicherung herunterladen nicht möglich';}
+}
+function importBackup(ev){
+  const file=ev&&ev.target&&ev.target.files?ev.target.files[0]:null;
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const obj=JSON.parse(String(reader.result||''));
+      if(!obj||obj.kind!=='polypoint-hausdienstplan-backup'||!obj.states)throw new Error('falsches Backup');
+      Object.entries(obj.states).forEach(([id,item])=>{
+        if(item&&item.state){localStorage.setItem(profileKey(id,item.profile||'default'),JSON.stringify(item.state));}
+      });
+      reloadAll(true);
+      if(q('loadedInfo'))q('loadedInfo').textContent='Sicherung geladen';
+    }catch(e){console.warn(e);if(q('loadedInfo'))q('loadedInfo').textContent='Sicherung laden nicht möglich';}
+  };
+  reader.readAsText(file);
+}
+window.copyPlanText=copyPlanText;
+window.downloadCSV=downloadCSV;
+window.openPrintPDFPage=openPrintPDFPage;
+window.exportBackup=exportBackup;
+window.importBackup=importBackup;
+
+
+window.addEventListener('storage',()=>reloadAll(false));
+initSelectors();reloadAll(false);
+</script>
+<script>
+(function(){
+  function applyDynamicLabels(){
+    const dyn=window.__ULMI_DYNAMIC_CONTEXT__||{};
+    const name=dyn.unitName||'Haus-Dienstplan';
+    const site=dyn.siteName||'';
+    document.title='ULMIPOINT '+name;
+
+    document.querySelectorAll('h1').forEach(h=>{
+      const t=h.textContent||'';
+      if(t.match(/Azoren|Bali|Capri|Delos|Gruppe|Nachtwache|Haus-Pikett|Haus-Dienstplan/i)) h.textContent=name;
+    });
+
+    document.querySelectorAll('.eyebrow').forEach(e=>{
+      const t=e.textContent||'';
+      if(t.match(/POLYPOINT|ULMIPOINT|AZOREN|BALI|CAPRI|DELOS/i)){
+        e.textContent=site?('ULMIPOINT · '+site):'ULMIPOINT';
+      }
+    });
+
+    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(n=>{
+      if(n.nodeValue){
+        n.nodeValue=n.nodeValue
+          .replace(/\bAzoren\b/g,name)
+          .replace(/\bAZOREN\b/g,name.toUpperCase());
+      }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',applyDynamicLabels);
+  else applyDynamicLabels();
+  setTimeout(applyDynamicLabels,250);
+  setTimeout(applyDynamicLabels,1200);
+})();
+</script>
+</body>
+</html>

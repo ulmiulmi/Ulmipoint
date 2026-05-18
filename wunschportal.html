@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ULMIPOINT Wunschportal</title>
+<style>
+:root{--bg:#f6f8fc;--card:#fff;--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--yellow:#9a6700;--shadow:0 12px 30px rgba(16,24,40,.08)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+.app{max-width:1120px;margin:0 auto;padding:14px}.hero{background:#fff;border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--shadow);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}.eyebrow{font-size:12px;font-weight:950;color:var(--blue);text-transform:uppercase;letter-spacing:.05em}h1{margin:4px 0 4px;font-size:30px;letter-spacing:-.05em}.mini{font-size:12px;color:var(--muted);font-weight:850;line-height:1.35}.pill{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:950;background:#eef2f7;color:#475467;white-space:nowrap}.pill.blue{background:#eaf2ff;color:var(--blue)}.pill.green{background:#e7f7ef;color:var(--green)}.pill.red{background:#fffafa;color:var(--red);border:1px solid #f2a3a3}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:var(--shadow)}h2{margin:0 0 8px;font-size:20px;letter-spacing:-.03em}h3{margin:10px 0 6px;font-size:15px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:950;cursor:pointer;color:var(--text)}button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button.ok{background:#e7f7ef;border-color:#b7e4ca;color:#0f8a5f}button.danger{background:#ffe7e7;border-color:#f2a3a3;color:#c73636}button:disabled{opacity:.55;cursor:not-allowed}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;padding:9px;font-weight:850;color:var(--text)}textarea{min-height:38px;resize:vertical}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:14px;padding:10px;font-size:12px;font-weight:850;white-space:pre-wrap}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}.notice.warn{border-color:#f3d28f;background:#fffdf5;color:#9a6700}.monthbar{display:grid;grid-template-columns:140px 110px 1fr;gap:10px;align-items:end}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:12px}.dow{font-size:11px;color:var(--muted);font-weight:950;text-align:center}.day{border:1px solid var(--line);border-radius:16px;background:#fbfcfe;padding:8px;min-height:132px}.day.weekend{background:#fff7e6}.day .num{font-weight:950;font-size:13px;margin-bottom:6px}.day .date{font-size:10px;color:var(--muted);font-weight:850;margin-bottom:7px}.day select{padding:7px;font-size:12px}.day textarea{font-size:12px;margin-top:6px;padding:7px;min-height:42px}.legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.tag{border-radius:999px;padding:3px 7px;font-size:11px;font-weight:950;background:#eef2f7}.tag.f{background:#e7f7ef;color:#0f8a5f}.tag.s{background:#f0e9ff;color:#6f42c1}.tag.fr{background:#eaf2ff;color:#2563eb}.tag.no{background:#ffe7e7;color:#c73636}.hidden{display:none!important}.locked-field{background:#f8fafc!important;color:#475467!important}.footer{font-size:11px;color:#667085;font-weight:850;margin-top:12px;text-align:center}.employee-list{max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fbfcfe;padding:8px}.employee-row{font-size:12px;font-weight:850;padding:5px 4px;border-bottom:1px solid #edf1f6}.employee-row:last-child{border-bottom:0}.personal-plan{border:1px solid var(--line);border-radius:18px;background:#fbfcfe;padding:12px;margin-top:10px}.personal-plan-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}.personal-plan-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-top:8px}.plan-dow{font-size:11px;color:var(--muted);font-weight:950;text-align:center}.plan-cell{border:1px solid var(--line);border-radius:14px;background:#fff;padding:7px;min-height:72px}.plan-cell.weekend{background:#fff7e6}.plan-cell.has-duty{border-color:#c9dcff;background:#f7fbff}.plan-cell.empty{opacity:.72}.plan-num{font-weight:950;font-size:12px}.plan-date{font-size:10px;color:var(--muted);font-weight:850}.plan-duty{margin-top:4px;font-size:12px;font-weight:950;color:var(--text);line-height:1.2}.plan-wish{margin-top:4px;font-size:10px;font-weight:900;color:#175cd3}.plan-note{font-size:11px;color:var(--muted);font-weight:850;margin-top:6px}.plan-list{display:grid;gap:6px;margin-top:8px}.plan-row{display:grid;grid-template-columns:105px 1fr;gap:8px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:7px;font-size:12px;font-weight:850}.plan-row strong{font-weight:950}.plan-row .muted{color:var(--muted);font-size:11px}.plan-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}@media(max-width:820px){.grid,.formgrid{grid-template-columns:1fr}.monthbar{grid-template-columns:1fr 1fr}.days{grid-template-columns:1fr}.day{min-height:0}h1{font-size:24px}.app{padding:10px}}
+
+/* Mobile-Navigator-Ansicht */
+:root{--navBlue:#2563eb;--navGreen:#0f8a5f;--navRed:#c73636;--navYellow:#9a6700;--navPurple:#6f42c1;--softBlue:#eaf2ff;--softGreen:#e7f7ef;--softRed:#ffe7e7;--softYellow:#fff4d8;--softPurple:#f0e9ff}
+body{background:linear-gradient(180deg,#eaf2ff 0,#f6f8fc 180px,#fbfcff 100%)}
+.hero{border-radius:0 0 24px 24px;border-top:0;background:linear-gradient(135deg,#ffffff,#f7fbff);align-items:center}
+.hero h1{font-size:clamp(30px,8vw,46px);line-height:.95}.eyebrow{color:var(--navBlue)}
+button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{background:var(--softGreen);border-color:#b7e4ca;color:var(--navGreen)}
+.card,.personal-plan,.day,.plan-cell{box-shadow:0 10px 26px rgba(16,24,40,.06)}
+#loginCard{border-color:#c9dcff;background:linear-gradient(180deg,#fff,#fbfdff)}
+.today-card{border:1px solid #b7e4ca;background:linear-gradient(135deg,#e7f7ef,#f7fffb);border-radius:18px;padding:12px;margin-top:8px;box-shadow:0 12px 26px rgba(15,138,95,.10)}.today-card.empty{border-color:#d9e2ef;background:#fff}.today-card.warn{border-color:#f3d28f;background:#fffdf5}.today-label{font-size:12px;font-weight:950;color:var(--navGreen);text-transform:uppercase;letter-spacing:.05em}.today-date{font-size:16px;font-weight:950;margin-top:2px}.today-duty{font-size:24px;font-weight:1000;letter-spacing:-.04em;margin-top:6px;color:var(--text)}.today-detail{font-size:12px;color:var(--muted);font-weight:850;margin-top:4px}.today-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.status-chip{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950}.status-chip.fixed{background:var(--softGreen);color:var(--navGreen)}.status-chip.open{background:var(--softYellow);color:var(--navYellow)}.status-chip.free{background:#eef2f7;color:#475467}.status-chip.wish{background:#e0f2fe;color:#0e7490}
+.quick-tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;margin:8px 0}.quick-tabs a{flex:0 0 auto;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:8px 11px;font-size:12px;font-weight:950;background:#fff;color:var(--text)}.quick-tabs a.primary{background:var(--navBlue);border-color:var(--navBlue);color:#fff}
+.plan-cell.today,.day.today{outline:3px solid var(--navBlue);background:#eef5ff!important}.plan-cell.fixed{border-color:#b7e4ca;background:#f7fffb}.plan-fixed{margin-top:4px;font-size:10px;font-weight:950;color:var(--navGreen)}
+.monthbar{grid-template-columns:1fr 1fr 1.4fr}.day .date,.plan-date{font-variant-numeric:tabular-nums}.day .num,.plan-num{font-size:16px}.day select{font-size:14px;min-height:42px}.day textarea{font-size:14px;min-height:50px}.employee-list{display:none}.portal-help{display:none}
+@media(max-width:820px){
+  .app{padding:0 10px 14px}.hero{margin:0 -10px 10px;padding:14px 16px 16px}.toolbar{gap:7px}.grid{display:block;margin-top:10px}.grid .card{margin-bottom:10px}.grid .card:nth-child(2){display:none}.card{border-radius:18px;padding:12px}h2{font-size:22px}.monthbar{grid-template-columns:1fr 1fr}.monthbar label:nth-child(3){grid-column:1/-1}.formgrid{grid-template-columns:1fr}.personal-plan{padding:10px}.personal-plan-head{display:block}.personal-plan-head button{margin-top:8px;width:100%}.personal-plan-grid{grid-template-columns:1fr;gap:8px}.plan-dow{display:none}.plan-cell{display:grid;grid-template-columns:64px 1fr;gap:3px 10px;min-height:0;padding:10px}.plan-cell .plan-num{grid-row:1/4;font-size:22px;align-self:center;text-align:center}.plan-cell .plan-date,.plan-cell .plan-duty,.plan-cell .plan-wish,.plan-cell .plan-fixed{grid-column:2}.plan-duty{font-size:15px}.plan-row{grid-template-columns:86px 1fr}.days{grid-template-columns:1fr;gap:10px}.dow{display:none}.day{display:grid;grid-template-columns:70px 1fr;gap:4px 10px;min-height:0;padding:10px}.day .num{grid-row:1/4;font-size:23px;text-align:center;align-self:center}.day .date,.day select,.day textarea{grid-column:2}.day select,.day textarea{width:100%}.notice{font-size:13px}.footer{padding:12px}.quick-tabs{position:sticky;top:0;z-index:20;background:rgba(246,248,252,.96);backdrop-filter:blur(10px);margin-left:-10px;margin-right:-10px;padding:8px 10px}.today-duty{font-size:26px}.portal-help{display:none!important}
+}
+
+/* ULMIPOINT Logo oben rechts im Mitarbeiter-Wunschportal */
+.portal-hero-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:220px}
+.portal-logo{display:block;height:96px;width:auto;max-width:min(440px,38vw);border-radius:17px;background:#08101a;box-shadow:0 8px 18px rgba(16,24,40,.10);object-fit:contain}
+@media(max-width:820px){.portal-hero-right{align-items:flex-end;width:100%;min-width:0}.portal-logo{height:62px;max-width:min(300px,66vw);align-self:flex-end;border-radius:14px}}
+
+
+
+/* Wunschportal: Loginbereich ohne leere rechte Fläche */
+.grid{
+  grid-template-columns:minmax(0,1fr)!important;
+}
+#loginCard{
+  width:100%;
+  max-width:none;
+}
+.portal-help{
+  display:none!important;
+}
+@media(min-width:821px){
+  #loginCard .formgrid{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  }
+}
+
+
+.apk-download{display:inline-flex;align-items:center;gap:6px;border:1px solid #c9dcff;background:#eaf2ff;color:#175cd3;text-decoration:none;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:950;white-space:nowrap}
+.apk-download:hover{box-shadow:0 6px 16px rgba(37,99,235,.12);transform:translateY(-1px)}
+@media(max-width:820px){.apk-download{padding:6px 9px;font-size:11px}.hero .toolbar{justify-content:flex-start}}
+
+
+/* Wunschportal: Logo als breiter Top-Banner */
+.hero{
+  display:block!important;
+  padding:0!important;
+  overflow:hidden;
+}
+.portal-hero-right{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.portal-logo{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  max-width:none!important;
+  max-height:190px!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  border-radius:0!important;
+  background:#08101a!important;
+  box-shadow:none!important;
+  margin:0!important;
+}
+.hero>div:first-child{
+  padding:14px 16px 4px!important;
+}
+.portal-hero-right .toolbar{
+  padding:8px 16px 16px!important;
+  display:flex!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  flex-wrap:wrap!important;
+}
+@media(max-width:820px){
+  .app{padding-top:env(safe-area-inset-top)!important}
+  .hero{margin:0 -10px 10px!important;border-radius:0 0 24px 24px!important}
+  .portal-logo{max-height:145px!important}
+  .hero>div:first-child{padding:12px 18px 4px!important}
+  .hero h1{font-size:clamp(30px,9vw,42px)!important;line-height:.95!important}
+  .hero .mini{font-size:13px!important;line-height:1.25!important}
+  .eyebrow{font-size:11px!important;letter-spacing:.08em!important}
+  .portal-hero-right .toolbar{padding:8px 18px 16px!important}
+}
+@media(max-width:420px){
+  .portal-logo{max-height:128px!important}
+}
+
+
+/* Wunschportal: Kopftext aufgeräumt */
+.hero>div:first-child{
+  padding:18px 22px 6px!important;
+}
+.hero .eyebrow{
+  display:none!important;
+}
+.hero h1{
+  margin:0!important;
+  font-size:clamp(34px,4.8vw,54px)!important;
+  line-height:.96!important;
+  letter-spacing:-.06em!important;
+  max-width:780px!important;
+}
+.hero .mini{
+  margin-top:8px!important;
+  max-width:760px!important;
+  font-size:15px!important;
+  line-height:1.35!important;
+  color:#475467!important;
+}
+.hero>.toolbar{
+  margin:8px 22px 18px!important;
+  padding-top:10px!important;
+  border-top:1px solid #edf1f6!important;
+  display:flex!important;
+  gap:8px!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+}
+.hero>.toolbar .pill,
+.hero>.toolbar .apk-download{
+  font-size:13px!important;
+  padding:7px 12px!important;
+}
+@media(max-width:820px){
+  .hero>div:first-child{
+    padding:14px 18px 4px!important;
+  }
+  .hero h1{
+    font-size:clamp(30px,8.6vw,40px)!important;
+    line-height:.98!important;
+  }
+  .hero .mini{
+    margin-top:7px!important;
+    font-size:14px!important;
+    line-height:1.32!important;
+  }
+  .hero>.toolbar{
+    margin:8px 18px 16px!important;
+    padding-top:9px!important;
+  }
+  .hero>.toolbar .pill,
+  .hero>.toolbar .apk-download{
+    font-size:12px!important;
+    padding:6px 10px!important;
+  }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="hero">
+    <div class="portal-hero-right">
+      <img class="portal-logo" src="assets/ulmipoint-titlebar.png?v=20260515-3" alt="ULMIPOINT KI-Planer">
+    </div>
+    <div>
+      <div class="eyebrow">ULMIPOINT Wunschportal</div>
+      <h1>Mitarbeiter-Wünsche</h1>
+    </div>
+    <div class="toolbar">
+        <span class="pill blue">separates Portal</span>
+        <span class="pill green" id="loginPill">nicht eingeloggt</span>
+      <a class="apk-download" href="https://github.com/ulmiulmi/liv-dienstplaner/releases/latest/download/ulmipoint-wunschportal.apk">📲 Android-App herunterladen</a>
+      </div>
+  </section>
+  <nav class="quick-tabs" aria-label="Schnellnavigation">
+    <a href="#todayPlanCard" class="primary">Heute</a>
+    <a href="#personalPlanSection">Dienstplan</a>
+    <a href="#wishEntryTitle">Wünsche</a>
+  </nav>
+
+  <div class="grid">
+    <article class="card" id="loginCard">
+      <h2>Mitarbeiter-Login</h2>
+      <div class="notice">Für Mitarbeitende: Name oder E-Mail und persönlicher Wunsch-Code. Kein Supabase-Benutzer nötig. Definitive Dienste werden nicht verändert.</div>
+      <div style="display:none" aria-hidden="true">
+        <input id="email" type="email" autocomplete="username" tabindex="-1">
+        <input id="password" type="password" autocomplete="current-password" tabindex="-1">
+        <button type="button" id="loginBtn" tabindex="-1">Admin einloggen</button>
+      </div>
+      <div class="formgrid" style="margin-top:10px">
+        <label><span class="mini">Name oder E-Mail</span><input id="codeIdentity" type="text" autocomplete="username" placeholder="Name oder E-Mail"></label>
+        <label><span class="mini">Wunsch-Code</span><input id="codePin" type="password" autocomplete="current-password" placeholder="Code"></label>
+      </div>
+      <div class="toolbar" style="margin-top:10px"><button class="ok" id="codeLoginBtn">Mit Code öffnen</button><button id="logoutBtn">Abmelden</button></div>
+      <div id="loginStatus" class="notice" style="margin-top:10px">Bitte mit Wunsch-Code öffnen.</div>
+    </article>
+
+    <article class="card portal-help">
+      <h2>Was gespeichert wird</h2>
+      <div class="mini">Gespeichert werden Wunschdienst, Frei-Wunsch, Nicht-Verfügbarkeit und Kommentar pro Tag. Definitive Plan-Einträge bleiben unverändert.</div>
+      <div class="legend">
+        <span class="tag f">Dienste aus Planer</span>
+        <span class="tag fr">Frei gewünscht</span>
+        <span class="tag no">Nicht verfügbar</span>
+        <span class="tag">Kommentar</span>
+      </div>
+      
+    </article>
+  </div>
+
+  <article class="card" style="margin-top:12px" id="portalCard">
+    <section class="personal-plan" id="personalPlanSection" style="margin-top:0">
+      <div class="personal-plan-head">
+        <div>
+          <h2>Mein Dienstplan</h2>
+          <div class="mini">Nach dem Login siehst du zuerst deinen heutigen Dienst. Darunter steht dein persönlicher Plan für den aktuellen Monat.</div>
+        </div>
+        <button type="button" id="refreshPersonalPlanBtn">Dienstplan aktualisieren</button>
+      </div>
+      <div id="todayPlanCard" class="today-card warn">
+        <div class="today-label">Heute</div>
+        <div class="today-date">Noch nicht geladen</div>
+        <div class="today-duty">Bitte einloggen</div>
+        <div class="today-detail">Danach wird hier dein heutiger Dienst aus dem aktuellen Serverstand angezeigt.</div>
+      </div>
+      <div id="personalPlanInfo" class="notice" style="margin-top:8px">Noch keine Serverdaten geladen.</div>
+      <div id="personalPlanGrid" class="personal-plan-grid"></div>
+      <div id="personalPlanList" class="plan-list"></div>
+    </section>
+
+    <section id="wishEntrySection" style="margin-top:14px">
+      <h2 id="wishEntryTitle">Wünsche eintragen</h2>
+      <div class="mini" style="margin-bottom:8px">Hier trägst du Wünsche für den freigegebenen Wunschmonat ein. Der Dienstplan oben bleibt immer dein aktueller persönlicher Plan.</div>
+      <div class="monthbar">
+        <label><span class="mini">Monat</span><select id="month"></select></label>
+        <label><span class="mini">Jahr</span><input id="year" type="number" min="2020" max="2035"></label>
+        <label><span class="mini">Mitarbeiter</span><select id="employeeSelect"><option value="">Bitte zuerst einloggen und Serverdaten laden</option></select></label>
+      </div>
+      <div class="toolbar" style="margin-top:10px">
+        <button id="loadServerBtn">Serverdaten laden</button>
+        <button class="primary" id="saveWishBtn">Wünsche speichern</button>
+        <button id="clearMonthBtn">Monat leeren</button>
+      </div>
+      <div id="portalStatus" class="notice" style="margin-top:10px">Bereit.</div>
+      <div id="employeeInfo" class="employee-list" style="margin-top:10px">Noch keine Mitarbeiterdaten geladen.</div>
+      <div class="days" id="days"></div>
+    </section>
+  </article>
+  <div class="footer">ULMIPOINT Wunschportal</div>
+</div>
+
+<script>
+(function(){
+  const SERVER_URL='https://ezjufsxacihfdwpyoibs.supabase.co';
+  const SERVER_ANON='sb_publishable_3AsChws4K7YjRusOk4m6Mw_aA6iBmdg';
+  const STORE_ID='default';
+  const WUNSCH_API_BASE='/api';
+  const SESSION_KEY='polypoint_wunschportal_session_v1';
+  const months=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  let wishDeadlineWeeks=6;
+  let wishDeadlineDays=42;
+  const baseWishOptions=[['','egal / kein Wunsch'],['FR','Wunsch frei / frei gewünscht'],['NO','nicht verfügbar']];
+  const otherWishOption=['OTHER','anderer Wunsch / siehe Kommentar'];
+  let dutyOptionGroups={__all:baseWishOptions.concat([otherWishOption])};
+  let wishOptions=baseWishOptions.concat([otherWishOption]);
+  let session=null, serverRow=null, employees=[], currentWishes={}, portalRoleMessage='', currentAssignment=null;
+  let activeEmployeeValue='', activeMonthKey='', lastLoadedDaysJson='{}', wishAutosaveTimer=null, wishAutosaveBusy=false;
+
+  function q(id){return document.getElementById(id)}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function status(id,msg,kind=''){const el=q(id); if(!el)return; el.textContent=msg; el.className='notice '+kind;}
+  function normEmail(v){ return String(v || '').trim().toLowerCase(); }
+  function normText(v){ return String(v || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss'); }
+  function setLoginPill(){ const el=q('loginPill'); if(!el)return; const label=session?.mode==='code' ? ('Code: '+(session?.user?.name||session?.employeeName||'Mitarbeiter')) : (session?.user?.email||'nicht eingeloggt'); el.textContent=label; el.className='pill '+(session?.user?.email||session?.mode==='code'?'green':'red'); }
+  function isCodeMode(){ return session?.mode==='code'; }
+  function normCode(v){ return String(v||'').trim(); }
+  function applyInviteParams(){
+    const p=new URLSearchParams(location.search);
+    const identity=p.get('i')||p.get('email')||p.get('name')||'';
+    const code=p.get('c')||p.get('code')||'';
+    if(identity)q('codeIdentity').value=identity;
+    if(code)q('codePin').value=code;
+    if(identity&&code)status('loginStatus','Wunschportal-Zugang aus Link vorbereitet. Bitte „Mit Code öffnen“ drücken.','ok');
+  }
+  function todayStart(){ const d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+  function minWishMonthDate(){
+    const d=todayStart(); d.setDate(d.getDate()+wishDeadlineDays);
+    return d.getDate()>1 ? new Date(d.getFullYear(),d.getMonth()+1,1) : new Date(d.getFullYear(),d.getMonth(),1);
+  }
+  function applyWishSettings(data){
+    const ws = data && typeof data.wishSettings === 'object' ? data.wishSettings : {};
+    let weeks = Number(ws.deadlineWeeks);
+    if(!Number.isFinite(weeks)) weeks = Number(ws.weeks);
+    if(!Number.isFinite(weeks)) weeks = 6;
+    wishDeadlineWeeks = Math.max(0, Math.min(26, Math.round(weeks)));
+    wishDeadlineDays = wishDeadlineWeeks * 7;
+    updateMonthOptions(true);
+  }
+  function monthFirst(y,m){ return new Date(Number(y),Number(m)-1,1); }
+  function isWishMonthOpen(y,m){ if(!y||!m)return false; return monthFirst(y,m).getTime()>=minWishMonthDate().getTime(); }
+  function wishDeadlineText(){ const d=minWishMonthDate(); return 'Wünsche sind aktuell nur für Monate ab '+months[d.getMonth()]+' '+d.getFullYear()+' offen (Frist: '+wishDeadlineWeeks+' Wochen vor Monatsbeginn).'; }
+  function updateMonthOptions(keepCurrent=true){
+    const min=minWishMonthDate();
+    const yearEl=q('year'), monthEl=q('month'), saveBtn=q('saveWishBtn'); if(!yearEl||!monthEl)return;
+    let y=Number(yearEl.value)||min.getFullYear();
+    const prev=Number(monthEl.value)||0;
+    const allowed=[];
+    for(let i=1;i<=12;i++){ if(isWishMonthOpen(y,i))allowed.push(i); }
+    if(!allowed.length){
+      monthEl.innerHTML='<option value="">Keine offenen Monate</option>';
+      if(saveBtn)saveBtn.disabled=true;
+      return false;
+    }
+    monthEl.innerHTML=allowed.map(i=>'<option value="'+i+'">'+months[i-1]+'</option>').join('');
+    monthEl.value=(keepCurrent && allowed.includes(prev)) ? prev : allowed[0];
+    if(saveBtn)saveBtn.disabled=false;
+    return true;
+  }
+  function setInitialWishMonth(){
+    const min=minWishMonthDate();
+    const yearEl=q('year'); if(yearEl)yearEl.value=min.getFullYear();
+    updateMonthOptions(false);
+    const monthEl=q('month'); if(monthEl)monthEl.value=min.getMonth()+1;
+  }
+  function saveSession(data){ session={access_token:data.access_token,refresh_token:data.refresh_token,user:data.user,expires_at:Date.now()+Math.max(60,(data.expires_in||3600))*1000}; localStorage.setItem(SESSION_KEY,JSON.stringify(session)); setLoginPill(); }
+  function loadSession(){
+    try{
+      const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'{}');
+      if(s && ((s.mode==='code' && s.wishCode && (s.identity || s.user?.email || s.employeeName)) || s.access_token)){
+        if(!s.expires_at || s.expires_at>Date.now()+30000){
+          session=s;
+          if(s.mode==='code'){
+            const id=s.identity || s.user?.email || s.employeeName || '';
+            if(q('codeIdentity') && id) q('codeIdentity').value=id;
+            if(q('codePin') && s.wishCode) q('codePin').value=s.wishCode;
+            status('loginStatus','Du bist auf diesem Gerät noch angemeldet. Dienstplan wird geladen …','ok');
+          }
+        }else{
+          localStorage.removeItem(SESSION_KEY);
+        }
+      }
+    }catch(_){}
+    setLoginPill();
+  }
+  function isFresh(){ return !!(session&&((session.mode==='code')||session.access_token)&&(!session.expires_at||session.expires_at>Date.now()+30000)); }
+  async function supa(path,opt={}){ const headers=Object.assign({'apikey':SERVER_ANON},opt.headers||{}); const res=await fetch(SERVER_URL+path,Object.assign({},opt,{headers})); const txt=await res.text(); let data=null; try{data=txt?JSON.parse(txt):null}catch(_){data=txt} if(!res.ok){throw new Error((data&&data.message)||(data&&data.msg)||String(data||('HTTP '+res.status)))} return data; }
+  async function wishApi(path,payload={}){
+    const res=await fetch(WUNSCH_API_BASE+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const txt=await res.text(); let data=null; try{data=txt?JSON.parse(txt):null}catch(_){data={message:txt}}
+    if(!res.ok || (data&&data.ok===false)) throw new Error((data&&data.message)||('HTTP '+res.status));
+    return data;
+  }
+  function applyApiPayload(payload){
+    if(!payload || !payload.employee) throw new Error('Ungültige API-Antwort.');
+    const emp=payload.employee;
+    employees=[emp];
+    const opts=Array.isArray(payload.wishOptions)&&payload.wishOptions.length?payload.wishOptions:baseWishOptions.concat([otherWishOption]);
+    wishOptions=opts; dutyOptionGroups={__all:opts};
+    currentWishes=JSON.parse(JSON.stringify(payload.wishes||{}));
+    serverRow={id:STORE_ID,updated_at:payload.updatedAt||new Date().toISOString(),data:{__api:true,__personalPlan:payload.personalPlan||null,__currentMonthPlan:payload.currentMonthPlan||null,__currentDay:payload.currentDay||null,__todayPlan:payload.currentDay||null,__wishes:currentWishes,wishSettings:{deadlineWeeks:payload.wishDeadlineWeeks||6}}};
+    applyWishSettings(serverRow.data);
+    currentAssignment={mode:'code',employee:emp,email:normEmail(session?.user?.email||payload.identity||'')};
+    portalRoleMessage='Mit Wunsch-Code angemeldet: '+emp.name+' · '+emp.group+'. Du siehst nur dein eigenes Profil.';
+  }
+  async function refreshSession(){ if(isFresh())return session; if(session?.mode==='code')return session; if(!session?.refresh_token)return null; try{ const data=await supa('/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})}); saveSession(data); return session; }catch(e){ localStorage.removeItem(SESSION_KEY); session=null; setLoginPill(); return null; } }
+  function employeeCodeMatches(e,identity,code){
+    const idn=normText(identity); const em=normEmail(identity); const c=normCode(code);
+    if(!c || normCode(e.wishCode)!==c)return false;
+    const byEmail=em && (e.emails||[]).includes(em);
+    const byName=idn && (normText(e.name)===idn || normText(e.name).includes(idn) || idn.includes(normText(e.name)));
+    return !!(byEmail || byName);
+  }
+  function findEmployeeByCode(identity,code,list){ return (list||[]).filter(e=>employeeCodeMatches(e,identity,code)); }
+  function saveCodeSession(emp,identity,code){
+    session={mode:'code',access_token:'',refresh_token:'',user:{id:'code:'+emp.id,email:normEmail(identity),name:emp.name},identity:identity,employeeId:emp.id,employeeName:emp.name,group:emp.group,wishCode:code,expires_at:Date.now()+1000*60*60*24*60};
+    localStorage.setItem(SESSION_KEY,JSON.stringify(session));
+    setLoginPill();
+  }
+  async function codeLogin(){
+    const identity=q('codeIdentity').value.trim(); const code=q('codePin').value.trim();
+    if(!identity||!code){status('loginStatus','Bitte Name/E-Mail und Wunsch-Code eintragen.','bad');return;}
+    try{
+      const payload=await wishApi('/wunsch-login',{identity,code,monthKey:monthKey(),todayDate:localTodayDate()});
+      const emp=payload.employee; saveCodeSession(emp,identity,code); session.identity=identity; session.wishCode=code; localStorage.setItem(SESSION_KEY,JSON.stringify(session));
+      applyApiPayload(payload);
+      renderEmployeeSelect();
+      status('loginStatus','Wunschportal geöffnet für '+emp.name+' · '+emp.group+'. Auf diesem Gerät gemerkt.','ok');
+    }catch(e){status('loginStatus','Code-Login nicht möglich: '+e.message,'bad');}
+  }
+  async function login(){ const email=q('email').value.trim(); const password=q('password').value; if(!email||!password){status('loginStatus','Bitte E-Mail und Passwort eintragen.','bad');return} try{ const data=await supa('/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})}); saveSession(data); status('loginStatus','Eingeloggt als '+(session.user.email||email),'ok'); await loadServer(); }catch(e){status('loginStatus','Login nicht möglich: '+e.message,'bad')} }
+  function logout(){ localStorage.removeItem(SESSION_KEY); session=null; serverRow=null; setLoginPill(); employees=[]; currentWishes={}; renderEmployeeSelect(); status('loginStatus','Abgemeldet. Zugang auf diesem Gerät gelöscht.','ok'); }
+  async function fetchRow(){ const s=await refreshSession(); if(!s)throw new Error('Bitte zuerst einloggen oder mit Wunsch-Code öffnen.'); const headers={}; if(s.access_token)headers.Authorization='Bearer '+s.access_token; const data=await supa('/rest/v1/planer_store?id=eq.'+encodeURIComponent(STORE_ID)+'&select=id,data,updated_at',{method:'GET',headers}); return Array.isArray(data)?data[0]:null; }
+  function parseJsonMaybe(v){ if(!v||typeof v!=='string')return null; try{return JSON.parse(v)}catch(_){return null} }
+
+  function groupFromKey(key,obj){
+    const raw=String(obj?.planerGroupName || obj?.groupName || key || '').replace(/^polypoint_/,'').replace(/_/g,' ').trim();
+    if(/azoren/i.test(raw))return 'Azoren';
+    if(/bali/i.test(raw))return 'Bali';
+    if(/capri/i.test(raw))return 'Capri';
+    if(/delos/i.test(raw))return 'Delos';
+    if(/nacht/i.test(raw))return 'Nachtwache';
+    if(/pikett/i.test(raw))return 'Haus-Pikett';
+    if(/haus.*dienst|hausdienst/i.test(raw))return 'Haus-Dienstplan';
+    return raw || 'Allgemein';
+  }
+  function groupKey(v){ return normText(v||'allgemein'); }
+  function dutyLabel(d){
+    const code=String(d?.code||'').trim();
+    const name=String(d?.name||'').trim();
+    const time=[d?.start,d?.end].filter(Boolean).join('–');
+    return code + (name ? ' · ' + name : '') + (time ? ' · ' + time : '');
+  }
+  function shouldShowDutyInPortal(d){
+    const code=String(d?.code||'').trim().toUpperCase();
+    const type=String(d?.type||'').trim();
+    const name=String(d?.name||'').trim();
+    if(!code)return false;
+    if(['KR','FER','WB','WB%','SCH','SCHF','ÜK','UK','KGL','KF'].includes(code))return false;
+    if(['absenceWork','schoolFree','compensationFree'].includes(type))return false;
+    if(code==='FR')return false;
+    if(d?.countsForCoverage || d?.autoPlan)return true;
+    if(['group','split','office','emergencyGroup'].includes(type))return true;
+    if(code==='P' || /pikett/i.test(name))return true;
+    if(/nacht/i.test(code+' '+name+' '+type))return true;
+    return false;
+  }
+  function normalizedDutyCode(v){ return String(v || '').trim().toUpperCase(); }
+  function activeStandardCodesFromState(st){
+    const set=new Set();
+    const needs=st?.standardNeeds || {};
+    Object.entries(needs).forEach(([day,arr])=>{
+      if(day && day[0] === '_')return;
+      if(!Array.isArray(arr))return;
+      arr.forEach(code=>{ code=normalizedDutyCode(code); if(code)set.add(code); });
+    });
+    return set;
+  }
+  function employeeRelevantWishDuty(d){
+    const code=normalizedDutyCode(d?.code);
+    const type=String(d?.type||'');
+    if(['FER','WB','WB%','SCH','SCHF','ÜK','UK','KGL','KF'].includes(code))return true;
+    if(['absenceWork','schoolFree','compensationFree'].includes(type) && !['KR'].includes(code))return true;
+    return false;
+  }
+  const fallbackEmployeeWishOptions=[
+    ['FER','Ferien'],
+    ['SCH','Schule'],
+    ['WB','Weiterbildung'],
+    ['KF','Kompensation / frei']
+  ];
+  function addOptionUnique(map, option){
+    const code=normalizedDutyCode(option?.[0]);
+    if(!code)return;
+    if(!map.has(code))map.set(code,[code,String(option?.[1]||code)]);
+  }
+  function employeeWishOptionsForState(st){
+    const map=new Map();
+    (Array.isArray(st?.duties)?st.duties:[]).forEach(d=>{
+      if(!employeeRelevantWishDuty(d))return;
+      const code=normalizedDutyCode(d.code); if(!code)return;
+      addOptionUnique(map,[code,dutyLabel(Object.assign({},d,{code}))]);
+    });
+    fallbackEmployeeWishOptions.forEach(o=>addOptionUnique(map,o));
+    return map;
+  }
+  function dutyOrder(pair){
+    const c=String(pair[0]||'');
+    const label=String(pair[1]||'');
+    if(/^F/.test(c))return '10_'+c;
+    if(/^M/.test(c))return '20_'+c;
+    if(/^S/.test(c))return '30_'+c;
+    if(/^G|^B/.test(c))return '40_'+c;
+    if(/^GD/.test(c))return '50_'+c;
+    if(/^N|NW/.test(c)||/nacht/i.test(label))return '60_'+c;
+    if(/^P/.test(c))return '70_'+c;
+    return '90_'+c;
+  }
+  function buildDutyOptionGroups(data){
+    const groups={__all:new Map()};
+    const employeeGroups={__all:new Map()};
+    const groupNames={__all:'Alle Gruppen'};
+    const items=data?.items||{};
+    Object.entries(items).forEach(([key,val])=>{
+      const st=parseJsonMaybe(val); if(!st)return;
+      const group=groupFromKey(key,st); const gk=groupKey(group);
+      groupNames[gk]=group;
+      if(!groups[gk])groups[gk]=new Map();
+      if(!employeeGroups[gk])employeeGroups[gk]=new Map();
+      const duties=Array.isArray(st.duties)?st.duties:[];
+      const dutyByCode=new Map();
+      duties.forEach(d=>{ const code=normalizedDutyCode(d?.code); if(code)dutyByCode.set(code,d); });
+
+      // V13.0.232: Im Wunschportal erscheinen nur Dienste, die in der Standardwoche der Gruppe wirklich angehakt sind.
+      const activeCodes=activeStandardCodesFromState(st);
+      const codesForPortal=activeCodes.size ? [...activeCodes] : duties.filter(shouldShowDutyInPortal).map(d=>normalizedDutyCode(d.code));
+      codesForPortal.forEach(code=>{
+        code=normalizedDutyCode(code); if(!code)return;
+        const duty=dutyByCode.get(code);
+        if(duty && !shouldShowDutyInPortal(duty))return;
+        const option=duty ? [code,dutyLabel(Object.assign({},duty,{code}))] : [code,code+' · Standardwoche'];
+        groups[gk].set(code,option);
+        groups.__all.set(code,option);
+      });
+
+      employeeWishOptionsForState(st).forEach((option,code)=>{
+        employeeGroups[gk].set(code,option);
+        employeeGroups.__all.set(code,option);
+      });
+    });
+    const out={};
+    Object.entries(groups).forEach(([gk,map])=>{
+      let opts=[...map.values()].sort((a,b)=>dutyOrder(a).localeCompare(dutyOrder(b),'de'));
+      let employeeOpts=[...(employeeGroups[gk]||new Map()).values()].sort((a,b)=>dutyOrder(a).localeCompare(dutyOrder(b),'de'));
+      const groupName=groupNames[gk]||'';
+      const hasNightDuty=opts.some(([code,label])=>/^N|NW/.test(code)||/nacht/i.test(label));
+      if(/nacht/i.test(groupName) && !hasNightDuty && !opts.length)opts.push(['AREA:NACHTWACHE','Nachtwache / Nachtdienst gewünscht']);
+      out[gk]=baseWishOptions.concat(employeeOpts).concat(opts).concat([otherWishOption]);
+    });
+    return out;
+  }
+
+  function extractEmployeeEmails(emp){
+    const vals=[];
+    ['email','mail','eMail','loginEmail','userEmail','portalEmail','workEmail','privateEmail'].forEach(k=>{ if(emp&&emp[k])vals.push(emp[k]); });
+    if(Array.isArray(emp?.emails))vals.push(...emp.emails);
+    return [...new Set(vals.map(normEmail).filter(Boolean))];
+  }
+  function extractEmployees(data){
+    const out=[]; const items=data?.items||{};
+    Object.entries(items).forEach(([key,val])=>{
+      const obj=parseJsonMaybe(val); if(!obj||!Array.isArray(obj.employees))return;
+      const group=groupFromKey(key,obj);
+      obj.employees.forEach(emp=>{
+        if(!emp||emp.active===false)return;
+        const name=String(emp.name||'').trim(); if(!name)return;
+        const emails=extractEmployeeEmails(emp);
+        out.push({id:String(emp.id||name),name,role:String(emp.role||''),group,groupKey:groupKey(group),emails,wishCode:String(emp.wishCode||emp.portalCode||emp.wunschCode||''),sourceKey:key});
+      });
+    });
+    const seen=new Set(), uniq=[];
+    out.forEach(e=>{ const k=(e.name+'|'+e.id+'|'+e.group).toLowerCase(); if(seen.has(k))return; seen.add(k); uniq.push(e); });
+    uniq.sort((a,b)=>(a.group||'').localeCompare(b.group||'','de')||a.name.localeCompare(b.name,'de'));
+    return uniq;
+  }
+  function roleStore(data){ const roles=data?.accessRoles||data?.roles||{}; return (roles&&typeof roles==='object')?roles:{}; }
+  function portalRoleInfo(data){ const email=normEmail(session?.user?.email); const roles=roleStore(data); const entry=roles[email]||null; const role=String(typeof entry==='string'?entry:entry?.role||'').trim().toLowerCase(); return {email, roles, entry, role, isAdmin:role==='admin'||role==='planner', restricted:role==='employee'}; }
+  function employeeMatchesEntry(e,entry){
+    if(!entry)return false;
+    const wantedName=normText(entry.employeeName||entry.name||'');
+    const wantedId=String(entry.employeeId||'').trim().toLowerCase();
+    const wantedGroup=groupKey(entry.group||entry.groupName||'');
+    const wantedEmail=normEmail(entry.email||'');
+    const okName=!wantedName || normText(e.name)===wantedName;
+    const okId=!wantedId || String(e.id||'').trim().toLowerCase()===wantedId;
+    const okGroup=!wantedGroup || e.groupKey===wantedGroup;
+    const okEmail=!wantedEmail || (e.emails||[]).includes(wantedEmail);
+    return okName && okId && okGroup && okEmail;
+  }
+  function findEmployeeByRoleEntry(entry){ return employees.filter(e=>employeeMatchesEntry(e,entry)); }
+  function findEmployeeByEmail(email){ email=normEmail(email); if(!email)return []; return employees.filter(e=>(e.emails||[]).includes(email)); }
+  function applyPortalRoleFilter(){
+    if(session?.mode==='code'){
+      const all=employees.slice();
+      let matches=all.filter(e=>String(e.id)===String(session.employeeId)&&normCode(e.wishCode)===normCode(session.wishCode));
+      if(!matches.length)matches=findEmployeeByCode(session.user?.email||session.employeeName||'',session.wishCode,all);
+      if(matches.length){ const chosen=matches[0]; employees=[chosen]; currentAssignment={mode:'code',employee:chosen,email:session.user?.email||''}; portalRoleMessage='Mit Wunsch-Code angemeldet: '+chosen.name+' · '+chosen.group+'. Du siehst nur dein eigenes Profil.'; return; }
+      employees=[]; currentAssignment={mode:'blocked',employee:null,email:session.user?.email||''}; portalRoleMessage='Dieser Wunsch-Code passt nicht mehr. Bitte beim Planer/Admin melden.'; return;
+    }
+    const info=portalRoleInfo(serverRow?.data||{});
+    currentAssignment=null;
+    portalRoleMessage='';
+    if(info.isAdmin){
+      currentAssignment={mode:'admin',employee:null,email:info.email};
+      portalRoleMessage='Admin/Planer im Wunschportal angemeldet. Du kannst alle Mitarbeiter sehen, testen und Zuordnungen prüfen. Definitive Dienste werden nicht verändert.';
+      return;
+    }
+    let matches=[];
+    if(info.restricted && info.entry)matches=findEmployeeByRoleEntry(info.entry);
+    if(!matches.length)matches=findEmployeeByEmail(info.email);
+    if(matches.length){
+      const chosen=matches[0];
+      employees=[chosen];
+      currentAssignment={mode:info.restricted?'role':'email',employee:chosen,email:info.email};
+      portalRoleMessage='Dein Login ist zugeordnet: '+chosen.name+' · '+chosen.group+'. Du siehst nur dein eigenes Profil und passende Dienste dieser Gruppe.';
+    }else{
+      employees=[];
+      currentAssignment={mode:'blocked',employee:null,email:info.email};
+      portalRoleMessage='Dieser Login ist noch keinem Mitarbeiterprofil zugeordnet. Bitte beim Planer/Admin freischalten lassen.';
+    }
+  }
+  function optionsForEmployee(emp){
+    const byGroup=emp?.groupKey && dutyOptionGroups[emp.groupKey] ? dutyOptionGroups[emp.groupKey] : null;
+    return byGroup || dutyOptionGroups.__all || baseWishOptions.concat([otherWishOption]);
+  }
+  function selectedEmployee(value){ const val=value==null?q('employeeSelect').value:value; return employees.find(e=>e.id+'|'+e.name+'|'+e.group===val)||null; }
+  function updateWishOptionsForSelectedEmployee(){ wishOptions=optionsForEmployee(selectedEmployee()); }
+  function safeKeyPart(v){ return String(v||'').trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,''); }
+  function employeeKey(emp){ const base=[emp?.groupKey||emp?.group||'', emp?.id||'', emp?.name||''].filter(Boolean).map(safeKeyPart).filter(Boolean).join('__'); return 'emp_'+(base || safeKeyPart(emp?.name||'unknown')); }
+  function legacyEmployeeKey(emp){ return (emp?.id||emp?.name||'').toLowerCase().replace(/\s+/g,'_'); }
+  function wishLookupKeys(emp){
+    const keys=[employeeKey(emp), legacyEmployeeKey(emp)].filter(Boolean);
+    const info=portalRoleInfo(serverRow?.data||{}); const byEmail=normEmail(session?.user?.email||'');
+    if(byEmail && !info.isAdmin) keys.push(byEmail);
+    return [...new Set(keys)];
+  }
+  function wishStore(data){ if(!data.wishes||typeof data.wishes!=='object')data.wishes={version:'13.0.226d',people:{}}; if(!data.wishes.people||typeof data.wishes.people!=='object')data.wishes.people={}; return data.wishes; }
+  function monthKey(){ return q('year').value+'-'+String(q('month').value).padStart(2,'0'); }
+  function rememberLoadedState(){ activeEmployeeValue=q('employeeSelect').value||''; activeMonthKey=monthKey(); lastLoadedDaysJson=JSON.stringify(currentWishes||{}); }
+  function loadExistingWishes(){ const emp=selectedEmployee(); updateWishOptionsForSelectedEmployee(); currentWishes={}; if(!emp||!serverRow?.data){renderDays();renderPersonalPlan();rememberLoadedState();return;} if(session?.mode==='code' && serverRow.data.__api){ currentWishes=JSON.parse(JSON.stringify(serverRow.data.__wishes||{})); renderDays(); renderPersonalPlan(); rememberLoadedState(); return; } const ws=wishStore(serverRow.data); const keys=wishLookupKeys(emp); for(const k of keys){ const days=ws.people?.[k]?.months?.[monthKey()]?.days; if(days){currentWishes=JSON.parse(JSON.stringify(days)); break;} } renderDays(); renderPersonalPlan(); rememberLoadedState(); }
+  function renderEmployeeSelect(){
+    const sel=q('employeeSelect'); sel.innerHTML='';
+    const email=session?.user?.email||'';
+    const info=portalRoleInfo(serverRow?.data||{});
+    sel.disabled=false;
+    sel.classList.remove('locked-field');
+    q('saveWishBtn').disabled=false;
+    if(!employees.length){
+      sel.innerHTML='<option value="">Nicht freigeschaltet</option>';
+      sel.disabled=true;
+      sel.classList.add('locked-field');
+      q('saveWishBtn').disabled=true;
+      q('employeeInfo').innerHTML='<div class="employee-row">Keine Mitarbeiter-Zuordnung für diesen Login gefunden.<br><span class="mini">Eingeloggt: '+esc(email)+'. Bitte Admin/Planer um Freischaltung bitten.</span></div>';
+      status('portalStatus',(portalRoleMessage||'Nicht freigeschaltet.')+'\nEingeloggt: '+email,'bad');
+      currentWishes={}; renderDays(); renderPersonalPlan(); return;
+    }
+    employees.forEach(e=>{ const opt=document.createElement('option'); opt.value=e.id+'|'+e.name+'|'+e.group; opt.textContent=e.name+(e.role?' · '+e.role:'')+(e.group?' · '+e.group:''); sel.appendChild(opt); });
+    if(currentAssignment?.employee){ sel.value=currentAssignment.employee.id+'|'+currentAssignment.employee.name+'|'+currentAssignment.employee.group; }
+    if(!info.isAdmin){
+      sel.disabled=true;
+      sel.classList.add('locked-field');
+    }
+    const visibleEmployees = info.isAdmin ? employees.slice(0,60) : employees.slice(0,1);
+    q('employeeInfo').innerHTML=visibleEmployees.map(e=>'<div class="employee-row">'+esc(e.name)+' <span class="mini">'+esc([e.role,e.group,(info.isAdmin?(e.emails||[]).join(', '):'')].filter(Boolean).join(' · '))+'</span></div>').join('') || 'Keine Mitarbeiterdaten gefunden.';
+    const kind=info.isAdmin?'warn':'ok';
+    status('portalStatus',(portalRoleMessage||'Serverdaten geladen. Wünsche eintragen.')+'\nEingeloggt: '+email,kind);
+    loadExistingWishes();
+  }
+  function initControls(){ setInitialWishMonth(); renderDays(); renderPersonalPlan(); const el=q('portalStatus'); if(el) status('portalStatus',wishDeadlineText(),'warn'); }
+  function getGroupStateForEmployee(emp){
+    if(!emp || !serverRow?.data?.items)return null;
+    const items=serverRow.data.items||{};
+    let st=parseJsonMaybe(items[emp.sourceKey]);
+    if(st && Array.isArray(st.employees) && st.employees.some(e=>String(e.id||e.name)===String(emp.id)||normText(e.name)===normText(emp.name)))return st;
+    for(const val of Object.values(items)){
+      const obj=parseJsonMaybe(val); if(!obj||!Array.isArray(obj.employees))continue;
+      const g=groupKey(groupFromKey('',obj));
+      const sameGroup=!emp.groupKey || g===emp.groupKey;
+      const hasEmp=obj.employees.some(e=>String(e.id||e.name)===String(emp.id)||normText(e.name)===normText(emp.name));
+      if(sameGroup && hasEmp)return obj;
+    }
+    return st||null;
+  }
+  function dutyForPlan(st,code){ code=String(code||'').trim(); return (Array.isArray(st?.duties)?st.duties:[]).find(d=>String(d.code||'').trim()===code)||null; }
+  function shortDutyLabel(st,entry){
+    if(!entry)return 'frei / leer';
+    const code=String(entry.code||'').trim();
+    if(!code)return 'frei / leer';
+    if(code==='FR')return 'Frei';
+    const d=dutyForPlan(st,code);
+    const name=String(d?.name||entry.name||'').trim();
+    const time=(d?.start&&d?.end)?String(d.start)+'–'+String(d.end):'';
+    return code + (name?' · '+name:'') + (time?' · '+time:'');
+  }
+  function shortWishLabel(type){
+    const found=(wishOptions||[]).find(o=>o[0]===type);
+    if(found)return found[1];
+    if(!type)return '';
+    return type;
+  }
+  function renderPersonalPlan(){
+    const infoEl=q('personalPlanInfo'), gridEl=q('personalPlanGrid'), listEl=q('personalPlanList');
+    if(!infoEl||!gridEl||!listEl)return;
+    const emp=selectedEmployee(); const y=Number(q('year').value)||new Date().getFullYear(); const m=Number(q('month').value)||0;
+    gridEl.innerHTML=''; listEl.innerHTML=''; renderTodayPlan();
+    if(!emp){ infoEl.textContent='Bitte Mitarbeiter auswählen.'; infoEl.className='notice warn'; return; }
+    if(!serverRow?.data){ infoEl.textContent='Noch keine Serverdaten geladen.'; infoEl.className='notice warn'; return; }
+    if(session?.mode==='code' && serverRow.data.__api){
+      // V13.0.232: Der persönliche Dienstplan folgt nicht dem Wunschmonat.
+      // Er zeigt den aktuellen Monat von heute, damit oben Heute und der Monatsplan zusammenpassen.
+      const pp=serverRow.data.__currentMonthPlan || serverRow.data.__personalPlan || {};
+      const days=Array.isArray(pp.days)?pp.days:[]; const rows=Array.isArray(pp.rows)?pp.rows:[];
+      const planMonthKey=pp.monthKey || (days[0]&&String(days[0].date||'').slice(0,7)) || localTodayDate().slice(0,7);
+      const parts=String(planMonthKey).split('-').map(Number); const py=parts[0]||new Date().getFullYear(); const pm=parts[1]||new Date().getMonth()+1;
+      if(!days.length){ infoEl.textContent=pp.info||'Für den aktuellen Monat wurde kein persönlicher Dienstplan gefunden.'; infoEl.className='notice warn'; return; }
+      let html=''; ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(d=>html+='<div class="plan-dow">'+d+'</div>');
+      let start=new Date(py,pm-1,1).getDay(); start=start===0?7:start; for(let i=1;i<start;i++)html+='<div></div>';
+      days.forEach(day=>{ const wish=day.wish || (currentWishes[day.date]?.type ? shortWishLabel(currentWishes[day.date].type) : ''); html+='<div class="plan-cell '+(day.weekend?'weekend ':'')+(day.hasDuty?'has-duty ':'empty ')+(day.fixed?'fixed ':'')+(isTodayDate(day.date)?'today':'')+'"><div class="plan-num">'+esc(day.day)+'</div><div class="plan-date">'+esc(formatDateCH(day.date))+'</div><div class="plan-duty">'+esc(day.label||'frei / leer')+'</div>'+(wish?'<div class="plan-wish">Wunsch: '+esc(wish)+'</div>':'')+(day.fixed?'<div class="plan-fixed">fixiert</div>':'')+'</div>'; });
+      gridEl.innerHTML=html;
+      listEl.innerHTML=rows.length?rows.map(r=>'<div class="plan-row"><div><strong>'+esc(formatDateCH(r.date,false))+'</strong><div class="muted">'+esc(r.dow||'')+'</div></div><div>'+esc(r.label||'')+(r.wish?'<div class="plan-wish">Wunsch: '+esc(r.wish)+'</div>':'')+'</div></div>').join(''):'<div class="plan-note">Für diesen aktuellen Monat sind im Serverstand keine persönlichen Dienste eingetragen.</div>';
+      infoEl.textContent=pp.info||('Persönlicher Dienstplan: '+emp.name+' · '+emp.group+' · '+planMonthKey); infoEl.className='notice ok'; return;
+    }
+    const st=getGroupStateForEmployee(emp);
+    if(!st){ infoEl.textContent='Für '+emp.name+' wurde kein Gruppenplan gefunden.'; infoEl.className='notice bad'; return; }
+    const daysIn=new Date(y,m,0).getDate();
+    if(!m || !daysIn){ infoEl.textContent='Bitte Monat wählen.'; infoEl.className='notice warn'; return; }
+    let html=''; ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(d=>html+='<div class="plan-dow">'+d+'</div>');
+    let start=new Date(y,m-1,1).getDay(); start=start===0?7:start; for(let i=1;i<start;i++)html+='<div></div>';
+    const rows=[]; let planned=0;
+    for(let d=1;d<=daysIn;d++){
+      const date=dateStr(y,m,d); const dow=new Date(y,m-1,d).getDay();
+      const entry=(st.plan||{})[date+'__'+emp.id] || (st.plan||{})[date+'__'+emp.name] || null;
+      const label=shortDutyLabel(st,entry); const has=!!(entry&&entry.code&&entry.code!=='FR'); if(has)planned++;
+      const wish=currentWishes[date]?.type ? shortWishLabel(currentWishes[date].type) : '';
+      html+='<div class="plan-cell '+((dow===0||dow===6)?'weekend ':'')+(has?'has-duty ':'empty ')+((entry&&entry.fixed)||(st.lockedMonths&&st.lockedMonths[date.slice(0,7)])?'fixed ':'')+(isTodayDate(date)?'today':'')+'"><div class="plan-num">'+d+'</div><div class="plan-date">'+esc(formatDateCH(date))+'</div><div class="plan-duty">'+esc(label)+'</div>'+(wish?'<div class="plan-wish">Wunsch: '+esc(wish)+'</div>':'')+(((entry&&entry.fixed)||(st.lockedMonths&&st.lockedMonths[date.slice(0,7)]))?'<div class="plan-fixed">fixiert</div>':'')+'</div>';
+      if(entry&&entry.code){ rows.push('<div class="plan-row"><div><strong>'+esc(formatDateCH(date,false))+'</strong><div class="muted">'+['So','Mo','Di','Mi','Do','Fr','Sa'][dow]+'</div></div><div>'+esc(label)+(wish?'<div class="plan-wish">Wunsch: '+esc(wish)+'</div>':'')+'</div></div>'); }
+    }
+    gridEl.innerHTML=html;
+    listEl.innerHTML=rows.length?rows.join(''):'<div class="plan-note">Für diesen Monat sind im aktuellen Serverstand keine Dienste für dich eingetragen.</div>';
+    infoEl.textContent='Persönlicher Dienstplan: '+emp.name+' · '+emp.group+' · '+months[m-1]+' '+y+' · '+planned+' geplante Dienste. Stand aus dem aktuellen Server-Speicher.';
+    infoEl.className='notice ok';
+  }
+  function dateStr(y,m,d){return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
+  function parseDateISO(date){ const p=String(date||'').split('-').map(Number); if(p.length<3||!p[0]||!p[1]||!p[2])return null; return new Date(p[0],p[1]-1,p[2]); }
+  function formatDateCH(date,withWeekday=true){ const d=parseDateISO(date); if(!d)return String(date||''); const wd=['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()]; const out=String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); return withWeekday?wd+', '+out:out; }
+  function localTodayDate(){ const d=new Date(); return dateStr(d.getFullYear(),d.getMonth()+1,d.getDate()); }
+  function isTodayDate(date){ return String(date||'')===localTodayDate(); }
+  function renderTodayPlan(){
+    const el=q('todayPlanCard'); if(!el)return;
+    const pp=serverRow?.data?.__currentDay || serverRow?.data?.__todayPlan || null;
+    const emp=selectedEmployee();
+    if(!emp){ el.className='today-card warn'; el.innerHTML='<div class="today-label">Heute</div><div class="today-date">'+esc(formatDateCH(localTodayDate()))+'</div><div class="today-duty">Bitte einloggen</div><div class="today-detail">Nach dem Login steht hier dein heutiger Dienst.</div>'; return; }
+    let day=pp;
+    if(!day || !day.date){
+      const st=getGroupStateForEmployee(emp); const today=localTodayDate();
+      if(st){ const entry=(st.plan||{})[today+'__'+emp.id] || (st.plan||{})[today+'__'+emp.name] || null; const label=shortDutyLabel(st,entry); const fixed=!!(entry&&entry.fixed) || !!(st.lockedMonths&&st.lockedMonths[today.slice(0,7)]); day={date:today,label,code:entry?.code||'',hasDuty:!!(entry&&entry.code&&entry.code!=='FR'),fixed}; }
+    }
+    if(!day || !day.date){ el.className='today-card warn'; el.innerHTML='<div class="today-label">Heute</div><div class="today-date">'+esc(formatDateCH(localTodayDate()))+'</div><div class="today-duty">Kein Dienst eingetragen</div><div class="today-detail">Für heute ist im aktuellen Serverstand kein Dienst für dich eingetragen.</div>'; return; }
+    const has=!!day.hasDuty; const fixed=!!day.fixed; const duty=day.label||'frei / leer';
+    el.className='today-card '+(has?'':'empty');
+    el.innerHTML='<div class="today-label">Heute</div><div class="today-date">'+esc(formatDateCH(day.date))+'</div><div class="today-duty">'+esc(duty)+'</div><div class="today-detail">'+esc(emp.name+' · '+(emp.group||''))+'</div><div class="today-badges"><span class="status-chip '+(has?'fixed':'free')+'">'+(has?'Dienst geplant':'frei / leer')+'</span>'+(fixed?'<span class="status-chip fixed">fixiert</span>':'<span class="status-chip open">nicht fixiert</span>')+'</div>';
+  }
+  function optionsWithCurrent(value){ if(!value || wishOptions.some(o=>o[0]===value))return wishOptions; return wishOptions.slice(0,-1).concat([[value,value+' · bisheriger Wunsch']], [otherWishOption]); }
+  function renderDays(){
+    const y=Number(q('year').value)||new Date().getFullYear(); const m=Number(q('month').value)||0;
+    if(!m || !isWishMonthOpen(y,m)){ q('days').innerHTML='<div class="notice warn" style="grid-column:1/-1">Dieser Monat ist nicht mehr für Wünsche freigegeben. '+esc(wishDeadlineText())+'</div>'; return; }
+    const daysIn=new Date(y,m,0).getDate(); let html='';
+    ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(d=>html+='<div class="dow">'+d+'</div>');
+    let start=new Date(y,m-1,1).getDay(); start=start===0?7:start; for(let i=1;i<start;i++)html+='<div></div>';
+    for(let d=1;d<=daysIn;d++){
+      const date=dateStr(y,m,d); const w=currentWishes[date]||{}; const dow=new Date(y,m-1,d).getDay(); const opts=optionsWithCurrent(w.type||'');
+      html+='<div class="day '+((dow===0||dow===6)?'weekend ':'')+(isTodayDate(date)?'today':'')+'" data-date="'+date+'"><div class="num">'+d+'</div><div class="date">'+esc(formatDateCH(date))+'</div><select data-wish="'+date+'">'+opts.map(o=>'<option value="'+esc(o[0])+'" '+(w.type===o[0]?'selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select><textarea data-comment="'+date+'" placeholder="Kommentar">'+esc(w.comment||'')+'</textarea></div>';
+    }
+    q('days').innerHTML=html;
+  }
+  function collectDays(){ const days={}; document.querySelectorAll('[data-wish]').forEach(sel=>{ const date=sel.dataset.wish; const type=sel.value; const comment=(document.querySelector('[data-comment="'+date+'"]')?.value||'').trim(); if(type||comment)days[date]={type,comment,updatedAt:new Date().toISOString()}; }); return days; }
+  async function loadServer(){
+    try{
+      if(session?.mode==='code'){
+        const identity=session.identity || session.user?.email || q('codeIdentity').value.trim(); const code=session.wishCode || q('codePin').value.trim();
+        const payload=await wishApi('/wunsch-login',{identity,code,employeeId:session.employeeId,monthKey:monthKey(),todayDate:localTodayDate()});
+        applyApiPayload(payload);
+        renderEmployeeSelect();
+        const dutyCount=Math.max(0,(wishOptions.length-baseWishOptions.length-1));
+        status('loginStatus','Wunschportal verbunden. Wunschliste geladen: '+dutyCount,'ok');
+        return;
+      }
+      serverRow=await fetchRow(); if(!serverRow?.data)throw new Error('Kein Serverstand gefunden.');
+      applyWishSettings(serverRow.data);
+      dutyOptionGroups=buildDutyOptionGroups(serverRow.data); wishOptions=dutyOptionGroups.__all || baseWishOptions.concat([otherWishOption]);
+      employees=extractEmployees(serverRow.data); applyPortalRoleFilter(); renderEmployeeSelect();
+      const dutyCount=Math.max(0,(wishOptions.length-baseWishOptions.length-1)); status('loginStatus','Server verbunden. Wunschliste aus Standardwoche geladen: '+dutyCount,'ok');
+    }catch(e){status('portalStatus','Serverdaten konnten nicht geladen werden: '+e.message,'bad');}
+  }
+  function serverUser(){ const u=session?.user||{}; if(session?.mode==='code')return {id:u.id||'',email:u.email||'',name:session.employeeName||u.name||'Wunsch-Code'}; return {id:u.id||'',email:u.email||'',name:(u.user_metadata?.full_name||u.user_metadata?.name||u.email||u.id||'unbekannt')}; }
+  function activityFromData(data){ return Array.isArray(data?.activity)?data.activity.slice(0,50):[]; }
+  function makeActivity(action,count,emp){ return {id:'act_'+new Date().toISOString().replace(/[:.]/g,'-')+'_'+Math.random().toString(36).slice(2,8),at:new Date().toISOString(),action,user:serverUser(),area:'Wunschportal',group:emp?.group||'',employeeName:emp?.name||'',hash:dataHash(count),count,note:'Mitarbeiter-Wunschportal'}; }
+  function dataHash(count){ return 'wishes-'+count+'-'+Date.now().toString(36); }
+  function hasDirtyVisibleWishes(){ return JSON.stringify(collectDays()) !== lastLoadedDaysJson; }
+  async function saveWishes(opts={}){
+    const auto=!!opts.auto;
+    try{
+      if(wishAutosaveBusy && auto)return;
+      wishAutosaveBusy=true;
+      if(session?.mode==='code'){
+        const emp=opts.empOverride || selectedEmployee(); if(!emp)throw new Error('Bitte Mitarbeiter auswählen.');
+        const saveMonthKey=opts.monthKeyOverride || monthKey();
+        const ym=String(saveMonthKey).split('-'); const y=Number(ym[0])||0, m=Number(ym[1])||0;
+        if(!isWishMonthOpen(y,m))throw new Error('Dieser Monat ist nicht mehr für Wünsche freigegeben. '+wishDeadlineText());
+        const days=opts.daysOverride || collectDays();
+        const payload=await wishApi('/wunsch-save',{identity:session.identity||session.user?.email||'',code:session.wishCode||'',employeeId:emp.id,monthKey:saveMonthKey,todayDate:localTodayDate(),days,action:auto?(opts.action||'Wünsche automatisch gespeichert'):'Wünsche gespeichert'});
+        applyApiPayload(payload);
+        if(!opts.empOverride || (q('employeeSelect').value===activeEmployeeValue && saveMonthKey===monthKey())){ currentWishes=days; lastLoadedDaysJson=JSON.stringify(days); activeMonthKey=monthKey(); }
+        renderEmployeeSelect();
+        status('portalStatus',(auto?'Automatisch gespeichert: ':'Wünsche gespeichert: ')+Object.keys(days).length+' Tage · '+emp.name+' · '+emp.group+' · '+saveMonthKey,'ok');
+        return;
+      }
+      const s=await refreshSession(); if(!s)throw new Error('Bitte zuerst einloggen oder mit Wunsch-Code öffnen.');
+      serverRow=await fetchRow(); if(!serverRow?.data)throw new Error('Kein Serverstand gefunden.');
+      applyWishSettings(serverRow.data);
+      const roleInfoNow=portalRoleInfo(serverRow?.data||{});
+      if(currentAssignment?.mode==='blocked' && !roleInfoNow.isAdmin)throw new Error('Dieser Login ist noch nicht freigeschaltet. Bitte Admin/Planer kontaktieren.');
+      const emp=opts.empOverride || selectedEmployee(); if(!emp)throw new Error('Bitte Mitarbeiter auswählen.');
+      const saveMonthKey=opts.monthKeyOverride || monthKey();
+      const ym=String(saveMonthKey).split('-'); const y=Number(ym[0])||0, m=Number(ym[1])||0;
+      if(!isWishMonthOpen(y,m))throw new Error('Dieser Monat ist nicht mehr für Wünsche freigegeben. '+wishDeadlineText());
+      const roleInfoBefore=portalRoleInfo(serverRow.data);
+      if(roleInfoBefore.restricted && roleInfoBefore.entry){ const allowed=findEmployeeByRoleEntry(roleInfoBefore.entry); const ok=allowed.some(e=>e.id===emp.id&&e.name===emp.name&&e.group===emp.group); if(!ok)throw new Error('Dieser Login ist bereits einem anderen Mitarbeiter zugeordnet.'); }
+      const days=opts.daysOverride || collectDays(); const data=serverRow.data; const ws=wishStore(data); const key=employeeKey(emp);
+      if(!ws.people[key])ws.people[key]={employeeId:emp.id,employeeName:emp.name,email:session.user.email||'',group:emp.group,months:{}};
+      ws.people[key].employeeId=emp.id; ws.people[key].employeeName=emp.name; ws.people[key].email=session.user.email||''; ws.people[key].group=emp.group; ws.people[key].groupKey=emp.groupKey; ws.people[key].updatedAt=new Date().toISOString(); ws.people[key].keyMode='employee';
+      ws.people[key].months[saveMonthKey]={year:y,month:m,days,group:emp.group,updatedAt:new Date().toISOString(),savedBy:serverUser()};
+      ws.version='13.0.226c'; ws.updatedAt=new Date().toISOString();
+      const email=normEmail(session.user.email||''); const roles=Object.assign({},roleStore(data));
+      if(email && session.mode!=='code'){ const oldRole=roles[email]; const oldRoleName=String(typeof oldRole==='string'?oldRole:oldRole?.role||'').toLowerCase(); if(oldRoleName!=='admin'&&oldRoleName!=='planner'){ roles[email]={role:'employee',email,employeeId:emp.id,employeeName:emp.name,name:emp.name,group:emp.group,groupKey:emp.groupKey,updatedAt:new Date().toISOString(),source:'wunschportal-auto-gruppe'}; data.accessRoles=roles; data.roleVersion='13.0.226d'; }}
+      const count=Object.keys(days).length; data.activity=[makeActivity(auto?(opts.action||'Wünsche automatisch gespeichert'):'Wünsche gespeichert',count,emp)].concat(activityFromData(data)).slice(0,50);
+      const postHeaders={'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'}; if(s.access_token)postHeaders.Authorization='Bearer '+s.access_token;
+      await supa('/rest/v1/planer_store',{method:'POST',headers:postHeaders,body:JSON.stringify({id:STORE_ID,data,updated_at:new Date().toISOString()})});
+      if(!opts.empOverride || (q('employeeSelect').value===activeEmployeeValue && saveMonthKey===monthKey())){ currentWishes=days; lastLoadedDaysJson=JSON.stringify(days); activeMonthKey=monthKey(); }
+      serverRow={id:STORE_ID,data,updated_at:new Date().toISOString()};
+      currentAssignment=currentAssignment?.mode==='admin'?currentAssignment:{mode:'role',employee:emp,email};
+      if(!auto) portalRoleMessage='Gruppe gespeichert: '+emp.name+' · '+emp.group+'. Ab jetzt wird dieser Login automatisch dieser Gruppe zugeordnet.';
+      status('portalStatus',(auto?'Automatisch gespeichert: ':'Wünsche gespeichert: ')+count+' Tage · '+emp.name+' · '+emp.group+' · '+saveMonthKey,'ok');
+    }catch(e){status('portalStatus',(auto?'Automatisches Speichern fehlgeschlagen: ':'Wünsche konnten nicht gespeichert werden: ')+e.message,'bad')}
+    finally{ wishAutosaveBusy=false; }
+  }
+  function scheduleWishAutosave(reason){
+    if(wishAutosaveTimer)clearTimeout(wishAutosaveTimer);
+    status('portalStatus',(reason||'Änderung')+' · Auto-Speichern vorbereitet…','warn');
+    wishAutosaveTimer=setTimeout(()=>saveWishes({auto:true,action:'Auto-Speicherung Wunschportal'}),900);
+  }
+  async function saveCurrentIfDirty(reason){
+    if(wishAutosaveTimer){clearTimeout(wishAutosaveTimer); wishAutosaveTimer=null;}
+    const oldEmp=selectedEmployee(activeEmployeeValue); const oldMonth=activeMonthKey||monthKey(); const days=collectDays();
+    if(oldEmp && JSON.stringify(days)!==lastLoadedDaysJson){ await saveWishes({auto:true,empOverride:oldEmp,monthKeyOverride:oldMonth,daysOverride:days,action:reason||'Auto-Speicherung vor Wechsel'}); }
+  }
+  function clearMonth(){ if(!confirm('Wünsche für diesen Monat in der Ansicht leeren?'))return; currentWishes={}; renderDays(); scheduleWishAutosave('Monat geleert'); }
+  q('loginBtn').addEventListener('click',login); q('codeLoginBtn').addEventListener('click',codeLogin); q('logoutBtn').addEventListener('click',logout); q('loadServerBtn').addEventListener('click',loadServer); q('refreshPersonalPlanBtn').addEventListener('click',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Dienstplan-Aktualisierung'); await loadServer(); renderPersonalPlan(); }); q('saveWishBtn').addEventListener('click',()=>saveWishes()); q('clearMonthBtn').addEventListener('click',clearMonth); q('month').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Monatswechsel'); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('year').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Jahreswechsel'); updateMonthOptions(true); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('employeeSelect').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Mitarbeiterwechsel'); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('days').addEventListener('change',e=>{ if(e.target&&e.target.matches('[data-wish]'))scheduleWishAutosave('Wunsch geändert'); }); q('days').addEventListener('input',e=>{ if(e.target&&e.target.matches('[data-comment]'))scheduleWishAutosave('Kommentar geändert'); });
+  loadSession(); initControls(); applyInviteParams(); if(isFresh())loadServer();
+})();
+</script>
+</body>
+</html>

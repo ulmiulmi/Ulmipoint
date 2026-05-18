@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="de">
+<head>
+<script>
+(function(){
+  function param(name,fallback=''){
+    try{return new URLSearchParams(location.search||'').get(name)||fallback;}catch(_){return fallback;}
+  }
+  function slug(value){
+    return String(value||'')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'_')
+      .replace(/^_+|_+$/g,'')||'monatsabschluss';
+  }
+  const ctx={
+    siteId:param('siteId','haus'),
+    siteName:param('siteName','Haus'),
+    unitId:param('unitId','monatsabschluss'),
+    unitName:param('unitName','Monatsabschluss'),
+    plannerKey:param('plannerKey',param('functionType','monatsabschluss')),
+    functionType:param('functionType','monatsabschluss'),
+    kind:'hausfunktion',
+    slug
+  };
+  window.__ULMI_DYNAMIC_CONTEXT__=ctx;
+  const PREFIX='ulmipoint_site_'+slug(ctx.siteId)+'__page_'+slug(ctx.plannerKey||ctx.functionType||ctx.unitId)+'__';
+  const SHARED=[
+    'polypoint_server_config_v2',
+    'polypoint_server_session_v1',
+    'polypoint_server_sync_meta_v1',
+    'polypoint_server_autosave_v1',
+    'polypoint_employee_wishes_v1',
+    'ulmipoint_selected_site_v1',
+    'ulmipoint_org_structure_draft_v1',
+    'ulmipoint_org_admin_token_v1'
+  ];
+  function isShared(k){return SHARED.indexOf(String(k||''))>=0;}
+  const real=window.localStorage;
+  function mapKey(k){k=String(k||'');return isShared(k)?k:PREFIX+k;}
+  function keys(){
+    const out=[];const seen={};
+    for(let i=0;i<real.length;i++){
+      const k=real.key(i);
+      if(!k) continue;
+      if(k.indexOf(PREFIX)===0){const c=k.slice(PREFIX.length);if(!seen[c]){seen[c]=1;out.push(c);}}
+      else if(isShared(k)&&!seen[k]){seen[k]=1;out.push(k);}
+    }
+    return out;
+  }
+  const proxy={
+    getItem(k){return real.getItem(mapKey(k));},
+    setItem(k,v){return real.setItem(mapKey(k),String(v));},
+    removeItem(k){return real.removeItem(mapKey(k));},
+    clear(){keys().forEach(k=>real.removeItem(mapKey(k)));},
+    key(i){return keys()[i]||null;},
+    get length(){return keys().length;}
+  };
+  try{Object.defineProperty(window,'localStorage',{value:proxy,configurable:true});}catch(_){}
+})();
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ULMIPOINT Monatsabschluss</title>
+<style>
+:root{--bg:#f6f8fc;--card:#fff;--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--yellow:#9a6700;--shadow:0 12px 30px rgba(16,24,40,.08)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+.app{max-width:1280px;margin:0 auto;padding:14px}.hero,.card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:16px;box-shadow:var(--shadow)}.card{margin-top:12px}
+.hero{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}.eyebrow{font-size:12px;font-weight:950;color:var(--blue);letter-spacing:.06em;text-transform:uppercase}
+h1{margin:3px 0 2px;font-size:clamp(30px,4vw,48px);line-height:.96;letter-spacing:-.06em}h2{margin:0 0 8px;font-size:20px;letter-spacing:-.03em}.mini{font-size:12px;color:var(--muted);font-weight:850;line-height:1.35}
+.toolbar,.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.filters{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;margin-top:10px}
+input,select{width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;padding:9px;font-weight:850;color:var(--text)}
+button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:950;cursor:pointer;color:var(--text)}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button.ok{background:#e7f7ef;border-color:#b7e4ca;color:var(--green)}
+.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:14px;padding:10px;font-size:12px;font-weight:850;white-space:pre-wrap}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}.notice.warn{border-color:#f3d28f;background:#fffdf5;color:#9a6700}
+.statgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:10px}.stat{border:1px solid var(--line);border-radius:16px;background:#fbfcfe;padding:10px}.stat b{display:block;font-size:24px;letter-spacing:-.05em}.stat span{font-size:11px;color:var(--muted);font-weight:900}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;margin-top:10px;max-height:560px}table{border-collapse:collapse;width:100%;min-width:1120px}th,td{text-align:left;border-bottom:1px solid #edf1f6;padding:9px 10px;font-size:12px;vertical-align:top}th{position:sticky;top:0;background:#f8fafc;font-size:11px;color:#475467;text-transform:uppercase;letter-spacing:.04em}td{font-weight:850}.pill{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:950;background:#eef2f7;color:#475467}.pill.ok{background:#e7f7ef;color:#0f8a5f}.pill.warn{background:#fff7e6;color:#9a6700}.pill.bad{background:#ffe7e7;color:#c73636}.pill.blue{background:#eaf2ff;color:#2563eb}.muted{color:var(--muted)}.right{text-align:right}
+.tabs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.tab{display:none}.tab.active{display:block}
+@media(max-width:900px){.filters{grid-template-columns:1fr 1fr}.statgrid{grid-template-columns:1fr 1fr 1fr}.hero{border-radius:0 0 24px 24px;margin:-14px -14px 10px}}@media(max-width:520px){.filters{grid-template-columns:1fr}.statgrid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<section class="hero">
+  <div>
+    <div class="eyebrow">ULMIPOINT</div>
+    <h1>Monatsabschluss</h1>
+    
+  </div>
+  <div class="toolbar">
+    <button class="primary" id="loadBtn">Berechnen</button>
+    <button class="ok" id="saveDraftBtn">Abschluss speichern</button>
+    <button class="ok" id="saveAllBtn">Alle Abschlüsse erstellen</button>
+    <button id="loadDraftBtn">Gespeicherten Abschluss laden</button>
+    <button id="listDraftsBtn">Abschluss-Liste</button>
+    <button class="ok" id="csvSummaryBtn">Zusammenfassung CSV</button>
+    <button class="ok" id="csvDetailsBtn">Tage CSV</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Auswahl</h2>
+  <div class="filters">
+    <label><span class="mini">Monat</span><input id="monthKey" type="month"></label>
+    <label><span class="mini">Bereich</span><input id="groupFilter" placeholder="z. B. Delos"></label>
+    <label><span class="mini">Mitarbeiter</span><input id="employeeFilter" placeholder="Name"></label>
+    <label><span class="mini">Kanton</span><input value="Basel-Stadt" readonly></label>
+  </div>
+  <h2 style="margin-top:14px">Zulagen-Regeln</h2>
+  <div class="mini">Ansätze pro Stunde. Die Stunden werden automatisch aus Stempelung + Basel-Stadt-Kalender berechnet.</div>
+  <div class="filters">
+    <label><span class="mini">Nachtdienst-Zulage CHF/h</span><input id="rateNight" type="number" min="0" step="0.05" value="0"></label>
+    <label><span class="mini">Samstag-Zulage CHF/h</span><input id="rateSaturday" type="number" min="0" step="0.05" value="0"></label>
+    <label><span class="mini">Sonntag/Feiertag-Zulage CHF/h</span><input id="rateSundayHoliday" type="number" min="0" step="0.05" value="0"></label>
+    <label><span class="mini">Pikett-Zulage CHF/h</span><input id="ratePikett" type="number" min="0" step="0.05" value="0"></label>
+  </div>
+  <div class="actions" style="margin-top:10px">
+    <button id="sessionBtn">Sitzung prüfen</button>
+    <button id="clearFilterBtn">Filter leeren</button>
+    <button id="loadRatesBtn">Zulagen vom Server laden</button>
+    <button id="saveRatesBtn">Zulagen auf Server speichern</button>
+  </div>
+  <div id="status" class="notice" style="margin-top:10px">Noch nicht berechnet.</div>
+  <div class="statgrid">
+    <div class="stat"><b id="sSoll">0</b><span>Soll h</span></div>
+    <div class="stat"><b id="sIst">0</b><span>Ist h</span></div>
+    <div class="stat"><b id="sDiff">0</b><span>Differenz h</span></div>
+    <div class="stat"><b id="sNight">0</b><span>Nacht h</span></div>
+    <div class="stat"><b id="sSH">0</b><span>So/Feiertag h</span></div>
+    <div class="stat"><b id="sAllowance">0</b><span>Zulagen CHF</span></div>
+    <div class="stat"><b id="sWarn">0</b><span>Kontrollen</span></div>
+  </div>
+</section>
+
+<div class="tabs">
+  <button class="primary" data-tab="summary">Mitarbeiter</button>
+  <button data-tab="details">Tage</button>
+  <button data-tab="holidays">Feiertage BS</button>
+</div>
+
+<section class="card tab active" id="tab-summary">
+  <h2>Mitarbeiter-Zusammenfassung</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Mitarbeiter</th><th>Bereich</th><th class="right">Soll</th><th class="right">Ist</th><th class="right">Diff</th><th class="right">Nacht</th><th class="right">Sa</th><th class="right">So/Feiertag</th><th class="right">Nachtzulage</th><th class="right">Weekend/Feiertag</th><th class="right">Zulagen total</th><th>Krank/Ferien/Schule/WB</th><th>Kontrolle</th></tr></thead>
+    <tbody id="summaryRows"><tr><td colspan="15" class="muted">Noch nicht berechnet.</td></tr></tbody>
+  </table></div>
+</section>
+
+<section class="card tab" id="tab-details">
+  <h2>Tagesdetails</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Datum</th><th>MA</th><th>Bereich</th><th>Plan</th><th>Status</th><th class="right">Soll</th><th class="right">Ist</th><th class="right">Diff</th><th class="right">Nacht</th><th class="right">Sa</th><th class="right">So/Feiertag</th><th class="right">Zulagen CHF</th><th>Kommen</th><th>Gehen</th><th>Kontrolle</th></tr></thead>
+    <tbody id="detailRows"><tr><td colspan="15" class="muted">Noch nicht berechnet.</td></tr></tbody>
+  </table></div>
+</section>
+
+<section class="card tab" id="tab-holidays">
+  <h2>Feiertage Basel-Stadt</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Datum</th><th>Name</th><th>Code</th><th>Typ</th></tr></thead>
+    <tbody id="holidayRows"><tr><td colspan="4" class="muted">Noch nicht berechnet.</td></tr></tbody>
+  </table></div>
+</section>
+</div>
+
+<script>
+(function(){
+  const SERVER_TOKEN_KEY='polypoint_server_session_v1';
+  const RATES_KEY='ulmipoint_monthly_allowance_rates_v1';
+  let lastData=null;
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  function status(t,k=''){const el=$('status');el.textContent=t;el.className='notice'+(k?' '+k:'')}
+  function monthNow(){return new Date().toISOString().slice(0,7)}
+  function session(){
+    try{const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}'); if(s&&s.access_token)return s;}catch(_){}
+    return null;
+  }
+  function requireSession(){
+    const s=session();
+    if(!s||!s.access_token)throw new Error('Keine Server-Sitzung gefunden. Bitte im Hauptplaner über ☁️ Server einloggen.');
+    if(s.expires_at&&s.expires_at<Date.now()+30000)throw new Error('Server-Sitzung ist abgelaufen. Bitte im Hauptplaner neu einloggen.');
+    return s;
+  }
+  function checkSession(){
+    try{const s=requireSession();status('Sitzung OK: '+((s.user&&s.user.email)||'eingeloggt'),'ok');return true;}catch(e){status(e.message,'bad');return false;}
+  }
+  function num(id){const n=Number($(id).value);return Number.isFinite(n)&&n>0?n:0}
+  function allowanceRates(){return {night:num('rateNight'),saturday:num('rateSaturday'),sundayHoliday:num('rateSundayHoliday'),pikett:num('ratePikett')}}
+  function loadRates(){
+    try{
+      const r=JSON.parse(localStorage.getItem(RATES_KEY)||'{}');
+      if(r.night!=null)$('rateNight').value=r.night;
+      if(r.saturday!=null)$('rateSaturday').value=r.saturday;
+      if(r.sundayHoliday!=null)$('rateSundayHoliday').value=r.sundayHoliday;
+      if(r.pikett!=null)$('ratePikett').value=r.pikett;
+    }catch(_){}
+  }
+  async function apiCall(body){
+    const s=requireSession();
+    const resp=await fetch('/api/monthly-close',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.access_token},body:JSON.stringify(body)});
+    const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
+    return data;
+  }
+  function applyRates(r){
+    r=r||{};
+    if(r.night!=null)$('rateNight').value=r.night;
+    if(r.saturday!=null)$('rateSaturday').value=r.saturday;
+    if(r.sundayHoliday!=null)$('rateSundayHoliday').value=r.sundayHoliday;
+    if(r.pikett!=null)$('ratePikett').value=r.pikett;
+    localStorage.setItem(RATES_KEY,JSON.stringify(allowanceRates()));
+  }
+  async function loadRatesServer(){
+    status('Zulagen-Regeln werden geladen …');
+    const data=await apiCall({mode:'load_rules',monthKey:$('monthKey').value});
+    applyRates(data.rules&&data.rules.allowanceRates);
+    status('Zulagen-Regeln vom Server geladen.','ok');
+  }
+  async function saveRates(){
+    status('Zulagen-Regeln werden gespeichert …');
+    const data=await apiCall({mode:'save_rules',monthKey:$('monthKey').value,allowanceRates:allowanceRates()});
+    applyRates(data.rules&&data.rules.allowanceRates);
+    status('Zulagen-Regeln auf Server gespeichert.','ok');
+  }
+  async function load(mode='calculate'){
+    status(mode==='save_draft'?'Monatsabschluss wird gespeichert …':'Monatsabschluss wird berechnet …');
+    const body={mode,monthKey:$('monthKey').value,group:$('groupFilter').value.trim(),employeeName:$('employeeFilter').value.trim(),allowanceRates:allowanceRates()};
+    const data=await apiCall(body);
+    lastData=data; render(data);
+    if(data.allowanceRates) applyRates(data.allowanceRates);
+    status((mode==='save_draft'||mode==='save_all_drafts'?'Gespeichert: ':'Berechnet: ')+data.monthKey+' · '+data.employees.length+' Mitarbeiter · '+data.days.length+' Tageszeilen'+(data.savedEmployeeDrafts?' · Einzelabschlüsse: '+data.savedEmployeeDrafts:''),'ok');
+  }
+  async function loadDraft(){
+    status('Gespeicherter Abschluss wird geladen …');
+    const data=await apiCall({mode:'load_draft',monthKey:$('monthKey').value});
+    if(!data.draft){ status('Für diesen Monat ist noch kein Abschluss gespeichert.','warn'); return; }
+    const d=data.draft;
+    lastData={ok:true,monthKey:d.monthKey,canton:d.canton,holidayProfile:d.holidayProfile,allowanceRates:d.allowanceRates,totals:d.totals,employees:d.employees,days:d.days,holidays:[],updatedAt:d.savedAt,access:data.access};
+    if(d.allowanceRates) applyRates(d.allowanceRates);
+    render(lastData);
+    status('Gespeicherter Abschluss geladen: '+d.monthKey+' · '+(data.employeeDrafts?Object.keys(data.employeeDrafts).length:0)+' Mitarbeiter-Abschlüsse · gespeichert '+new Date(d.savedAt).toLocaleString('de-CH'),'ok');
+  }
+  async function saveAll(){
+    const oldGroup=$('groupFilter').value, oldEmp=$('employeeFilter').value;
+    $('groupFilter').value=''; $('employeeFilter').value='';
+    try{
+      await load('save_all_drafts');
+      status('Alle Abschlüsse erstellt und gespeichert: '+lastData.monthKey+' · '+lastData.employees.length+' Mitarbeitende · '+(lastData.savedEmployeeDrafts||0)+' Einzelabschlüsse','ok');
+    }finally{
+      $('groupFilter').value=oldGroup; $('employeeFilter').value=oldEmp;
+    }
+  }
+  async function listDrafts(){
+    status('Abschluss-Liste wird geladen …');
+    const data=await apiCall({mode:'list_drafts',monthKey:$('monthKey').value});
+    const text=(data.months||[]).map(m=>m.monthKey+' · Gesamt: '+(m.monthDraft?'ja':'nein')+' · Mitarbeiter: '+m.employeeCount+(m.savedAt?' · '+new Date(m.savedAt).toLocaleString('de-CH'):'')).join('\n') || 'Noch keine gespeicherten Abschlüsse.';
+    status(text,'ok');
+  }
+  function n(v){return Number(v||0).toFixed(2)}
+  function render(data){
+    const t=data.totals||{};
+    $('sSoll').textContent=n(t.plannedHours); $('sIst').textContent=n(t.workedHours); $('sDiff').textContent=n(t.diffHours); $('sNight').textContent=n(t.nightHours); $('sSH').textContent=n(t.sundayHolidayHours); $('sAllowance').textContent=n(t.totalAllowance); $('sWarn').textContent=t.warnings||0;
+    $('summaryRows').innerHTML=(data.employees||[]).map(e=>'<tr>'+
+      '<td><strong>'+esc(e.employeeName)+'</strong><div class="muted">'+esc(e.employeeId)+'</div></td><td>'+esc(e.group)+'</td>'+
+      '<td class="right">'+n(e.plannedHours)+'</td><td class="right">'+n(e.workedHours)+'</td><td class="right">'+n(e.diffHours)+'</td><td class="right">'+n(e.nightHours)+'</td><td class="right">'+n(e.saturdayHours)+'</td><td class="right">'+n(e.sundayHolidayHours)+'</td>'+
+      '<td class="right">'+n(e.nightAllowance)+'</td><td class="right">'+n((e.saturdayAllowance||0)+(e.sundayHolidayAllowance||0))+'</td><td class="right"><strong>'+n(e.totalAllowance)+'</strong></td>'+
+      '<td>KR '+(e.krank||0)+' · FER '+(e.ferien||0)+' · SCH '+(e.schule||0)+' · WB '+(e.weiterbildung||0)+'</td>'+
+      '<td><span class="pill '+((e.warnings||0)?'bad':'ok')+'">'+(e.warnings||0)+' Hinweise</span></td></tr>').join('') || '<tr><td colspan="15" class="muted">Keine Mitarbeiter gefunden.</td></tr>';
+    $('detailRows').innerHTML=(data.days||[]).map(d=>{
+      const warn=(d.warnings||[]).join(' · ');
+      return '<tr><td>'+esc(d.date+' '+d.weekday)+(d.holiday?'<div class="pill warn">'+esc(d.holiday)+'</div>':'')+'</td><td>'+esc(d.employeeName)+'</td><td>'+esc(d.group)+'</td><td>'+esc(d.planLabel)+'</td><td><span class="pill blue">'+esc(d.status)+'</span></td>'+
+      '<td class="right">'+n(d.plannedHours)+'</td><td class="right">'+n(d.workedHours)+'</td><td class="right">'+n(d.diffHours)+'</td><td class="right">'+n(d.nightHours)+'</td><td class="right">'+n(d.saturdayHours)+'</td><td class="right">'+n(d.sundayHolidayHours)+'</td><td class="right">'+n(d.totalAllowance)+'</td>'+
+      '<td>'+esc(d.firstClock?new Date(d.firstClock).toLocaleString("de-CH"):"")+'</td><td>'+esc(d.lastClock?new Date(d.lastClock).toLocaleString("de-CH"):"")+'</td><td>'+(warn?'<span class="pill bad">'+esc(warn)+'</span>':'<span class="pill ok">OK</span>')+'</td></tr>';
+    }).join('') || '<tr><td colspan="15" class="muted">Keine Tagesdaten.</td></tr>';
+    $('holidayRows').innerHTML=(data.holidays||[]).map(h=>'<tr><td>'+esc(h.date)+'</td><td>'+esc(h.name)+'</td><td>'+esc(h.code)+'</td><td>'+esc(h.type)+'</td></tr>').join('');
+  }
+  function csv(rows,head,name){
+    const lines=[head].concat(rows);
+    const text=lines.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
+    const blob=new Blob([text],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }
+  function csvSummary(){
+    if(!lastData)return status('Zuerst berechnen.','warn');
+    csv(lastData.employees.map(e=>[e.employeeName,e.group,e.plannedHours,e.workedHours,e.diffHours,e.nightHours,e.saturdayHours,e.sundayHolidayHours,e.nightAllowance,e.saturdayAllowance,e.sundayHolidayAllowance,e.totalAllowance,e.krank,e.ferien,e.schule,e.weiterbildung,e.warnings]),
+      ['Mitarbeiter','Bereich','Soll h','Ist h','Diff h','Nacht h','Samstag h','So/Feiertag h','Nachtzulage CHF','Samstagzulage CHF','Sonntag/Feiertag Zulage CHF','Zulagen total CHF','Krank','Ferien','Schule','Weiterbildung','Hinweise'],
+      'ulmipoint-monatsabschluss-'+lastData.monthKey+'-mitarbeiter.csv');
+  }
+  function csvDetails(){
+    if(!lastData)return status('Zuerst berechnen.','warn');
+    csv(lastData.days.map(d=>[d.date,d.weekday,d.employeeName,d.group,d.code,d.planLabel,d.status,d.holiday,d.plannedHours,d.workedHours,d.diffHours,d.nightHours,d.saturdayHours,d.sundayHolidayHours,d.nightAllowance,d.saturdayAllowance,d.sundayHolidayAllowance,d.totalAllowance,d.firstClock,d.lastClock,(d.warnings||[]).join(' | ')]),
+      ['Datum','Wochentag','Mitarbeiter','Bereich','Code','Plan','Status','Feiertag','Soll h','Ist h','Diff h','Nacht h','Samstag h','So/Feiertag h','Nachtzulage CHF','Samstagzulage CHF','Sonntag/Feiertag Zulage CHF','Zulagen total CHF','Kommen','Gehen','Kontrolle'],
+      'ulmipoint-monatsabschluss-'+lastData.monthKey+'-tage.csv');
+  }
+  document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('primary'));b.classList.add('primary');document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));$('tab-'+b.dataset.tab).classList.add('active')});
+  $('loadBtn').onclick=()=>load('calculate').catch(e=>status('Fehler: '+e.message,'bad'));
+  $('saveDraftBtn').onclick=()=>load('save_draft').catch(e=>status('Fehler: '+e.message,'bad'));
+  $('saveAllBtn').onclick=()=>saveAll().catch(e=>status('Fehler: '+e.message,'bad'));
+  $('loadDraftBtn').onclick=()=>loadDraft().catch(e=>status('Fehler: '+e.message,'bad'));
+  $('listDraftsBtn').onclick=()=>listDrafts().catch(e=>status('Fehler: '+e.message,'bad'));
+  $('sessionBtn').onclick=checkSession;
+  $('clearFilterBtn').onclick=()=>{$('groupFilter').value='';$('employeeFilter').value='';};
+  $('csvSummaryBtn').onclick=csvSummary;
+  $('csvDetailsBtn').onclick=csvDetails;
+  $('saveRatesBtn').onclick=()=>saveRates().catch(e=>status('Fehler: '+e.message,'bad'));
+  $('loadRatesBtn').onclick=()=>loadRatesServer().catch(e=>status('Fehler: '+e.message,'bad'));
+  $('monthKey').value=monthNow();
+  loadRates();
+  checkSession();
+})();
+</script>
+<script>
+(function(){
+  function applyDynamicLabels(){
+    const dyn=window.__ULMI_DYNAMIC_CONTEXT__||{};
+    const site=dyn.siteName||'';
+    document.querySelectorAll('.eyebrow').forEach(e=>{
+      const t=e.textContent||'';
+      if(t.match(/ULMIPOINT/i)) e.textContent=site?('ULMIPOINT · '+site):'ULMIPOINT';
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',applyDynamicLabels);
+  else applyDynamicLabels();
+  setTimeout(applyDynamicLabels,250);
+})();
+</script>
+</body>
+</html>

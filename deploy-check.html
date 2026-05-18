@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ULMIPOINT Deploy Check</title>
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;background:#f6f8fc;color:#172033}
+main{max-width:900px;margin:0 auto;padding:18px}
+.card{background:#fff;border:1px solid #d9e2ef;border-radius:22px;padding:16px;margin:12px 0;box-shadow:0 12px 30px rgba(16,24,40,.08)}
+h1{font-size:42px;line-height:.95;letter-spacing:-.06em;margin:0 0 8px}
+button{border:0;border-radius:999px;background:#2563eb;color:#fff;font-weight:900;padding:10px 14px}
+pre{white-space:pre-wrap;background:#111827;color:#fff;border-radius:16px;padding:12px;overflow:auto}
+.ok{color:#0f8a5f;font-weight:900}.bad{color:#c73636;font-weight:900}.warn{color:#9a6700;font-weight:900}
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <div style="font-size:12px;font-weight:950;color:#2563eb;letter-spacing:.08em;text-transform:uppercase">ULMIPOINT</div>
+    <h1>Deploy Check</h1>
+    <p>Prüft nur lesend, ob Seiten und API erreichbar sind.</p>
+    <button onclick="run()">Prüfen</button>
+  </div>
+  <div class="card" id="result">Noch nicht geprüft.</div>
+</main>
+<script>
+async function check(path, method){
+  const r={path,ok:false,status:0,type:'',text:''};
+  try{
+    const resp=await fetch(path,{method:method||'GET',cache:'no-store'});
+    r.status=resp.status;
+    r.type=resp.headers.get('content-type')||'';
+    r.text=(await resp.text()).slice(0,500);
+    r.ok=resp.ok;
+  }catch(e){r.text=String(e&&e.message||e);}
+  return r;
+}
+function line(r){
+  const codeVisible = r.path.includes('/api/') && r.text.includes('module.exports') && r.text.includes('const ');
+  const klass = codeVisible ? 'bad' : (r.ok?'ok':(r.status?'warn':'bad'));
+  const note = codeVisible ? ' ⚠️ Quellcode sichtbar' : '';
+  return `<div class="${klass}">${r.ok?'✓':'!'} ${r.path} · ${r.status||'Fehler'} · ${r.type}${note}</div>`;
+}
+async function run(){
+  const tests=[
+    await check('/index.html'),
+    await check('/planer.html'),
+    await check('/organisation-admin.html'),
+    await check('/bereich-dyn.html'),
+    await check('/haus.html'),
+    await check('/nachtwache-dyn.html'),
+    await check('/pikett-dyn.html'),
+    await check('/hausdienstplan-dyn.html'),
+    await check('/api/org-structure','POST')
+  ];
+  document.getElementById('result').innerHTML=tests.map(line).join('')+'<pre>'+JSON.stringify(tests,null,2)+'</pre>';
+}
+</script>
+</body>
+</html>

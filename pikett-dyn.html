@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="de">
+<head>
+<script>
+(function(){
+  function param(name,fallback=''){
+    try{return new URLSearchParams(location.search||'').get(name)||fallback;}catch(_){return fallback;}
+  }
+  function slug(value){
+    return String(value||'')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'_')
+      .replace(/^_+|_+$/g,'')||'pikett';
+  }
+  const ctx={
+    siteId:param('siteId','haus'),
+    siteName:param('siteName','Haus'),
+    unitId:param('unitId','pikett'),
+    unitName:param('unitName','Haus-Pikett'),
+    plannerKey:param('plannerKey',param('functionType','pikett')),
+    functionType:param('functionType','pikett'),
+    kind:'hausfunktion',
+    slug
+  };
+  window.__ULMI_DYNAMIC_CONTEXT__=ctx;
+  const PREFIX='ulmipoint_site_'+slug(ctx.siteId)+'__page_'+slug(ctx.plannerKey||ctx.functionType||ctx.unitId)+'__';
+  const SHARED=[
+    'polypoint_server_config_v2',
+    'polypoint_server_session_v1',
+    'polypoint_server_sync_meta_v1',
+    'polypoint_server_autosave_v1',
+    'polypoint_employee_wishes_v1',
+    'ulmipoint_selected_site_v1',
+    'ulmipoint_org_structure_draft_v1',
+    'ulmipoint_org_admin_token_v1'
+  ];
+  function isShared(k){return SHARED.indexOf(String(k||''))>=0;}
+  const real=window.localStorage;
+  function mapKey(k){k=String(k||'');return isShared(k)?k:PREFIX+k;}
+  function keys(){
+    const out=[];const seen={};
+    for(let i=0;i<real.length;i++){
+      const k=real.key(i);
+      if(!k) continue;
+      if(k.indexOf(PREFIX)===0){const c=k.slice(PREFIX.length);if(!seen[c]){seen[c]=1;out.push(c);}}
+      else if(isShared(k)&&!seen[k]){seen[k]=1;out.push(k);}
+    }
+    return out;
+  }
+  const proxy={
+    getItem(k){return real.getItem(mapKey(k));},
+    setItem(k,v){return real.setItem(mapKey(k),String(v));},
+    removeItem(k){return real.removeItem(mapKey(k));},
+    clear(){keys().forEach(k=>real.removeItem(mapKey(k)));},
+    key(i){return keys()[i]||null;},
+    get length(){return keys().length;}
+  };
+  try{Object.defineProperty(window,'localStorage',{value:proxy,configurable:true});}catch(_){}
+})();
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ULMIPOINT Haus-Pikett</title>
+<style>
+:root{--bg:#f6f8fc;--card:#fff;--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--yellow:#9a6700;--purple:#6f42c1;--shadow:0 12px 30px rgba(16,24,40,.08)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+.app{max-width:1580px;margin:0 auto;padding:18px}.hero,.card{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.hero{padding:18px;margin-bottom:12px;display:flex;justify-content:space-between;gap:12px;align-items:end}.eyebrow{font-size:12px;font-weight:950;color:var(--blue);text-transform:uppercase;letter-spacing:.08em}.hero h1{margin:3px 0 0;font-size:clamp(26px,4vw,42px);letter-spacing:-.05em}.hero p{margin:6px 0 0;color:var(--muted);font-weight:750;line-height:1.35}.card{padding:15px;margin-bottom:12px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:end}button{border:0;background:#eef2f7;color:var(--text);border-radius:999px;padding:9px 13px;font-weight:900;cursor:pointer}button:hover{transform:translateY(-1px)}button:disabled{opacity:.45;cursor:not-allowed;transform:none}.primary{background:var(--blue);color:#fff}.danger{background:#ffe7e7;color:var(--red)}.okbtn{background:#e7f7ef;color:var(--green)}
+label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bottom:4px}select,input{border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px 9px;font-weight:750;color:var(--text);max-width:100%}.mini{font-size:12px;color:var(--muted);font-weight:800;line-height:1.35}.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:950;background:#eef2f7;color:#475467}.blue{background:#eaf2ff;color:var(--blue)}.green{background:#e7f7ef;color:var(--green)}.red{background:#ffe7e7;color:var(--red)}.yellow{background:#fff4d8;color:var(--yellow)}.purple{background:#f0e9ff;color:var(--purple)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:12px;align-items:start}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px;margin-bottom:10px}.sum{border:1px solid var(--line);border-radius:16px;background:#fff;padding:10px}.sum .v{font-size:24px;font-weight:950;letter-spacing:-.04em}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;max-height:72vh}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border-bottom:1px solid #edf1f6;padding:7px;text-align:left;white-space:nowrap}th{background:#f8fafc;color:var(--muted);font-size:10px;text-transform:uppercase;position:sticky;top:0;z-index:2}.daycell{font-weight:950}.weekend{background:#fff7e6}.today{box-shadow:inset 0 -3px 0 var(--blue)}.openrow{background:#fffafa}.okrow{background:#f7fffb}.selected{outline:3px solid var(--blue)!important;background:#eef5ff!important}.issue{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px;margin-bottom:8px}.issue.red{border-color:#f2a3a3;background:#fffafa}.issue.yellow{border-color:#f3d28f;background:#fffdf5}.issue.green{border-color:#b7e4ca;background:#f7fffb}.issue.blue{border-color:#c9dcff;background:#f7fbff}.groupbox{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}.groupcheck{border:1px solid var(--line);border-radius:16px;background:#fbfcfe;padding:10px;display:flex;gap:8px;align-items:flex-start;font-weight:950}.groupcheck input{width:21px;height:21px;margin-top:2px;accent-color:#2563eb}.groupcheck.on{border-color:#c9dcff;background:#f7fbff}.groupcheck.off{border-color:#f3d28f;background:#fffdf5;opacity:.78}.candidate-list{display:grid;gap:7px;margin-top:8px}.candidate{border:1px solid var(--line);border-radius:14px;background:#fff;padding:9px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start}.candidate.best{border-color:#c9dcff;background:#f7fbff}.candidate.blocked{opacity:.72;background:#fbfcfe}.candidate-name{font-weight:950}.candidate-meta{font-size:11px;color:#667085;font-weight:850;line-height:1.28;margin-top:2px}.candidate-score{font-size:10px;color:#667085;font-weight:900;margin-top:4px}.actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.actions button{font-size:11px;padding:6px 9px}.status-toast{position:fixed;right:18px;top:18px;z-index:9999;display:none;border-radius:999px;padding:10px 14px;font-weight:950;background:#111827;color:#fff;box-shadow:0 8px 28px rgba(17,24,39,.24)}.status-toast.show{display:block}.status-toast.ok{background:#0f8a5f}.status-toast.warn{background:#9a6700}.status-toast.bad{background:#c73636}.code{display:inline-flex;align-items:center;justify-content:center;border-radius:9px;padding:3px 7px;font-weight:950;background:#eef2f7;color:#475467}.code.p{background:#7c2d12;color:#fff}.softline{white-space:normal;line-height:1.32}.smallinput{width:78px}.navlink{display:inline-flex;align-items:center;text-decoration:none;border-radius:999px;background:#eef2f7;color:#172033;padding:9px 13px;font-weight:900}.filebtn{position:relative;overflow:hidden}.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}.fair-mini-table{width:100%;font-size:11px;margin-top:8px}.fair-mini-table th,.fair-mini-table td{padding:4px;border-bottom:1px solid #edf1f6;text-align:left;white-space:nowrap}.fair-ok{color:#0f8a5f;font-weight:950}.fair-warn{color:#9a6700;font-weight:950}.fair-bad{color:#c73636;font-weight:950}.print-title{display:none}
+@media(max-width:980px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr}.hero{display:block}.toolbar{margin-top:10px}.table-wrap{max-height:58vh}.groupbox{grid-template-columns:1fr}}
+@media print{body{background:#fff}.hero,.toolbar,.side,.no-print{display:none!important}.app{max-width:none;padding:0}.card{box-shadow:none;border:0;padding:0}.table-wrap{max-height:none;overflow:visible;border:0}table{font-size:10px}th,td{border:1px solid #b8c2d0;padding:4px}.print-title{display:block}}
+
+.hp-overview{padding:16px}.hp-overview .section-head{margin-bottom:10px}.overview-summary{margin-bottom:0}.sum.open .v{color:var(--red)}.sum.ok .v{color:var(--green)}.sum.warn .v{color:var(--yellow)}.sum.plan .v{color:var(--blue)}
+/* Haus-Pikett optisch aufgeräumt */
+.hp-hero{align-items:stretch}.hero-text{max-width:980px}.hero-text p{max-width:980px}.hero-actions{display:grid;gap:10px;min-width:min(440px,100%);align-self:stretch}.action-group{border:1px solid var(--line);border-radius:18px;background:#fbfcfe;padding:10px}.action-title{font-size:12px;color:var(--muted);font-weight:950;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}.toolbar.slim{margin:0;gap:7px}.toolbar.slim button{padding:8px 11px;font-size:12px}.pikett-control{padding:16px}.control-head,.section-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.control-head h2,.section-head h2{margin:0;font-size:20px;letter-spacing:-.03em}.control-head p,.section-head p{margin:4px 0 0;color:var(--muted);font-size:13px;font-weight:800;line-height:1.35}.status-row{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.control-grid{display:grid;grid-template-columns:170px 130px 1fr;gap:10px;align-items:end}.fieldbox label{margin-bottom:5px}.fieldbox select{width:100%}.plan-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.hp-details{border:1px solid var(--line);border-radius:18px;background:#fbfcfe;padding:0;margin-top:12px;overflow:hidden}.hp-details>summary{cursor:pointer;padding:12px 14px;font-weight:950;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}.hp-details>summary::-webkit-details-marker{display:none}.hp-details>summary:after{content:'öffnen';font-size:11px;color:var(--muted);font-weight:950;background:#eef2f7;border-radius:999px;padding:4px 8px}.hp-details[open]>summary:after{content:'schliessen'}.hp-details .groupbox{margin:0;padding:0 12px 12px}.summary{border:1px solid var(--line);border-radius:18px;background:#fbfcfe;padding:8px}.sum{box-shadow:0 6px 16px rgba(16,24,40,.04)}.sum .mini{text-transform:uppercase;letter-spacing:.04em;font-size:10px}.table-wrap{max-height:none}.side .section-head{margin-bottom:10px}.side .section-head h2{font-size:18px}.side .issue:first-of-type{margin-top:0}@media(max-width:980px){.hero-actions{margin-top:12px}.control-head,.section-head{display:block}.status-row{justify-content:flex-start;margin-top:8px}.control-grid{grid-template-columns:1fr 1fr}.plan-actions{grid-column:1/-1;justify-content:flex-start}.summary{grid-template-columns:1fr 1fr}}@media(max-width:560px){.app{padding:10px}.control-grid{grid-template-columns:1fr}.plan-actions button,.toolbar.slim button{width:100%;justify-content:center}.hero-actions{display:block}.action-group+.action-group{margin-top:8px}.summary{grid-template-columns:1fr 1fr}.sum .v{font-size:20px}}
+
+
+/* Haus-Pikett Plan optisch ruhiger */
+.pikett-plan-card{padding:16px;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(251,252,254,.98))}
+.pikett-plan-card .section-head{padding-bottom:10px;border-bottom:1px solid #edf1f6;margin-bottom:10px}
+.pikett-table-wrap{border:0;background:transparent;overflow:visible}
+#planTable{border-collapse:separate;border-spacing:0 7px;background:transparent;font-size:13px}
+#planTable thead th{position:sticky;top:0;background:rgba(248,250,252,.96);border:0;padding:8px 10px;z-index:3}
+#planTable tbody tr{background:#fff;box-shadow:0 6px 16px rgba(16,24,40,.05);transition:transform .12s ease,box-shadow .12s ease,background .12s ease}
+#planTable tbody tr:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(16,24,40,.08)}
+#planTable tbody tr.openrow{background:#fffafa}
+#planTable tbody tr.okrow{background:#f7fffb}
+#planTable tbody tr.fromplan{background:#f7fbff}
+#planTable tbody tr.weekend{background:#fff8eb}
+#planTable tbody td{border-top:1px solid #edf1f6;border-bottom:1px solid #edf1f6;padding:9px 10px;vertical-align:middle}
+#planTable tbody td:first-child{border-left:1px solid #edf1f6;border-radius:15px 0 0 15px}
+#planTable tbody td:last-child{border-right:1px solid #edf1f6;border-radius:0 15px 15px 0}
+#planTable .daycell{min-width:84px;width:84px}
+.day-badge{display:inline-grid;grid-template-columns:auto auto;gap:3px 7px;align-items:center;border-radius:14px;background:#f8fafc;border:1px solid #e6edf5;padding:6px 8px;min-width:62px}
+.day-badge .day-num{font-size:20px;font-weight:950;line-height:1;letter-spacing:-.04em;color:#172033}
+.day-badge .day-wd{font-size:11px;font-weight:950;color:#667085;text-transform:uppercase;letter-spacing:.04em}
+.day-badge .day-full{grid-column:1/-1;font-size:10px;font-weight:850;color:#98a2b3;line-height:1}
+.pikett-person{display:flex;align-items:center;gap:7px;font-weight:950}
+.pikett-person small{display:block;color:#667085;font-weight:850;margin-top:2px}
+.pikett-empty{font-weight:950;color:var(--red)}
+#planTable .actions{justify-content:flex-start;white-space:normal}
+#planTable .actions button{box-shadow:none}
+@media(max-width:780px){#planTable{font-size:12px}#planTable tbody td{padding:8px 7px}.pikett-table-wrap{overflow:auto}.day-badge{min-width:54px}.day-badge .day-num{font-size:18px}}
+
+
+
+/* Haus-Pikett rechte Detailseite klarer */
+.tag-side{position:sticky;top:12px}
+.tag-side .section-head{padding-bottom:10px;border-bottom:1px solid #edf1f6;margin-bottom:10px}
+.detail-box{border:1px solid #dbe7ff;border-radius:18px;background:linear-gradient(180deg,#f7fbff,#fff);padding:12px;margin-bottom:10px;box-shadow:0 8px 20px rgba(37,99,235,.06)}
+.detail-box.detail-empty{background:#f7fbff;text-align:left}.detail-empty-icon{font-size:26px;margin-bottom:5px}.detail-empty-title{font-size:18px;font-weight:950;letter-spacing:-.03em}.detail-empty-text{color:var(--muted);font-size:13px;font-weight:800;line-height:1.35;margin-top:4px}
+.detail-date-card{border:1px solid #c9dcff;border-radius:18px;background:#eef5ff;padding:12px;margin-bottom:10px}.detail-date-main{font-size:20px;font-weight:950;letter-spacing:-.04em}.detail-date-sub{font-size:12px;color:#475467;font-weight:850;margin-top:3px;line-height:1.35}.detail-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:10px}.detail-kpi{border:1px solid #d9e8ff;border-radius:14px;background:#fff;padding:8px}.detail-kpi span{display:block;color:#667085;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.04em}.detail-kpi b{display:block;font-size:17px;line-height:1.1;margin-top:2px}.detail-subtitle{font-size:12px;color:#344054;font-weight:950;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 7px}.detail-status{border-radius:16px;padding:10px;margin:8px 0}.detail-status.green{border:1px solid #b7e4ca;background:#f7fffb}.detail-status.red{border:1px solid #f2a3a3;background:#fffafa}.detail-status.yellow{border:1px solid #f3d28f;background:#fffdf5}.detail-status-title{font-weight:950}.detail-status-body{font-size:13px;font-weight:850;line-height:1.35;margin-top:3px}.detail-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.detail-actions button{font-size:12px;padding:7px 10px}
+.group-best-list{display:grid;gap:7px;margin:8px 0 10px}.group-best-card{border:1px solid #e1eaf7;border-radius:14px;background:#fff;padding:9px}.group-best-card b{display:block;margin-bottom:2px}.group-best-card.empty{background:#fbfcfe;opacity:.88}.source-profile{font-size:11px;color:#667085;font-weight:850;line-height:1.3;margin-top:2px}
+.candidate-list{gap:8px}.candidate{padding:10px;border-radius:16px;box-shadow:0 5px 14px rgba(16,24,40,.04)}.candidate.best{border-color:#8fbaff;background:#f3f8ff;box-shadow:0 8px 22px rgba(37,99,235,.10)}.candidate.blocked{border-style:dashed}.candidate-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.candidate-chipline{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.candidate-chip{display:inline-flex;align-items:center;border-radius:999px;background:#eef2f7;color:#475467;padding:3px 7px;font-size:10px;font-weight:950}.candidate-chip.good{background:#e7f7ef;color:#0f8a5f}.candidate-chip.warn{background:#fff4d8;color:#9a6700}.candidate-score{border-radius:10px;padding:5px 7px;background:#f8fafc}.candidate-score.green{background:#f7fffb;color:#0f8a5f}.candidate-score.red{background:#fffafa;color:#c73636}.candidate .actions{align-self:center}.candidate .actions button{min-width:70px}
+@media(max-width:980px){.tag-side{position:static}.detail-kpis{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:560px){.detail-kpis{grid-template-columns:1fr}.candidate{grid-template-columns:1fr}.candidate .actions{justify-content:flex-start}.candidate .actions button{width:100%}}
+
+
+
+/* Haus-Pikett Kontrolle */
+.hp-check{padding:16px}
+.hp-check .section-head{padding-bottom:10px;border-bottom:1px solid #edf1f6;margin-bottom:12px}
+.check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.check-panel{border:1px solid var(--line);border-radius:18px;background:#fff;padding:12px;min-height:112px}
+.check-panel h3{margin:0;font-size:16px;letter-spacing:-.03em}
+.check-panel .check-note{margin:4px 0 10px;color:var(--muted);font-size:12px;font-weight:800;line-height:1.35}
+.check-panel.green{border-color:#b7e4ca;background:#f7fffb}
+.check-panel.red{border-color:#f2a3a3;background:#fffafa}
+.check-panel.yellow{border-color:#f3d28f;background:#fffdf5}
+.check-panel.blue{border-color:#c9dcff;background:#f7fbff}
+.check-list{display:grid;gap:6px;max-height:260px;overflow:auto;padding-right:2px}
+.check-row{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;border:1px solid rgba(217,226,239,.85);border-radius:13px;background:rgba(255,255,255,.78);padding:8px}
+.check-row b{font-size:12px}.check-row span{font-size:12px;color:var(--muted);font-weight:850;line-height:1.3}.check-row .pill{flex:0 0 auto}
+.check-empty{border:1px dashed #cbd5e1;border-radius:13px;background:rgba(255,255,255,.72);padding:10px;color:var(--muted);font-weight:850;font-size:13px}
+.check-fair-table{width:100%;font-size:12px;margin-top:6px}.check-fair-table th,.check-fair-table td{padding:5px;border-bottom:1px solid #edf1f6;text-align:left;white-space:nowrap}.check-fair-table th{position:static;background:transparent}
+@media(max-width:980px){.check-grid{grid-template-columns:1fr}.tag-side{position:static}}
+
+
+/* Haus-Pikett Entscheidungsanzeige */
+/* Jahresfairness aktiv: Monat zuerst, Jahr danach */
+/* Gruppen-P-Übernahme mit Bericht */
+.decision-box{border:1px solid #c9dcff;background:#f7fbff;border-radius:18px;padding:12px;margin:10px 0;box-shadow:0 8px 18px rgba(16,24,40,.04)}
+.decision-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:8px}
+.decision-head b{font-size:15px;letter-spacing:-.02em}.decision-head small{display:block;color:var(--muted);font-weight:850;margin-top:2px;line-height:1.25}
+.decision-list{display:grid;gap:6px}.decision-row{border:1px solid #edf1f6;background:#fff;border-radius:13px;padding:8px 9px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start}
+.decision-row.chosen{border-color:#b7e4ca;background:#f7fffb}.decision-row.blocked{border-color:#f3d28f;background:#fffdf5}.decision-row.manual{border-color:#d9e2ef;background:#fbfcfe}
+.decision-main{font-weight:950}.decision-reason{font-size:11px;color:var(--muted);font-weight:850;line-height:1.3;margin-top:2px}.decision-badge{white-space:nowrap}
+@media(max-width:560px){.decision-row{grid-template-columns:1fr}.decision-badge{white-space:normal}}
+
+</style>
+</head>
+<body>
+<div id="toast" class="status-toast"></div>
+<main class="app">
+  <section class="hero no-print hp-hero">
+    <div class="hero-text">
+      <div class="eyebrow">ULMIPOINT · HAUS</div>
+      <h1>Haus-Pikett</h1>
+      <p>Zentrale Pikett-Planung für das ganze Haus. Pro Tag wird genau <b>1 Pikett</b> geführt. P-Einträge aus den aktiven Gruppen können übernommen werden; offene Tage werden danach fair vorgeschlagen.</p>
+    </div>
+    <div class="hero-actions">
+      <div class="action-group">
+        <div class="action-title">Gruppendaten</div>
+        <div class="toolbar slim">
+          <button onclick="reloadGroupData(true)">neu lesen</button>
+          <button class="okbtn" onclick="syncGroupPlanPikettManual()">P aus Gruppen übernehmen</button>
+          <button class="primary" onclick="writeHausPikettToGroups()">P in Gruppenpläne schreiben</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card no-print pikett-control">
+    <div class="control-head">
+      <div>
+        <h2>Monat & Planung</h2>
+        <p>Monat wählen, aktive Wohngruppen prüfen und offene Pikett-Tage vorschlagen lassen.</p>
+      </div>
+      <div class="status-row">
+        <input type="hidden" id="profileSelect" value="default"><input type="hidden" id="readProfileSelect" value="same"><span class="pill green">Speicher dieses Geräts</span>
+        <span class="pill blue" id="saveStatus">bereit</span>
+        <span class="pill yellow" id="readStatus">Gruppen nicht gelesen</span>
+      </div>
+    </div>
+    <div class="control-grid">
+      <div class="fieldbox"><label>Monat</label><select id="monthSelect" onchange="applyMonth()"></select></div>
+      <div class="fieldbox"><label>Jahr</label><select id="yearSelect" onchange="applyMonth()"></select></div>
+      <div class="plan-actions">
+        <button class="okbtn" onclick="autoFillMonth()">offene Tage vorschlagen</button>
+        <button class="danger" onclick="clearMonth()">Monat leeren</button>
+      </div>
+    </div>
+    <details class="hp-details" open>
+      <summary>Aktive Wohngruppen</summary>
+      <div class="groupbox" id="groupChecks"></div>
+    </details>
+  </section>
+
+
+  <section class="card no-print hp-overview">
+    <div class="section-head">
+      <div>
+        <h2>Haus-Pikett Übersicht</h2>
+        <p>Schneller Überblick über den aktuellen Monat, offene Tage und Hinweise.</p>
+      </div>
+      <span class="pill blue" id="sMonthPill">—</span>
+    </div>
+    <div class="summary overview-summary">
+      <div class="sum"><div class="mini">Monat</div><div class="v" id="sMonth">—</div></div>
+      <div class="sum"><div class="mini">Tage</div><div class="v" id="sDays">0</div></div>
+      <div class="sum ok"><div class="mini">geplant</div><div class="v" id="sPlanned">0</div></div>
+      <div class="sum open"><div class="mini">offen</div><div class="v" id="sOpen">0</div></div>
+      <div class="sum plan"><div class="mini">aus Gruppenplan</div><div class="v" id="sGroupPlan">0</div></div>
+      <div class="sum warn"><div class="mini">Warnungen</div><div class="v" id="sWarn">0</div></div>
+      <div class="sum"><div class="mini">aktive Gruppen</div><div class="v" id="sGroups">0</div></div>
+      <div class="sum"><div class="mini">Kandidaten</div><div class="v" id="sCands">0</div></div>
+      <div class="sum"><div class="mini">Fairness</div><div class="v" id="sFair">—</div></div>
+      <div class="sum"><div class="mini">Fairness Jahr</div><div class="v" id="sYearFair">—</div></div>
+    </div>
+  </section>
+
+
+
+  <section class="card no-print hp-check">
+    <div class="section-head">
+      <div>
+        <h2>Haus-Pikett Kontrolle</h2>
+        <p>Offene Tage, Warnungen, Fairness und geladene Gruppendaten auf einen Blick.</p>
+      </div>
+      <span class="pill blue">Kontrolle</span>
+    </div>
+    <div id="pikettCheckBox" class="check-grid">
+      <div class="issue blue"><b>Kontrolle wird geladen</b><div>Die Prüfung erscheint nach dem Laden des Monats.</div></div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <article class="card pikett-plan-card">
+      <div class="section-head no-print">
+        <div>
+          <h2>Pikett-Plan</h2>
+          <p>Alle Tage des Monats klar dargestellt. Ein Klick auf einen Tag öffnet rechts die Vorschläge.</p>
+        </div>
+        <span class="pill blue">Monatsübersicht</span>
+      </div>
+      <h2 class="print-title">ULMIPOINT Haus-Pikett</h2>
+      <div class="table-wrap pikett-table-wrap"><table id="planTable"><thead></thead><tbody></tbody></table></div>
+    </article>
+
+    <aside class="card side tag-side no-print">
+      <div class="section-head">
+        <div>
+          <h2>Tag & Vorschläge</h2>
+          <p>Tag anklicken und passende Personen prüfen.</p>
+        </div>
+      </div>
+      <div id="detailBox" class="issue blue"><b>Tag wählen</b><div>Klicke links auf einen Tag, um Vorschläge aus den angehakten Wohngruppen zu sehen.</div></div>
+      <div class="issue yellow">
+        <b>Wichtig</b>
+        <div class="softline">Capri ist standardmässig nicht angehakt. Sobald Capri wieder offen ist, einfach Haken setzen und speichern. Der Haus-Pikett-Plan bleibt zentral, schreibt nicht automatisch in die vier Wohngruppenpläne und verteilt möglichst gleichmässig auf alle Mitarbeitenden der aktiven Gruppen.</div>
+      </div>
+      <div id="writeBackStatus" class="issue blue" style="display:none"></div>
+      <div id="sourceInfo" class="issue"></div>
+    </aside>
+  </section>
+</main>
+<script>
+'use strict';
+const VERSION='13.0.187';
+const MONTHS=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const WEEKDAYS=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const GROUPS=[
+  {id:'azoren',name:'Azoren',file:'planer_azoren.html',defaultEnabled:true},
+  {id:'bali',name:'Bali',file:'planer_bali.html',defaultEnabled:true},
+  {id:'capri',name:'Capri',file:'planer_capri.html',defaultEnabled:false,note:'zurzeit geschlossen'},
+  {id:'delos',name:'Delos',file:'planer_delos.html',defaultEnabled:true}
+];
+const BASE_KEY='polypoint_haus_pikett_v13_clean';
+const PROFILE_KEY=BASE_KEY+'_device_profile';
+const GROUP_BASE_PREFIX='polypoint_ki_planer_v13_clean__';
+let state=null,dates=[],groupStates={},selectedDate='';
+
+function defaultState(){
+  const now=new Date();
+  return {version:VERSION,selectedMonth:now.getMonth()+1,selectedYear:now.getFullYear(),includedGroups:{azoren:true,bali:true,capri:false,delos:true},readProfile:'same',plan:{},savedAt:''};
+}
+function clone(x){return JSON.parse(JSON.stringify(x));}
+function q(id){return document.getElementById(id);}function pad(n){return String(n).padStart(2,'0');}
+function iso(y,m,d){return `${y}-${pad(m)}-${pad(d)}`;}function todayISO(){return new Date().toISOString().slice(0,10);}function parseDate(s){const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d);}function dateToISO(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}function daysInMonth(y,m){return new Date(y,m,0).getDate();}function monthKey(y=state.selectedYear,m=state.selectedMonth){return `${y}-${pad(m)}`;}function entryKey(empId,date){return `${date}__${empId}`;}function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function toast(text,type='ok'){const el=q('toast');el.textContent=text;el.className=`status-toast show ${type}`;clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.className='status-toast',2600);}function fmtTime(){return new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit'});}function isWeekend(date){const wd=parseDate(date).getDay();return wd===0||wd===6;}function validISODate(s){return /^\d{4}-\d{2}-\d{2}$/.test(String(s||''));}
+function shiftDateISO(date,days){const d=parseDate(date);d.setDate(d.getDate()+days);return dateToISO(d);}function weekStartISO(date){const d=parseDate(date);const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return dateToISO(d);}function weekendStartISO(date){const wd=parseDate(date).getDay();if(wd===6)return date;if(wd===0)return shiftDateISO(date,-1);return shiftDateISO(date,6-wd);}function normalizeName(name){return String(name||'').trim().toLowerCase().replace(/\s+/g,' ');}function profileLabel(p){return 'dieses Gerät';}
+function currentProfile(){return 'default';}
+function storageKeyForProfile(profile=currentProfile()){return profile&&profile!=='default'?`${BASE_KEY}__${profile}`:BASE_KEY;}
+function groupStorageKey(groupId,profile){const p=profile&&profile!=='default'?`__${profile}`:'';return `${GROUP_BASE_PREFIX}${groupId}${p}`;}
+function groupStoredProfile(groupId){try{return localStorage.getItem(`${GROUP_BASE_PREFIX}${groupId}_device_profile`)||'';}catch(e){return '';}}
+function profileOrderForGroup(groupId,preferred=activeReadProfile()){const out=[];const add=p=>{p=p||'default';if(!out.includes(p))out.push(p);};add('default');add(groupStoredProfile(groupId));add('pc');add('handy');return out;}
+function activeReadProfile(){return 'default';}
+function makeDates(){dates=[];for(let d=1;d<=daysInMonth(state.selectedYear,state.selectedMonth);d++)dates.push(iso(state.selectedYear,state.selectedMonth,d));}
+function initSelectors(){const ms=q('monthSelect'),ys=q('yearSelect');ms.innerHTML=MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');const y=new Date().getFullYear();ys.innerHTML='';for(let yy=y-1;yy<=y+3;yy++)ys.innerHTML+=`<option value="${yy}">${yy}</option>`;}
+function init(){state=defaultState();initSelectors();loadState(false);makeDates();reloadGroupData(false);renderAll();}
+function applyMonth(){state.selectedMonth=parseInt(q('monthSelect').value);state.selectedYear=parseInt(q('yearSelect').value);makeDates();selectedDate='';syncGroupPlanPikett(false);saveState(false);renderAll();}
+function setProfile(p){try{if(p==='default')localStorage.removeItem(PROFILE_KEY);else localStorage.setItem(PROFILE_KEY,p);}catch(e){console.warn(e);}loadState(false);reloadGroupData(false);renderAll();toast('Speicher dieses Geräts aktiv','ok');}
+function setReadProfile(p){state.readProfile=p;saveState(false);reloadGroupData(true);renderAll();}
+function normalizeState(){
+  state={...defaultState(),...(state||{})};
+  state.version=VERSION;
+  const cleanedGroups={};
+  GROUPS.forEach(g=>{cleanedGroups[g.id]=(state.includedGroups&&state.includedGroups[g.id]!=null)?!!state.includedGroups[g.id]:!!g.defaultEnabled;});
+  state.includedGroups=cleanedGroups;
+  if(!state.plan||typeof state.plan!=='object')state.plan={};
+  Object.keys(state.plan).forEach(date=>{
+    const x=state.plan[date];
+    if(x&&(x.groupId==='nachtwache'||/nachtwache/i.test(String(x.groupName||''))))delete state.plan[date];
+  });
+  if(!state.readProfile)state.readProfile='same';
+}
+function loadState(show=true){try{const raw=localStorage.getItem(storageKeyForProfile());state=raw?JSON.parse(raw):defaultState();normalizeState();if(show)toast('Haus-Pikett geladen','ok');}catch(e){console.warn(e);state=defaultState();normalizeState();if(show)toast('Laden nicht möglich','bad');}if(q('profileSelect'))q('profileSelect').value='default';if(q('readProfileSelect'))q('readProfileSelect').value='same';makeDates();}
+function saveState(show=true){normalizeState();state.savedAt=new Date().toISOString();try{localStorage.setItem(storageKeyForProfile(),JSON.stringify(state));q('saveStatus').textContent=`gespeichert ${fmtTime()}`;if(show)toast('Haus-Pikett gespeichert','ok');}catch(e){console.warn(e);if(show)toast('Speichern nicht möglich','bad');}}
+function readGroupState(group){const preferred=activeReadProfile();const profiles=profileOrderForGroup(group.id,preferred);let firstObj=null,firstKey=groupStorageKey(group.id,preferred),firstProfile=preferred,checked=[];for(const profile of profiles){const key=groupStorageKey(group.id,profile);checked.push(`${profileLabel(profile)}: ${key}`);let obj=null;try{const raw=localStorage.getItem(key);if(raw)obj=JSON.parse(raw);}catch(e){console.warn(e);}if(obj&&!firstObj){firstObj=obj;firstKey=key;firstProfile=profile;}if(obj&&Array.isArray(obj.employees)&&obj.employees.length){return {group,key,state:obj,found:true,employees:obj.employees,plan:obj.plan||{},duties:Array.isArray(obj.duties)?obj.duties:[],savedAt:obj.savedAt||'',profile,preferredProfile:preferred,checkedProfiles:profiles,checkedKeys:checked,autoFound:profile!==preferred};}}const obj=firstObj;return {group,key:firstKey,state:obj,found:!!obj,employees:Array.isArray(obj?.employees)?obj.employees:[],plan:obj?.plan||{},duties:Array.isArray(obj?.duties)?obj.duties:[],savedAt:obj?.savedAt||'',profile:firstProfile,preferredProfile:preferred,checkedProfiles:profiles,checkedKeys:checked,autoFound:firstProfile!==preferred};}
+function reloadGroupData(show=true){groupStates={};GROUPS.forEach(g=>groupStates[g.id]=readGroupState(g));syncGroupPlanPikett(false);if(show)toast('Gruppendaten neu gelesen · Pikett aus Gruppenplan übernommen','ok');renderAll();}
+function groupState(id){const group=GROUPS.find(g=>g.id===id);return group?(groupStates[id]||readGroupState(group)):{group:{id,name:id},found:false,employees:[],plan:{},duties:[],savedAt:'',profile:activeReadProfile(),key:''};}
+function groupEnabled(id){return !!state.includedGroups?.[id];}
+function setGroupEnabled(id,checked){state.includedGroups[id]=!!checked;syncGroupPlanPikett(false);saveState(false);resetFairnessCache();renderGroupChecks();renderPlan();renderDetail();toast(checked?`${groupName(id)} eingeschlossen`:`${groupName(id)} ausgeschlossen`,'ok');}
+function groupName(id){return GROUPS.find(g=>g.id===id)?.name||id;}
+function groupAssignmentCount(id){return Object.values(state.plan||{}).filter(x=>x&&x.groupId===id&&x.month===monthKey()).length;}
+function activeGroups(){return GROUPS.filter(g=>groupEnabled(g.id));}
+function renderGroupChecks(){const el=q('groupChecks');if(!el)return;el.innerHTML=GROUPS.map(g=>{const on=groupEnabled(g.id);const info=groupState(g.id);const count=info.employees.length;const saved=info.savedAt?new Date(info.savedAt).toLocaleString('de-CH'):'';const note=g.note?` · ${g.note}`:'';const prof=profileLabel(info.profile||activeReadProfile());const auto=info.autoFound?' · automatisch gefunden':'';return `<label class="groupcheck ${on?'on':'off'}"><input type="checkbox" ${on?'checked':''} onchange="setGroupEnabled('${g.id}',this.checked)"><span><b>${g.name}</b><small style="display:block;color:#667085;font-weight:800;line-height:1.25">${on?'wird für Vorschläge gelesen':'ausgeschlossen'}${note}<br>${info.found?`${count} Mitarbeitende${auto}${saved?' · '+esc(saved):''}`:`keine Browserdaten gefunden in neutral/PC/Handy`}</small></span></label>`;}).join('');}
+function renderAll(){syncGroupPlanPikett(false);resetFairnessCache();q('monthSelect').value=state.selectedMonth;q('yearSelect').value=state.selectedYear;q('profileSelect').value=currentProfile();q('readProfileSelect').value=state.readProfile||'same';renderGroupChecks();renderPlan();renderPikettKontrolle();renderDetail();renderSourceInfo();}
+function dutyFor(info,code){return (info.duties||[]).find(d=>d.code===code)||null;}
+function entryFor(info,emp,date){return info.plan?.[entryKey(emp.id,date)]||null;}
+function empActiveOn(emp,date){if(emp.active===false)return false;if(emp.activeFrom&&date<emp.activeFrom)return false;if(emp.activeUntil&&date>emp.activeUntil)return false;return true;}
+function entryCode(e){return String((e&&!e.removed)?(e.code||''):'').toUpperCase();}
+function entryLabel(e){if(!e||e.removed||!e.code)return 'frei';let s=String(e.code||'').toUpperCase();if(e.teamMeetingAddon)s+=` + ${e.teamMeetingAddon}`;if(e.officeAddon)s+=' + Büro';return s;}
+function monthKeyForDate(date){return String(date||'').slice(0,7);}
+function groupRuleOn(info,key){const toggles=info?.state?.ruleToggles;return !toggles||toggles[key]!==false;}
+function groupMonthIsFixed(info,date){return !!info?.state?.lockedMonths?.[monthKeyForDate(date)];}
+function groupDateIsFrozen(info,date){const until=info?.state?.globalPlanFreezes?.[monthKeyForDate(date)]||'';return !!(until&&date<=until);}
+function groupHolidayName(info,date){
+  const lines=Array.isArray(info?.state?.holidays)?info.state.holidays:[];
+  for(const line of lines){const m=String(line||'').match(/^(\d{4}-\d{2}-\d{2})\s*(.*)$/);if(m&&m[1]===date)return m[2]||'Feiertag';}
+  return '';
+}
+function groupInSchoolHoliday(info,date){
+  const d=parseDate(date);
+  const lines=Array.isArray(info?.state?.schoolHolidays)?info.state.schoolHolidays:[];
+  return lines.some(line=>{const m=String(line||'').match(/(\d{4}-\d{2}-\d{2})\s+bis\s+(\d{4}-\d{2}-\d{2})/);return !!(m&&d>=parseDate(m[1])&&d<=parseDate(m[2]));});
+}
+function dayListHas(list,day){return Array.isArray(list)&&list.includes(day);}
+function schoolProtectionReason(info,emp,date){
+  if(!groupRuleOn(info,'schoolAuto'))return '';
+  const wd=WEEKDAYS[parseDate(date).getDay()];
+  const schoolRules=info?.state?.rules?.school||{};
+  const noSunday=schoolRules.noSunday!==false;
+  const noHolidays=schoolRules.noHolidays!==false;
+  const noSchoolHolidays=schoolRules.noBaselSchoolHolidays!==false;
+  if(noSunday&&wd==='Sonntag')return '';
+  if(noHolidays&&groupHolidayName(info,date))return '';
+  if(noSchoolHolidays&&groupInSchoolHoliday(info,date))return '';
+  if(dayListHas(emp?.schoolDays,wd))return 'Schule geschützt';
+  if(dayListHas(emp?.schoolFreeDays,wd))return 'Schule Freizeit geschützt';
+  return '';
+}
+function isSickEntry(e){const code=entryCode(e);return !!(e&&!e.removed&&(code==='KR'||code==='KA'||e.sickRange||e.sickFrom||e.sickTo));}
+function entryHardBlockReason(e){
+  if(!e||e.removed)return '';
+  const code=entryCode(e);
+  if(e.fixed||e.hardFrozen||e.globalFrozen||e.lockedEmpty)return `fixiert: ${entryLabel(e)}`;
+  if(!code)return '';
+  const map={
+    FR:'frei',WF:'Wunschfrei',KGL:'Kompensation GLAZ',KF:'Kompensation Feiertag',FER:'Ferien',
+    KR:'krank',KA:'krank/KA',SCH:'Schule',SCHF:'Schule Freizeit',ÜK:'Ausbildung/ÜK',UEK:'Ausbildung/ÜK',
+    WB:'Weiterbildung','WB%':'Weiterbildung',SK:'Sitzung',VD:'Versorgungsdienst',P:'bereits Pikett im Gruppenplan'
+  };
+  return map[code]||`hat ${entryLabel(e)} im Gruppenplan`;
+}
+function candidateBlockedByEntry(code){return !!entryHardBlockReason({code});}
+function hardProtectionReasonsForPerson(c,date){
+  const pk=personKey(c),reasons=[];
+  activeGroups().forEach(group=>{
+    const info=groupState(group.id);if(!info.found)return;
+    (info.employees||[]).forEach(emp=>{
+      const test={groupId:group.id,empId:emp.id,name:emp.name||emp.id};test.personKey=personKey(test);
+      if(test.personKey!==pk)return;
+      const e=entryFor(info,emp,date);
+      const er=entryHardBlockReason(e);if(er)reasons.push(`${group.name}: ${er}`);
+      const sr=schoolProtectionReason(info,emp,date);if(sr)reasons.push(`${group.name}: ${sr}`);
+      if(groupMonthIsFixed(info,date))reasons.push(`${group.name}: Monat fixiert`);
+      if(groupDateIsFrozen(info,date))reasons.push(`${group.name}: Plan bis ${info.state.globalPlanFreezes[monthKeyForDate(date)]} eingefroren`);
+    });
+  });
+  return [...new Set(reasons)];
+}
+function personSickInActiveGroups(c,date){
+  const pk=personKey(c);
+  return activeGroups().some(group=>{
+    const info=groupState(group.id);
+    if(!info.found)return false;
+    return (info.employees||[]).some(emp=>{
+      const test={groupId:group.id,empId:emp.id,name:emp.name||emp.id};
+      test.personKey=personKey(test);
+      return test.personKey===pk&&isSickEntry(entryFor(info,emp,date));
+    });
+  });
+}
+function resetFairnessCache(){_fairPeopleCache=null;_fairnessTargetCache=null;_yearFairnessTargetCache=null;}
+let _fairPeopleCache=null,_fairnessTargetCache=null,_yearFairnessTargetCache=null;
+function centralKey(c){return `${c.groupId}__${c.empId}`;}
+function personKey(c){return normalizeName(c.name)||centralKey(c);}
+function pikettMonthCount(c){const pk=personKey(c);return Object.values(state.plan||{}).filter(x=>x&&x.personKey===pk&&x.month===monthKey()).length;}
+function assignmentDateForCount(key,x){const d=String(x?.date||key||'');return validISODate(d)?d:'';}
+function pikettYearCount(c){
+  const pk=typeof c==='string'?c:personKey(c||{});
+  const y=String(state.selectedYear||'');
+  if(!pk||!y)return 0;
+  return Object.entries(state.plan||{}).filter(([key,x])=>{
+    const d=assignmentDateForCount(key,x);
+    return !!(x&&x.personKey===pk&&d.slice(0,4)===y);
+  }).length;
+}
+function pikettYearCountExcept(personOrEntry,date){
+  const pk=typeof personOrEntry==='string'?personOrEntry:personKey(personOrEntry||{});
+  const y=String(state.selectedYear||'');
+  if(!pk||!y)return 0;
+  return Object.entries(state.plan||{}).filter(([key,x])=>{
+    const d=assignmentDateForCount(key,x);
+    return !!(d!==date&&x&&x.personKey===pk&&d.slice(0,4)===y);
+  }).length;
+}
+function pikettMonthCountExcept(personOrEntry,date){
+  const pk=typeof personOrEntry==='string'?personOrEntry:personKey(personOrEntry||{});
+  return Object.entries(state.plan||{}).filter(([d,x])=>d!==date&&x&&x.personKey===pk&&x.month===monthKey()).length;
+}
+function pikettGroupMonthCount(groupId){return Object.values(state.plan||{}).filter(x=>x&&x.groupId===groupId&&x.month===monthKey()).length;}
+function pikettGroupMonthCountExcept(groupId,date){return Object.entries(state.plan||{}).filter(([d,x])=>d!==date&&x&&x.groupId===groupId&&x.month===monthKey()).length;}
+
+function isGroupPikettEntry(e){return !!(e&&!e.removed&&String(e.code||'').toUpperCase()==='P');}
+function chooseGroupPlanPikettForDate(date,found){
+  return [...(found||[])].sort((a,b)=>
+    pikettMonthCountExcept(a.personKey,date)-pikettMonthCountExcept(b.personKey,date)||
+    pikettYearCountExcept(a.personKey,date)-pikettYearCountExcept(b.personKey,date)||
+    pikettGroupMonthCountExcept(a.groupId,date)-pikettGroupMonthCountExcept(b.groupId,date)||
+    (parseFloat(a.pct||0)||0)-(parseFloat(b.pct||0)||0)||
+    String(a.groupName||'').localeCompare(String(b.groupName||''))||
+    String(a.empName||'').localeCompare(String(b.empName||''))
+  )[0]||null;
+}
+function groupPikettAssignmentsForDate(date){
+  const out=[];
+  activeGroups().forEach(group=>{
+    const info=groupState(group.id);
+    if(!info.found)return;
+    (info.employees||[]).forEach(emp=>{
+      const e=entryFor(info,emp,date);
+      if(!isGroupPikettEntry(e))return;
+      const name=emp.name||emp.id;
+      const c={groupId:group.id,groupName:group.name,empId:emp.id,name,pct:parseFloat(emp.pct||0)||0,entry:e,entryCode:'P'};
+      c.key=centralKey(c);c.personKey=personKey(c);
+      if(personSickInActiveGroups(c,date))return;
+      out.push({date,month:monthKey(),empId:emp.id,empName:name,groupId:group.id,groupName:group.name,personKey:c.personKey,pct:c.pct||0,sourceEntry:'P',fromGroupPlan:true,groupProfile:info.profile,groupStorageKey:info.key,createdAt:new Date().toISOString()});
+    });
+  });
+  return out.sort((a,b)=>a.groupName.localeCompare(b.groupName)||a.empName.localeCompare(b.empName));
+}
+function syncGroupPlanPikett(show=false){
+  if(!state||!state.plan||!dates.length)return 0;
+  let changed=0,removed=0,conflicts=0,keptManual=0,unchanged=0;
+  const rows=[];
+  dates.forEach(date=>{
+    const found=groupPikettAssignmentsForDate(date);
+    const old=state.plan[date];
+    if(found.length){
+      const chosen=chooseGroupPlanPikettForDate(date,found)||found[0];
+      const names=found.map(x=>`${x.empName} · ${x.groupName}`);
+      const next={...chosen,groupPlanCount:found.length,groupPlanConflict:found.length>1,groupPlanNames:names,groupPlanChosenBy:found.length>1?'fairness-month-year':'single-group-p',syncedAt:new Date().toISOString()};
+      if(found.length>1)conflicts++;
+      if(!old||old.fromGroupPlan){
+        const comparableOld=old?`${old.personKey}|${old.groupId}|${old.groupPlanCount||1}`:'';
+        const comparableNew=`${next.personKey}|${next.groupId}|${next.groupPlanCount||1}`;
+        if(comparableOld!==comparableNew){
+          state.plan[date]=next;
+          changed++;
+          rows.push(`${date}: übernommen · ${chosen.empName} · ${chosen.groupName}${found.length>1?` · ${found.length} P gefunden, gewählt nach Monat/Jahr`:''}`);
+        }else{
+          state.plan[date]={...old,...next,createdAt:old.createdAt||next.createdAt};
+          unchanged++;
+          if(show&&found.length>1)rows.push(`${date}: unverändert · ${chosen.empName} · mehrere P, Fairness bestätigt`);
+        }
+      }else if(!found.some(x=>x.personKey===old.personKey&&x.groupId===old.groupId)){
+        old.groupPlanConflict=true;
+        old.groupPlanNames=names;
+        old.groupPlanChosenName=`${chosen.empName} · ${chosen.groupName}`;
+        keptManual++;
+        rows.push(`${date}: manuelles Haus-Pikett belassen · Gruppenplan hätte ${chosen.empName} · ${chosen.groupName}`);
+      }else{
+        unchanged++;
+        if(show)rows.push(`${date}: bereits passend · ${old.empName||chosen.empName} · ${old.groupName||chosen.groupName}`);
+      }
+    }else if(old&&old.fromGroupPlan){
+      delete state.plan[date];
+      removed++;
+      rows.push(`${date}: entfernt · kein P mehr im Gruppenplan`);
+    }
+  });
+  if(changed||removed||keptManual){saveState(false);}
+  if(show){
+    const cls=keptManual?'yellow':(conflicts?'yellow':'green');
+    const detail=rows.length?`<div class="softline" style="margin-top:8px">${rows.slice(0,35).map(esc).join('<br>')}${rows.length>35?'<br>…':''}</div>`:'<div class="mini" style="margin-top:8px">Keine Änderungen nötig.</div>';
+    writeBackMessage(`<b>P aus Gruppenplänen übernehmen</b><div class="mini">übernommen/geändert: ${changed} · unverändert: ${unchanged} · entfernt: ${removed} · manuell belassen: ${keptManual} · Doppel-P-Tage: ${conflicts}</div>${detail}`,cls);
+    toast(`Aus Gruppen übernommen: ${changed}${removed?` · entfernt: ${removed}`:''}${keptManual?` · manuell belassen: ${keptManual}`:''}${conflicts?` · Doppel-P: ${conflicts}`:''}`,cls==='green'?'ok':'warn');
+  }
+  return changed;
+}
+function syncGroupPlanPikettManual(){syncGroupPlanPikett(true);renderAll();}
+
+function basicPikettAllowed(group,info,emp,date){
+  if(!group||!info||!info.found||!emp)return false;
+  const c={groupId:group.id,groupName:group.name,empId:emp.id,name:emp.name||emp.id};
+  c.key=centralKey(c);c.personKey=personKey(c);
+  if(hardProtectionReasonsForPerson(c,date).length)return false;
+  if(!empActiveOn(emp,date))return false;
+  const pct=parseFloat(emp.pct||0)||0;
+  if(pct>=90)return false;
+  return true;
+}
+function fairPeople(){
+  if(_fairPeopleCache)return _fairPeopleCache;
+  const map={};
+  activeGroups().forEach(group=>{
+    const info=groupState(group.id);
+    if(!info.found)return;
+    (info.employees||[]).forEach(emp=>{
+      const name=emp.name||emp.id;
+      const pk=normalizeName(name)||`${group.id}__${emp.id}`;
+      if(!map[pk])map[pk]={personKey:pk,name,groups:new Set(),eligibleDays:0,count:0,yearCount:0};
+      map[pk].groups.add(group.name);
+      dates.forEach(date=>{if(basicPikettAllowed(group,info,emp,date))map[pk].eligibleDays++;});
+    });
+  });
+  Object.entries(state.plan||{}).forEach(([key,x])=>{
+    if(!x||!x.personKey||!map[x.personKey])return;
+    if(x.month===monthKey())map[x.personKey].count++;
+    const d=assignmentDateForCount(key,x);
+    if(d.slice(0,4)===String(state.selectedYear||''))map[x.personKey].yearCount++;
+  });
+  _fairPeopleCache=Object.values(map).filter(x=>x.eligibleDays>0).map(x=>({...x,groups:[...x.groups],yearCount:x.yearCount||0}));
+  return _fairPeopleCache;
+}
+function fairnessTargets(){
+  if(_fairnessTargetCache)return _fairnessTargetCache;
+  const people=fairPeople();
+  const n=people.length;
+  if(!n)return _fairnessTargetCache={people:[],min:0,max:0,avg:0,days:dates.length,spread:0,ok:true};
+  const avg=dates.length/n;
+  const min=Math.floor(avg);
+  const max=Math.ceil(avg);
+  const counts=people.map(p=>p.count);
+  const low=counts.length?Math.min(...counts):0;
+  const high=counts.length?Math.max(...counts):0;
+  return _fairnessTargetCache={people,min,max,avg,days:dates.length,spread:high-low,ok:(high-low)<=1};
+}
+function yearFairnessTargets(){
+  if(_yearFairnessTargetCache)return _yearFairnessTargetCache;
+  const people=fairPeople();
+  const n=people.length;
+  if(!n)return _yearFairnessTargetCache={people:[],min:0,max:0,avg:0,total:0,spread:0,ok:true};
+  const total=people.reduce((sum,p)=>sum+(p.yearCount||0),0);
+  const avg=total/n;
+  const min=Math.floor(avg);
+  const max=Math.ceil(avg);
+  const counts=people.map(p=>p.yearCount||0);
+  const low=counts.length?Math.min(...counts):0;
+  const high=counts.length?Math.max(...counts):0;
+  return _yearFairnessTargetCache={people,min,max,avg,total,spread:high-low,ok:(high-low)<=1};
+}
+function fairnessForPerson(c){
+  const t=fairnessTargets();
+  const cnt=pikettMonthCount(c);
+  const yearCnt=pikettYearCount(c);
+  return {count:cnt,yearCount:yearCnt,min:t.min,max:t.max,avg:t.avg,spread:t.spread,people:t.people.length};
+}
+function fairnessSummaryText(){
+  const t=fairnessTargets();
+  if(!t.people.length)return '—';
+  return `${t.min}-${t.max}×`;
+}
+function yearFairnessSummaryText(){
+  const t=yearFairnessTargets();
+  if(!t.people.length)return '—';
+  return `${t.min}-${t.max}×`;
+}
+
+function assignedOnDate(date){return state.plan?.[date]||null;}
+function weekendAssigned(c,date){const ws=weekendStartISO(date);return [ws,shiftDateISO(ws,1)].some(d=>state.plan[d]?.personKey===personKey(c));}
+function adjacentWeekendAssigned(c,date){const ws=weekendStartISO(date);return [shiftDateISO(ws,-7),shiftDateISO(ws,7)].some(w=>[w,shiftDateISO(w,1)].some(d=>state.plan[d]?.personKey===personKey(c)));}
+function previousNextAssigned(c,date){return state.plan[shiftDateISO(date,-1)]?.personKey===personKey(c)||state.plan[shiftDateISO(date,1)]?.personKey===personKey(c);}
+
+function isoDayDiff(a,b){return Math.round((parseDate(b)-parseDate(a))/86400000);}
+function pikettDatesForPersonYear(pk,year=state.selectedYear){
+  const set=new Set();
+  Object.entries(state.plan||{}).forEach(([key,x])=>{
+    const d=assignmentDateForCount(key,x);
+    if(!x||!x.personKey||x.personKey!==pk||!validISODate(d)||d.slice(0,4)!==String(year))return;
+    set.add(d);
+  });
+  return [...set].sort();
+}
+function pikettSpacingCheckForPerson(pk,date){
+  if(!pk||!validISODate(date))return null;
+  const all=new Set(pikettDatesForPersonYear(pk,String(date).slice(0,4)));
+  all.add(date);
+  const list=[...all].sort();
+  const idx=list.indexOf(date);
+  if(idx<0)return null;
+  let start=idx,end=idx;
+  while(start>0&&isoDayDiff(list[start-1],list[start])===1)start--;
+  while(end<list.length-1&&isoDayDiff(list[end],list[end+1])===1)end++;
+  const prev=list[start-1]||'';
+  const next=list[end+1]||'';
+  if(prev){const gap=isoDayDiff(prev,list[start]);if(gap>1&&gap<14)return {prev,next:'',gap,blockStart:list[start],blockEnd:list[end]};}
+  if(next){const gap=isoDayDiff(list[end],next);if(gap>1&&gap<14)return {prev:'',next,gap,blockStart:list[start],blockEnd:list[end]};}
+  return null;
+}
+function pikettSpacingReason(c,date){
+  const pk=typeof c==='string'?c:personKey(c||{});
+  const v=pikettSpacingCheckForPerson(pk,date);
+  if(!v)return '';
+  const other=v.prev||v.next;
+  return `Pikett-Abstand ${v.gap} Tage zu ${other}; erlaubt ist direkt nacheinander oder mindestens 14 Tage Abstand im Jahr`;
+}
+function groupEntryCountsForPikettSequence(info,e){
+  if(!e||e.removed)return false;
+  const code=entryCode(e);
+  if(['','FR','WF','KGL','KF','FER','KR','KA','OFFEN'].includes(code))return false;
+  if(code==='P')return true;
+  const d=dutyFor(info,code);
+  if(d&&(d.countsAsWork||d.countsForSequence||d.countsForCoverage))return true;
+  if(['SCH','SCHF','ÜK','UEK','WB','WB%','SK','VD','TS','TSK','TSN','B','G'].includes(code))return true;
+  const h=parseFloat(e.manualHours??e.hours??0);
+  return Number.isFinite(h)&&h>0;
+}
+function groupSequenceEntryForCandidate(info,emp,personPk,checkDate,candidateDate){
+  if(checkDate===candidateDate)return {code:'P'};
+  const central=state.plan?.[checkDate];
+  if(central&&central.personKey===personPk)return {code:'P'};
+  return entryFor(info,emp,checkDate);
+}
+function housePikettWorkSequenceReason(c,date){
+  if(!c||!validISODate(date))return '';
+  const max=5,minFree=2,pk=personKey(c);
+  const from=shiftDateISO(date,-(max+minFree+4));
+  const to=shiftDateISO(date,max+minFree+4);
+  const reasons=[];
+  activeGroups().forEach(group=>{
+    const info=groupState(group.id);if(!info.found)return;
+    (info.employees||[]).forEach(emp=>{
+      const test={groupId:group.id,empId:emp.id,name:emp.name||emp.id};test.personKey=personKey(test);
+      if(test.personKey!==pk)return;
+      const arr=[];let guard=0;
+      for(let d=from;validISODate(d)&&d<=to&&guard<90;d=shiftDateISO(d,1),guard++){
+        const e=groupSequenceEntryForCandidate(info,emp,pk,d,date);
+        arr.push({date:d,work:groupEntryCountsForPikettSequence(info,e)});
+      }
+      for(let i=0;i<arr.length;){
+        if(!arr[i].work){i++;continue;}
+        const start=i;
+        while(i<arr.length&&arr[i].work)i++;
+        const len=i-start;
+        const runDates=arr.slice(start,i).map(x=>x.date);
+        if(!runDates.includes(date))continue;
+        if(len>max){reasons.push(`${group.name}: Pikett würde ${len} Tage am Stück ergeben (${arr[start].date} bis ${arr[i-1].date})`);continue;}
+        if(len>=max){
+          for(let j=0;j<minFree;j++){
+            const next=arr[i+j];
+            if(next&&next.work){reasons.push(`${group.name}: nach 5 Tagen müssen 2 Tage frei bleiben; nächster Arbeitstag ${next.date}`);break;}
+          }
+        }
+      }
+    });
+  });
+  return [...new Set(reasons)].join(' · ');
+}
+
+function candidateFor(group,info,emp,date){
+ const e=entryFor(info,emp,date);const code=entryCode(e);const c={groupId:group.id,groupName:group.name,empId:emp.id,name:emp.name||emp.id,pct:parseFloat(emp.pct||0)||0,entry:e,entryCode:code,blocked:false,warnings:[],reasons:[],score:1000};
+ c.key=centralKey(c);c.personKey=personKey(c);
+ if(!info.found){c.blocked=true;c.reasons.push('Gruppendaten nicht geladen');return c;}
+ const hardReasons=hardProtectionReasonsForPerson(c,date);
+ if(hardReasons.length){c.blocked=true;c.reasons.push(...hardReasons);}
+ if(!empActiveOn(emp,date)){c.blocked=true;c.reasons.push('nicht aktiv an diesem Datum');}
+ if(c.pct>=90){c.blocked=true;c.reasons.push('90% oder mehr · für Pikett gesperrt');}
+ const spacingWhy=pikettSpacingReason(c,date);if(spacingWhy){c.blocked=true;c.reasons.push(spacingWhy);}
+ const seqWhy=housePikettWorkSequenceReason(c,date);if(seqWhy){c.blocked=true;c.reasons.push(seqWhy);}
+ if(!c.blocked){c.score+=80;}
+ const fair=fairnessForPerson(c);c.monthCnt=fair.count;c.yearCnt=fair.yearCount;c.fairMin=fair.min;c.fairMax=fair.max;c.fairPeople=fair.people;
+ if(fair.people){
+   if(fair.count<fair.min)c.score+=9000;
+   if(fair.count>=fair.max&&fair.max>0){c.warnings.push(`Fairness-Ziel ${fair.max}× erreicht · nur nehmen, wenn sonst niemand passt`);c.score-=6000;}
+   c.score-=fair.count*3000;
+ }
+ const gcnt=pikettGroupMonthCount(group.id);c.groupCnt=gcnt;c.score-=gcnt*35;
+ if(isWeekend(date)&&adjacentWeekendAssigned(c,date)){c.warnings.push('angrenzendes Wochenende schon Pikett');c.score-=120;}
+ if(previousNextAssigned(c,date)){c.warnings.push('Pikett am Vortag/Folgetag');c.score-=65;}
+ c.score+=Math.max(0,90-c.pct)*2;
+ return c;}
+function allCandidates(date){const out=[];activeGroups().forEach(group=>{const info=groupState(group.id);(info.employees||[]).forEach(emp=>out.push(candidateFor(group,info,emp,date)));});return out.sort((a,b)=>Number(a.blocked)-Number(b.blocked)||(a.monthCnt??99)-(b.monthCnt??99)||(a.yearCnt??99)-(b.yearCnt??99)||(a.groupCnt??99)-(b.groupCnt??99)||b.score-a.score||a.groupName.localeCompare(b.groupName)||a.name.localeCompare(b.name));}
+function bestCandidate(date){const cands=allCandidates(date).filter(c=>!c.blocked);if(!cands.length)return null;return cands.find(c=>!c.fairMax||c.monthCnt<c.fairMax)||cands[0];}
+function planEntryFromCandidate(date,c,extra={}){return {date,month:monthKey(),empId:c.empId,empName:c.name,groupId:c.groupId,groupName:c.groupName,personKey:c.personKey,sourceEntry:c.entryCode||'',fairCountBefore:c.monthCnt||0,fairTarget:c.fairMax||0,createdAt:new Date().toISOString(),...extra};}
+function assignCandidate(date,c){if(!c||c.blocked)return toast('Dieser Vorschlag ist gesperrt','bad');state.plan[date]=planEntryFromCandidate(date,c);saveState(false);resetFairnessCache();selectedDate=date;renderPlan();renderDetail();toast(`${c.name} · ${c.groupName} als Pikett gesetzt`,'ok');}
+function clearDay(date){const old=state.plan?.[date];if(old&&old.fromGroupPlan){toast('Dieser Pikett kommt aus dem Gruppenplan. Bitte P im Gruppenplan löschen, dann Gruppendaten neu lesen.','warn');return;}delete state.plan[date];saveState(false);resetFairnessCache();selectedDate=date;renderPlan();renderDetail();toast(`${date} freigegeben`,'warn');}
+function autoFillMonth(){let n=0,fail=0;dates.forEach(date=>{if(state.plan[date])return;const c=bestCandidate(date);if(c){state.plan[date]=planEntryFromCandidate(date,c,{auto:true});n++;}else fail++;});saveState(false);renderAll();toast(`Vorschläge gesetzt: ${n}${fail?` · offen: ${fail}`:''}`,fail?'warn':'ok');}
+function clearMonth(){if(!confirm('Haus-Pikett für diesen Monat löschen?'))return;dates.forEach(d=>delete state.plan[d]);saveState(false);renderAll();toast('Monat geleert','warn');}
+function statusForDate(date){const a=assignedOnDate(date);if(!a)return {cls:'red',text:'offen'};if(a.fromGroupPlan){if(a.groupPlanConflict)return {cls:'yellow',text:'mehrere P im Gruppenplan'};return {cls:'green',text:'aus Gruppenplan'};}if(a.groupPlanConflict)return {cls:'yellow',text:'Abweichung zum Gruppenplan'};const c=allCandidates(date).find(x=>x.personKey===a.personKey&&x.groupId===a.groupId);if(c?.blocked)return {cls:'red',text:'Regel: '+c.reasons.join(', ')};if(c?.fairMax&&pikettMonthCount(c)>c.fairMax)return {cls:'yellow',text:'Fairness prüfen'};return {cls:'green',text:'ok'};}
+function renderPlan(){
+  const thead=q('planTable').querySelector('thead'),tbody=q('planTable').querySelector('tbody');
+  thead.innerHTML='<tr><th>Datum</th><th>Haus-Pikett</th><th>Wohngruppe</th><th>Status</th><th class="no-print">Aktion</th></tr>';
+  let planned=0,open=0,candsTotal=0,groupPlan=0,warnings=0;
+  tbody.innerHTML=dates.map(date=>{
+    const dt=parseDate(date),wd=WEEKDAYS[dt.getDay()].slice(0,2);
+    const a=assignedOnDate(date);
+    if(a){planned++;if(a.fromGroupPlan)groupPlan++;}else open++;
+    const st=statusForDate(date);
+    if(st.cls==='yellow')warnings++;
+    const cands=allCandidates(date);
+    candsTotal+=cands.filter(c=>!c.blocked).length;
+    const rowCls=`${isWeekend(date)?'weekend ':''}${date===todayISO()?'today ':''}${selectedDate===date?'selected ':''}${a?.fromGroupPlan?'fromplan ':''}${a?'okrow':'openrow'}`;
+    const dayHtml=`<div class="day-badge"><span class="day-num">${dt.getDate()}</span><span class="day-wd">${wd}</span><span class="day-full">${date.slice(5)}</span></div>`;
+    const assHtml=a?`<div class="pikett-person"><span class="code p">P</span><span>${esc(a.empName)}<small>${a.fromGroupPlan?'aus Gruppenplan übernommen':'manuell gesetzt'}</small></span>${a.fromGroupPlan?' <span class="pill blue">Plan</span>':''}</div>`:'<span class="pill red pikett-empty">offen</span>';
+    return `<tr class="${rowCls}" onclick="selectDate('${date}')"><td class="daycell">${dayHtml}</td><td>${assHtml}</td><td>${a?esc(a.groupName):'—'}</td><td><span class="pill ${st.cls}">${esc(st.text)}</span></td><td class="no-print actions"><button onclick="event.stopPropagation();selectDate('${date}')">Vorschläge</button>${a?`<button class="danger" onclick="event.stopPropagation();clearDay('${date}')">löschen</button>`:`<button class="okbtn" onclick="event.stopPropagation();quickAssignBest('${date}')">besten setzen</button>`}</td></tr>`;
+  }).join('');
+  const set=(id,val)=>{const el=q(id);if(el)el.textContent=val;};
+  const monthLabel=`${MONTHS[state.selectedMonth-1]||''} ${state.selectedYear||''}`.trim();
+  set('sMonth',monthLabel||'—');set('sMonthPill',monthLabel||'Monat');set('sDays',dates.length);set('sPlanned',planned);set('sOpen',open);set('sGroupPlan',groupPlan);set('sWarn',warnings);set('sGroups',activeGroups().length);set('sCands',candsTotal);set('sFair',fairnessSummaryText());set('sYearFair',yearFairnessSummaryText());
+  const read=q('readStatus');if(read)read.textContent=`P aus Gruppenplan wird übernommen · ${activeGroups().map(g=>g.name).join(', ')||'keine Gruppe'}`;
+}
+function quickAssignBest(date){const c=bestCandidate(date);if(!c)return toast('Kein freier Vorschlag gefunden','bad');assignCandidate(date,c);}
+function selectDate(date){selectedDate=date;renderPlan();renderDetail();}
+
+function bestPerActiveGroup(date){return activeGroups().map(group=>{const cands=allCandidates(date).filter(c=>c.groupId===group.id&&!c.blocked);return {group,best:cands[0]||null,info:groupState(group.id),blocked:allCandidates(date).filter(c=>c.groupId===group.id)};});}
+function renderGroupBestSection(date){const rows=bestPerActiveGroup(date);if(!rows.length)return '';return `<div class="detail-subtitle">Beste freie Person je aktiver Gruppe</div><div class="group-best-list">${rows.map(r=>{if(!r.info.found)return `<div class="group-best-card empty"><b>${esc(r.group.name)}</b><div>Keine Gruppendaten gefunden.</div><div class="source-profile">Gesucht: Speicher dieses Geräts und ältere Stände</div></div>`;if(!r.best)return `<div class="group-best-card empty"><b>${esc(r.group.name)}</b><div>Keine freie Person an diesem Tag.</div><div class="source-profile">${r.info.employees.length} Mitarbeitende geprüft</div></div>`;return `<div class="group-best-card"><b>${esc(r.group.name)}</b><div>${esc(r.best.name)} · ${r.best.pct||0}%</div><div class="source-profile">Pikett Monat ${r.best.monthCnt}× · Jahr ${r.best.yearCnt||0}×${r.info.autoFound?' · automatisch gefunden':''}</div><div class="actions" style="margin-top:6px"><button class="primary" onclick="assignCandidate('${date}', candidateByKey('${esc(r.best.key)}','${date}'))">setzen</button></div></div>`;}).join('')}</div>`;}
+
+function candidateDecisionReason(c){
+  if(!c)return 'kein Vorschlag vorhanden';
+  if(c.blocked)return `gesperrt: ${(c.reasons||[]).join(' · ')||'nicht verfügbar'}`;
+  const parts=[`Pikett Monat ${c.monthCnt||0}×`,`Pikett Jahr ${c.yearCnt??pikettYearCount(c)}×`,`Gruppe ${c.groupCnt||0}×`];
+  if(c.fairMax)parts.push(`Fair-Ziel ${c.fairMin}-${c.fairMax}×`);
+  if(c.warnings&&c.warnings.length)parts.push(`Hinweis: ${c.warnings.join(' · ')}`);
+  else parts.push('frei für Haus-Pikett');
+  return parts.join(' · ');
+}
+function assignedDecisionReason(a,date){
+  if(!a)return '';
+  const c=allCandidates(date).find(x=>x.personKey===a.personKey&&x.groupId===a.groupId);
+  if(a.fromGroupPlan){
+    if(a.groupPlanConflict)return `mehrere P im Gruppenplan gefunden · gewählt nach Fairness: Monat zuerst, Jahr danach · Jahr ${pikettYearCount(a.personKey)}×`;
+    return 'P aus Gruppenplan übernommen';
+  }
+  if(c)return candidateDecisionReason(c);
+  return 'manuell gesetzt · keine automatische Entscheidung';
+}
+function renderDecisionRow(name,group,reason,cls,badge){
+  return `<div class="decision-row ${cls||''}"><div><div class="decision-main">${esc(name||'—')}${group?` · ${esc(group)}`:''}</div><div class="decision-reason">${esc(reason||'—')}</div></div>${badge?`<span class="pill ${badge.cls||'blue'} decision-badge">${esc(badge.text)}</span>`:''}</div>`;
+}
+function renderDecisionBox(date,cands,assigned){
+  const rows=[];
+  if(assigned&&assigned.fromGroupPlan){
+    rows.push(renderDecisionRow(assigned.empName,assigned.groupName,assignedDecisionReason(assigned,date),'chosen',{cls:assigned.groupPlanConflict?'yellow':'green',text:assigned.groupPlanConflict?'gewählt':'übernommen'}));
+    const found=groupPikettAssignmentsForDate(date);
+    const others=found.filter(x=>!(x.personKey===assigned.personKey&&x.groupId===assigned.groupId));
+    others.forEach(x=>rows.push(renderDecisionRow(x.empName,x.groupName,`nicht gewählt · Pikett Monat ${pikettMonthCountExcept(x.personKey,date)}× · Jahr ${pikettYearCountExcept(x.personKey,date)}× · Gruppe ${pikettGroupMonthCountExcept(x.groupId,date)}×`,'manual',{cls:'yellow',text:'Alternative'})));
+    if(!others.length&&assigned.groupPlanNames&&assigned.groupPlanNames.length>1){
+      assigned.groupPlanNames.filter(n=>!String(n).includes(assigned.empName||'')).slice(0,6).forEach(n=>rows.push(renderDecisionRow(n,'','Alternative aus Gruppenplan','manual',{cls:'yellow',text:'Alternative'})));
+    }
+    return `<div class="decision-box"><div class="decision-head"><div><b>Entscheidung</b><small>${assigned.groupPlanConflict?'Mehrere Gruppen hatten P. Gewählt wurde nach Fairness: Monat zuerst, dann Jahr.':'Dieser Eintrag kommt aus dem Gruppenplan.'}</small></div></div><div class="decision-list">${rows.join('')}</div></div>`;
+  }
+  if(assigned){
+    rows.push(renderDecisionRow(assigned.empName,assigned.groupName,assignedDecisionReason(assigned,date),'chosen',{cls:'green',text:assigned.auto?'Auto':'gesetzt'}));
+    return `<div class="decision-box"><div class="decision-head"><div><b>Entscheidung</b><small>Dieser Haus-Pikett-Eintrag wurde gesetzt. Hier siehst du, ob er weiterhin zur Schutz- und Fairnessprüfung passt.</small></div></div><div class="decision-list">${rows.join('')}</div></div>`;
+  }
+  const best=bestCandidate(date);
+  if(best)rows.push(renderDecisionRow(best.name,best.groupName,candidateDecisionReason(best),'chosen',{cls:'green',text:'bester Vorschlag'}));
+  const free=(cands||[]).filter(c=>!c.blocked&&(!best||c.key!==best.key)).slice(0,3);
+  free.forEach(c=>rows.push(renderDecisionRow(c.name,c.groupName,candidateDecisionReason(c),'manual',{cls:'blue',text:'Alternative'})));
+  const blocked=(cands||[]).filter(c=>c.blocked).slice(0,4);
+  blocked.forEach(c=>rows.push(renderDecisionRow(c.name,c.groupName,candidateDecisionReason(c),'blocked',{cls:'yellow',text:'gesperrt'})));
+  if(!rows.length)rows.push(renderDecisionRow('Kein Vorschlag','','Keine aktive Gruppe mit freier Person gefunden.','blocked',{cls:'red',text:'offen'}));
+  return `<div class="decision-box"><div class="decision-head"><div><b>Entscheidung</b><small>Warum diese Person vorgeschlagen wird. Harte Regeln: P zählt zur 5-Tage-Regel; gleiche Person direkt nacheinander oder mindestens 14 Tage Abstand im Jahr. Fairness: zuerst Monat, bei Gleichstand Jahr.</small></div></div><div class="decision-list">${rows.join('')}</div></div>`;
+}
+
+function renderDetail(){const el=q('detailBox');if(!el)return;if(!selectedDate){el.className='detail-box detail-empty';el.innerHTML='<div class="detail-empty-icon">👈</div><div class="detail-empty-title">Tag wählen</div><div class="detail-empty-text">Klicke links im Pikett-Plan auf einen Tag. Danach siehst du hier den Status, die beste Person pro Gruppe und die faire Gesamtliste.</div>';return;}const dt=parseDate(selectedDate);const assigned=assignedOnDate(selectedDate);const cands=allCandidates(selectedDate);const freeCands=cands.filter(c=>!c.blocked);const groupBest=bestPerActiveGroup(selectedDate).filter(r=>r.best).length;let html=`<div class="detail-date-card"><div class="detail-date-main">${WEEKDAYS[dt.getDay()]}, ${dt.getDate()}. ${MONTHS[dt.getMonth()]}</div><div class="detail-date-sub">${selectedDate} · Hausbedarf: genau 1 Pikett · aktive Gruppen: ${activeGroups().length}</div><div class="detail-kpis"><div class="detail-kpi"><span>Status</span><b>${assigned?'geplant':'offen'}</b></div><div class="detail-kpi"><span>freie Personen</span><b>${freeCands.length}</b></div><div class="detail-kpi"><span>Gruppen-Vorschläge</span><b>${groupBest}</b></div></div></div>`;if(assigned){const src=assigned.fromGroupPlan?`<div class="source-profile">aus Gruppenplan übernommen${assigned.groupPlanConflict?` · mehrere P gefunden: ${esc((assigned.groupPlanNames||[]).join(' / '))}`:''}</div>`:'';html+=`<div class="detail-status ${assigned.groupPlanConflict?'yellow':'green'}"><div class="detail-status-title">Geplant</div><div class="detail-status-body"><span class="code p">P</span> ${esc(assigned.empName)} · ${esc(assigned.groupName)}</div>${src}<div class="detail-actions"><button class="danger" onclick="clearDay('${selectedDate}')">Pikett löschen</button></div></div>`;}else{html+=`<div class="detail-status red"><div class="detail-status-title">Noch offen</div><div class="detail-status-body">Setze den besten Vorschlag oder wähle unten manuell eine Person.</div><div class="detail-actions"><button class="okbtn" onclick="quickAssignBest('${selectedDate}')">besten Vorschlag setzen</button></div></div>`;}html+=renderDecisionBox(selectedDate,cands,assigned);html+=renderGroupBestSection(selectedDate);html+=`<div class="detail-subtitle">Faire Gesamtliste</div><div class="candidate-list">${cands.length?cands.map((c,i)=>candidateHtml(c,selectedDate,i===0&&!c.blocked)).join(''):'<div class="issue yellow"><b>Keine Kandidaten</b><div>Bitte mindestens eine Wohngruppe anhaken und Gruppendaten neu lesen.</div></div>'}</div>`;el.className='detail-box';el.innerHTML=html;}
+function candidateHtml(c,date,isBest){const monthCnt=pikettMonthCount(c);const fair=c.fairMax?`${c.fairMin}-${c.fairMax}×`:'—';const msg=c.blocked?c.reasons.join(' · '):(c.warnings.length?c.warnings.join(' · '):'frei für Haus-Pikett');return `<div class="candidate ${c.blocked?'blocked':isBest?'best':''}"><div><div class="candidate-name-row"><span class="candidate-name">${esc(c.name)}</span>${isBest?'<span class="pill blue">fairster Vorschlag</span>':''}</div><div class="candidate-chipline"><span class="candidate-chip">${esc(c.groupName)}</span><span class="candidate-chip">${c.pct||0}%</span><span class="candidate-chip">Gruppenplan: ${esc(entryLabel(c.entry))}</span><span class="candidate-chip ${monthCnt<=1?'good':'warn'}">Pikett Monat: ${monthCnt}×</span><span class="candidate-chip">Pikett Jahr: ${c.yearCnt??pikettYearCount(c)}×</span><span class="candidate-chip">Fair-Ziel Monat: ${esc(fair)}</span></div><div class="candidate-score ${c.blocked?'red':'green'}">${esc(msg)} · Wert ${Math.round(c.score)}</div></div><div class="actions"><button class="primary" ${c.blocked?'disabled':''} onclick="assignCandidate('${date}', candidateByKey('${esc(c.key)}','${date}'))">setzen</button></div></div>`;}
+function candidateByKey(key,date){return allCandidates(date).find(c=>c.key===key)||null;}
+
+function pikettControlDateLabel(date){const dt=parseDate(date);return `${dt.getDate()}. ${MONTHS[dt.getMonth()]} · ${WEEKDAYS[dt.getDay()]}`;}
+function renderPikettKontrolle(){
+  const el=q('pikettCheckBox');if(!el)return;
+  const openRows=[],warnRows=[];
+  const active=activeGroups();
+  if(!active.length)warnRows.push({level:'red',title:'Keine Wohngruppe aktiv',text:'Mindestens eine Wohngruppe anhaken, sonst gibt es keine Kandidaten.'});
+  active.forEach(g=>{const info=groupState(g.id);if(!info.found)warnRows.push({level:'yellow',title:`${g.name} nicht geladen`,text:'Auf diesem Gerät wurde kein passender Gruppenstand gefunden.'});});
+  dates.forEach(date=>{
+    const a=assignedOnDate(date);
+    if(!a){
+      const best=bestCandidate(date);
+      openRows.push({date,title:pikettControlDateLabel(date),best:best?`${best.name} · ${best.groupName} · ${candidateDecisionReason(best)}`:'kein freier Vorschlag'});
+      if(!best)warnRows.push({level:'yellow',title:`${pikettControlDateLabel(date)} ohne Vorschlag`,text:'Für diesen Tag ist keine freie Person aus den aktiven Gruppen verfügbar.'});
+      return;
+    }
+    const st=statusForDate(date);
+    if(st.cls==='yellow'||st.cls==='red')warnRows.push({level:st.cls==='red'?'red':'yellow',title:pikettControlDateLabel(date),text:st.text});
+  });
+  const fair=fairnessTargets();
+  const fairRows=(fair.people||[]).slice().sort((a,b)=>b.count-a.count||b.yearCount-a.yearCount||a.name.localeCompare(b.name)).slice(0,10);
+  const yearFair=yearFairnessTargets();
+  const over=(fair.people||[]).filter(p=>fair.max>0&&p.count>fair.max);
+  if(over.length)warnRows.push({level:'yellow',title:'Fairness über Ziel',text:`${over.map(p=>`${p.name} ${p.count}×`).slice(0,4).join(', ')}${over.length>4?' …':''}`});
+  const openCls=openRows.length?'red':'green';
+  const warnCls=warnRows.some(x=>x.level==='red')?'red':(warnRows.length?'yellow':'green');
+  const openHtml=openRows.length?`<div class="check-list">${openRows.map(r=>`<div class="check-row"><div><b>${esc(r.title)}</b><br><span>${esc(r.best)}</span></div><span class="pill red">offen</span></div>`).join('')}</div>`:`<div class="check-empty">Alle Tage im aktuellen Monat haben ein Haus-Pikett.</div>`;
+  const warnHtml=warnRows.length?`<div class="check-list">${warnRows.map(w=>`<div class="check-row"><div><b>${esc(w.title)}</b><br><span>${esc(w.text)}</span></div><span class="pill ${w.level==='red'?'red':'yellow'}">${w.level==='red'?'Fehler':'Hinweis'}</span></div>`).join('')}</div>`:`<div class="check-empty">Keine roten Fehler und keine gelben Hinweise gefunden.</div>`;
+  const fairHtml=fair.people.length?`<div class="check-note">Monat-Ziel: ${fair.min}-${fair.max}× · Jahr bisher: ${yearFair.min}-${yearFair.max}× · Verteilung Monat: ${fair.ok?'ausgeglichen':'prüfen'}</div><table class="check-fair-table"><thead><tr><th>Name</th><th>Gruppe</th><th>P Monat</th><th>P Jahr</th></tr></thead><tbody>${fairRows.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc((p.groups||[]).join(', '))}</td><td><b class="${fair.max>0&&p.count>fair.max?'fair-warn':'fair-ok'}">${p.count}×</b></td><td><b class="${yearFair.max>0&&(p.yearCount||0)>yearFair.max?'fair-warn':'fair-ok'}">${p.yearCount||0}×</b></td></tr>`).join('')}</tbody></table>`:`<div class="check-empty">Noch keine verfügbaren Kandidaten aus aktiven Gruppen.</div>`;
+  const sourceRows=GROUPS.map(g=>{const info=groupState(g.id);const activeFlag=!!state.activeGroups?.[g.id];return `<div class="check-row"><div><b>${g.name}</b><br><span>${info.found?`${info.employees.length} Mitarbeitende geladen`:'kein Stand gefunden'}</span></div><span class="pill ${activeFlag?'green':'yellow'}">${activeFlag?'aktiv':'aus'}</span></div>`;}).join('');
+  el.innerHTML=`
+    <div class="check-panel ${openCls}"><h3>Offene Tage</h3><div class="check-note">Tage ohne Haus-Pikett und der beste aktuelle Vorschlag.</div>${openHtml}</div>
+    <div class="check-panel ${warnCls}"><h3>Hinweise & Konflikte</h3><div class="check-note">Gelbe Hinweise stoppen den Plan nicht, sollten aber geprüft werden.</div>${warnHtml}</div>
+    <div class="check-panel blue"><h3>Fairness</h3>${fairHtml}</div>
+    <div class="check-panel blue"><h3>Gruppendaten</h3><div class="check-note">Welche Gruppen für Haus-Pikett verwendet werden.</div><div class="check-list">${sourceRows}</div></div>
+  `;
+}
+
+
+function writeBackMessage(html,kind='blue'){
+  const el=q('writeBackStatus');
+  if(!el)return;
+  el.style.display='block';
+  el.className=`issue ${kind}`;
+  el.innerHTML=html;
+}
+function writeHausPikettToGroups(){
+  if(!confirm('Haus-Pikett wirklich in die Gruppenpläne schreiben? Es werden nur P-Einträge geschrieben. Bestehende Dienste, Frei, Ferien, Krank, Schule und fixierte Tage werden nicht überschrieben.'))return;
+  const allowedIds=GROUPS.map(g=>g.id);
+  const stats={written:0,exists:0,noGroup:0,noEmp:0,protected:0,fixed:0,busy:0,errors:0};
+  const rows=[];
+  dates.forEach(date=>{
+    const a=assignedOnDate(date);
+    if(!a||!allowedIds.includes(a.groupId))return;
+    const group=GROUPS.find(g=>g.id===a.groupId);
+    const info=groupState(a.groupId);
+    if(!group||!info||!info.found||!info.state){stats.noGroup++;rows.push(`${date}: ${a.groupName||a.groupId} nicht geladen`);return;}
+    if(groupMonthIsFixed(info,date)||groupDateIsFrozen(info,date)){stats.fixed++;rows.push(`${date}: ${a.groupName} übersprungen · Monat/Tag fixiert`);return;}
+    const emp=(info.employees||[]).find(e=>e.id===a.empId)||(info.employees||[]).find(e=>normalizeName(e.name)===normalizeName(a.empName));
+    if(!emp){stats.noEmp++;rows.push(`${date}: ${a.empName} in ${a.groupName} nicht gefunden`);return;}
+    const c={groupId:group.id,groupName:group.name,empId:emp.id,name:emp.name||a.empName||emp.id,pct:parseFloat(emp.pct||0)||0};
+    c.key=centralKey(c);c.personKey=personKey(c);
+    const reasons=hardProtectionReasonsForPerson(c,date);
+    if(reasons.length){stats.protected++;rows.push(`${date}: ${c.name} geschützt · ${reasons.join(', ')}`);return;}
+    const key=entryKey(emp.id,date);
+    const old=info.state.plan?.[key];
+    if(old&&!old.removed&&String(old.code||'').toUpperCase()==='P'){stats.exists++;rows.push(`${date}: ${c.name} · P bereits vorhanden`);return;}
+    if(old&&!old.removed&&(old.code||old.manual||old.fixed||old.teamMeeting||old.removed)){
+      stats.busy++;
+      rows.push(`${date}: ${c.name} übersprungen · Feld belegt (${entryLabel(old)})`);
+      return;
+    }
+    try{
+      if(!info.state.plan||typeof info.state.plan!=='object')info.state.plan={};
+      info.state.plan[key]={code:'P',manual:true,pikettAuto:false,fromHausPikett:true,reason:'aus Haus-Pikett geschrieben',source:'haus-pikett',savedAt:new Date().toISOString()};
+      info.state.savedAt=new Date().toISOString();
+      localStorage.setItem(info.key,JSON.stringify(info.state));
+      stats.written++;
+      rows.push(`${date}: ${c.name} · ${group.name} geschrieben`);
+    }catch(e){console.warn(e);stats.errors++;rows.push(`${date}: ${c.name} · Schreiben nicht möglich`);}
+  });
+  reloadGroupData(false);
+  renderAll();
+  const skipped=stats.noGroup+stats.noEmp+stats.protected+stats.fixed+stats.busy+stats.errors;
+  const cls=stats.errors?'red':(skipped?'yellow':'green');
+  writeBackMessage(`<b>P in Gruppenpläne schreiben</b><div class="mini">geschrieben: ${stats.written} · bereits vorhanden: ${stats.exists} · übersprungen: ${skipped}</div><div class="softline" style="margin-top:8px">${rows.slice(0,20).map(esc).join('<br>')}${rows.length>20?'<br>…':''}</div>`,cls);
+  toast(`P geschrieben: ${stats.written}${skipped?` · übersprungen: ${skipped}`:''}`,skipped?'warn':'ok');
+}
+
+function renderSourceInfo(){const el=q('sourceInfo');if(!el)return;const rows=GROUPS.map(g=>{const info=groupState(g.id);const prof=profileLabel(info.profile||activeReadProfile());const auto=info.autoFound?' · automatisch gefunden':'';return `<div><b>${g.name}</b>: ${info.found?`${info.employees.length} Mitarbeitende${auto} · ${esc(info.key)}`:`kein Stand auf diesem Gerät gefunden`}</div>`;}).join('');const fair=fairnessTargets();const yearFair=yearFairnessTargets();const fairRows=fair.people.sort((a,b)=>a.count-b.count||(a.yearCount||0)-(b.yearCount||0)||a.name.localeCompare(b.name)).slice(0,14).map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.groups.join(', '))}</td><td><b>${p.count}×</b></td><td><b>${p.yearCount||0}×</b></td></tr>`).join('');const fairHtml=fair.people.length?`<div style="margin-top:10px"><b>Fairness</b><div class="mini">Monat-Ziel bei ${fair.people.length} verfügbaren Mitarbeitenden: ${fair.min}-${fair.max}×. Jahr bisher: ${yearFair.min}-${yearFair.max}× im Haus-Pikett-Speicher.</div><table class="fair-mini-table"><thead><tr><th>Name</th><th>Gruppe</th><th>P Monat</th><th>P Jahr</th></tr></thead><tbody>${fairRows}</tbody></table></div>`:`<div class="mini" style="margin-top:10px">Fairness: keine verfügbaren Mitarbeitenden aus aktiven Gruppen gefunden.</div>`;el.className='issue';el.innerHTML=`<b>Geladene Quellen</b><div class="mini">Speicher: dieses Gerät<br>Gruppendaten werden automatisch auf diesem Gerät gesucht. P-Einträge aus Azoren, Bali, Capri und Delos werden ins Haus-Pikett übernommen. Bei mehreren P am selben Tag entscheidet Fairness: Monat zuerst, dann Jahr. Nachtwache wird nicht einbezogen.</div><div class="softline" style="margin-top:8px">${rows}</div>${fairHtml}`;}
+
+function download(name,content,type='text/plain'){const blob=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
+function csv(v){const s=String(v??'');return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+function openPrintPDFPage(){window.print();toast('Druckseite geöffnet','ok');}
+function downloadCSV(){const rows=[['Datum','Haus-Pikett','Wohngruppe','Status']];dates.forEach(date=>{const a=assignedOnDate(date);const st=statusForDate(date);rows.push([date,a?.empName||'',a?.groupName||'',st.text||'']);});download(`polypoint_haus_pikett_${monthKey()}_plan.csv`,rows.map(r=>r.map(csv).join(';')).join('\n'),'text/csv');toast('CSV exportiert','ok');}
+function copyPlanText(){const txt=dates.map(date=>{const a=assignedOnDate(date);return `${date}: ${a?`${a.empName} · ${a.groupName}`:'offen'}`;}).join('\n');navigator.clipboard?.writeText(txt);toast('Plan kopiert','ok');}
+function exportSicherung(){saveState(false);const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`polypoint_haus_pikett_${monthKey()}_dieses_geraet_backup.json`;a.click();URL.revokeObjectURL(a.href);}
+function importSicherung(ev){const file=ev.target.files?.[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(String(r.result||''));state={...defaultState(),...obj};normalizeState();makeDates();saveState(false);renderAll();toast('Pikett-Sicherung geladen','ok');}catch(e){console.warn(e);toast('Sicherung laden nicht möglich','bad');}};r.readAsText(file);ev.target.value='';}
+
+
+// Zentraler Export-Dialog: Funktionen explizit ans Fenster hängen
+window.openPrintPDFPage=openPrintPDFPage;
+window.downloadCSV=downloadCSV;
+window.copyPlanText=copyPlanText;
+window.exportBackup=exportSicherung;
+window.importBackup=importSicherung;
+
+window.addEventListener('DOMContentLoaded',init);
+</script>
+<script>
+(function(){
+  function applyDynamicLabels(){
+    const dyn=window.__ULMI_DYNAMIC_CONTEXT__||{};
+    const name=dyn.unitName||'Haus-Pikett';
+    const site=dyn.siteName||'';
+    document.title='ULMIPOINT '+name;
+
+    document.querySelectorAll('h1').forEach(h=>{
+      const t=h.textContent||'';
+      if(t.match(/Azoren|Bali|Capri|Delos|Gruppe|Nachtwache|Haus-Pikett|Haus-Dienstplan/i)) h.textContent=name;
+    });
+
+    document.querySelectorAll('.eyebrow').forEach(e=>{
+      const t=e.textContent||'';
+      if(t.match(/POLYPOINT|ULMIPOINT|AZOREN|BALI|CAPRI|DELOS/i)){
+        e.textContent=site?('ULMIPOINT · '+site):'ULMIPOINT';
+      }
+    });
+
+    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(n=>{
+      if(n.nodeValue){
+        n.nodeValue=n.nodeValue
+          .replace(/\bAzoren\b/g,name)
+          .replace(/\bAZOREN\b/g,name.toUpperCase());
+      }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',applyDynamicLabels);
+  else applyDynamicLabels();
+  setTimeout(applyDynamicLabels,250);
+  setTimeout(applyDynamicLabels,1200);
+})();
+</script>
+</body>
+</html>

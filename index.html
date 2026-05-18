@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ULMIPOINT</title>
+<style>
+:root{--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--yellow:#9a6700;--shadow:0 12px 30px rgba(16,24,40,.08)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+.app{max-width:1100px;margin:0 auto;padding:18px}
+.hero,.card{background:#fff;border:1px solid var(--line);border-radius:30px;padding:18px;box-shadow:var(--shadow)}
+.hero{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center}
+.logo-liv{height:72px;width:auto;max-width:min(360px,34vw);object-fit:contain}
+.logo-ulmi{height:88px;width:auto;max-width:min(390px,34vw);object-fit:contain;border-radius:17px;background:#08101a;box-shadow:0 8px 18px rgba(16,24,40,.10)}
+.title{text-align:center;min-width:0}
+.eyebrow{font-size:12px;font-weight:950;color:var(--blue);letter-spacing:.06em;text-transform:uppercase}
+h1{margin:4px 0 8px;font-size:clamp(44px,8vw,82px);line-height:.9;letter-spacing:-.08em}
+.org{font-size:20px;font-weight:950;letter-spacing:-.05em;margin-bottom:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.card{border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:10px}
+h2{font-size:22px;letter-spacing:-.04em;margin:0}.mini{font-size:13px;color:var(--muted);font-weight:850;line-height:1.35}
+button,a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:11px 14px;font-weight:950;cursor:pointer;color:var(--text)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.ok{background:#e7f7ef;border-color:#b7e4ca;color:var(--green)}.btn.warn{background:#fff7e6;border-color:#f3d28f;color:#9a6700}
+.notice{margin-top:14px;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:11px;font-size:12px;font-weight:850}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.planner-picker{display:none;border:1px solid #c9dcff;background:#f7fbff;border-radius:18px;padding:10px;margin-top:4px}
+.planner-picker.show{display:block}
+label{display:block}.field-label{font-size:12px;color:var(--muted);font-weight:950;margin-bottom:4px}
+select{width:100%;border:1px solid var(--line);border-radius:13px;background:#fff;padding:10px;font-weight:900;color:var(--text)}
+.pill{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:950;background:#eef2f7;color:#475467}
+@media(max-width:720px){
+  .app{padding:10px}
+  .hero{grid-template-columns:minmax(0,1fr) auto;gap:8px;border-radius:0 0 26px 26px;margin:-10px -10px 0}
+  .logo-liv{height:46px;max-width:min(220px,46vw)}
+  .logo-ulmi{height:58px;max-width:min(260px,48vw);border-radius:14px}
+  .title{grid-column:1/-1;grid-row:2;text-align:left}
+  h1{font-size:52px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="hero">
+    <img class="logo-liv" src="assets/liv-logo-titlebar.jpg?v=20260516-2" alt="LIV – Leben in Vielfalt">
+    <div class="title">
+      <div class="eyebrow">ULMIPOINT</div>
+      <h1>Start</h1>
+      <div class="org">LIV – Leben in Vielfalt</div>
+    </div>
+    <img class="logo-ulmi" src="assets/ulmipoint-titlebar.png?v=20260515-3" alt="ULMIPOINT KI-Planer">
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>Mitarbeitende</h2>
+      <div class="mini">Dienstplan und Wünsche öffnen.</div>
+      <div class="actions">
+        <a class="btn primary" href="wunschportal.html" target="_blank" rel="noopener">Wunschportal öffnen</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>Planung</h2>
+      <div class="mini">Für berechtigte Planerinnen und Planer.</div>
+      <div class="actions">
+        <button class="btn warn" id="plannerChooseBtn" type="button">Haus auswählen</button>
+        <button class="btn warn" id="plannerDirectBtn" type="button">Letztes Haus öffnen</button>
+      </div>
+      <div class="planner-picker" id="plannerPicker">
+        <label>
+          <span class="field-label">Haus / Standort</span>
+          <select id="plannerSelect"></select>
+        </label>
+        <div class="actions" style="margin-top:10px">
+          <button class="btn warn" id="plannerOpenBtn" type="button">Startseite öffnen</button>
+          <span class="pill" id="plannerHint">wird lokal gemerkt</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>Verwaltung</h2>
+      <div class="mini">Organisation, Häuser, Tageszentren und Bereiche verwalten.</div>
+      <div class="actions">
+        <a class="btn ok" href="organisation-admin.html">Organisation verwalten</a>
+      </div>
+    </article>
+  </section>
+
+  <div class="notice">
+    Häuser und Organisationsdaten werden nicht öffentlich angezeigt. Zugriff erfolgt erst in den geschützten Bereichen.
+  </div>
+</div>
+
+<script>
+(function(){
+  const SELECT_KEY = 'ulmipoint_start_planner_choice_v1';
+  const LAST_KEY = 'ulmipoint_planner_last_target_v1';
+  const ORG_DRAFT_KEY = 'ulmipoint_org_structure_draft_v1';
+  const SITE_KEY = 'ulmipoint_selected_site_v1';
+  const SERVER_TOKEN_KEY = 'polypoint_server_session_v1';
+
+  const $ = id => document.getElementById(id);
+
+  function safeJson(value, fallback){
+    try{return JSON.parse(value || '') || fallback;}catch(_){return fallback;}
+  }
+  function slug(value){
+    return String(value||'')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'_')
+      .replace(/^_+|_+$/g,'') || 'bereich';
+  }
+  function defaultOrg(){return {version:'1.0',organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',sites:[{id:'haus_1',name:'Haus 1',type:'wohnheim',canton:'BS',active:true,automaticFunctions:{nachtwache:true,pikett:true,hausdienstplan:true},units:[{id:'azoren',name:'Azoren',type:'wohngruppe',plannerKey:'azoren',active:true},{id:'bali',name:'Bali',type:'wohngruppe',plannerKey:'bali',active:true},{id:'capri',name:'Capri',type:'wohngruppe',plannerKey:'capri',active:false},{id:'delos',name:'Delos',type:'wohngruppe',plannerKey:'delos',active:true}]}]};}
+  function ensureOrg(org){return org&&Array.isArray(org.sites)&&org.sites.length?org:defaultOrg();}
+  function realUnits(site){
+    return (site.units||[]).filter(u=>u && !['pikett','hausdienstplan','nachtwache'].includes(String(u.type||'')));
+  }
+  function option(label, href, site, target){
+    return {label, href, site, target};
+  }
+  function getOrg(){
+    const draft = safeJson(localStorage.getItem(ORG_DRAFT_KEY), null);
+    return ensureOrg(draft && draft.organisationStructure ? draft.organisationStructure : null);
+  }
+  function serverSession(){
+    try{
+      const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}');
+      if(s && s.access_token && (!s.expires_at || s.expires_at > Date.now()+30000)) return s;
+    }catch(_){}
+    return null;
+  }
+  function saveOrgDraft(org, updatedAt){
+    if(!org || !Array.isArray(org.sites)) return false;
+    localStorage.setItem(ORG_DRAFT_KEY, JSON.stringify({
+      organisationStructure: org,
+      savedAt: new Date().toISOString(),
+      serverUpdatedAt: updatedAt || ''
+    }));
+    return true;
+  }
+  async function loadOrgFromServerIfPossible(){
+    const s = serverSession();
+    try{
+      const headers = {'Content-Type':'application/json'};
+      if(s && s.access_token) headers.Authorization = 'Bearer '+s.access_token;
+      const resp = await fetch('/api/org-structure', {
+        method:'POST',
+        headers,
+        body:JSON.stringify({mode:'load'})
+      });
+      const txt = await resp.text();
+      let data = {};
+      try{ data = txt ? JSON.parse(txt) : {}; }catch(_){ data = {message:txt}; }
+      if(!resp.ok || data.ok===false || !data.organisationStructure) return false;
+      saveOrgDraft(ensureOrg(data.organisationStructure), data.updatedAt);
+      fillSelect();
+      return true;
+    }catch(_){
+      return false;
+    }
+  }
+
+  function buildOptions(){
+    const options = [];
+    const org = getOrg();
+    const sites = org && Array.isArray(org.sites) ? org.sites : [];
+
+    sites.forEach(site=>{
+      if(!site || !site.id) return;
+      options.push(option(
+        (site.name||site.id) + ' · Startseite',
+        'planer.html?site=' + encodeURIComponent(site.id) + '#overview',
+        site,
+        'overview'
+      ));
+    });
+
+    if(!options.length){
+      options.push(option('Haus 1 · Startseite', 'planer.html#overview', null, 'overview'));
+    }
+
+    return options;
+  }
+
+  function fillSelect(){
+    const select = $('plannerSelect');
+    const options = buildOptions();
+    select.innerHTML = options.map((o,i)=>'<option value="'+i+'">'+o.label+'</option>').join('');
+    select.__options = options;
+
+    const saved = safeJson(localStorage.getItem(SELECT_KEY), null);
+    if(saved && saved.href){
+      const idx = options.findIndex(o=>o.href === saved.href);
+      if(idx >= 0) select.value = String(idx);
+    }
+  }
+
+  function openSelected(){
+    const select = $('plannerSelect');
+    const options = select.__options || buildOptions();
+    const choice = options[Number(select.value)] || options[0];
+    if(!choice) return;
+
+    try{
+      localStorage.setItem(SELECT_KEY, JSON.stringify({
+        label:choice.label,
+        href:choice.href,
+        savedAt:new Date().toISOString()
+      }));
+
+      if(choice.site){
+        localStorage.setItem(SITE_KEY, JSON.stringify(Object.assign({}, choice.site, {
+          selectedAt:new Date().toISOString()
+        })));
+      }
+    }catch(_){}
+
+    location.href = choice.href;
+  }
+
+  $('plannerChooseBtn').onclick = () => {
+    fillSelect();
+    $('plannerPicker').classList.toggle('show');
+  };
+  $('plannerOpenBtn').onclick = openSelected;
+  $('plannerDirectBtn').onclick = () => {
+    fillSelect();
+    const saved = safeJson(localStorage.getItem(SELECT_KEY), null);
+    if(saved && saved.href){
+      location.href = saved.href;
+      return;
+    }
+    openSelected();
+  };
+
+  fillSelect();
+  loadOrgFromServerIfPossible();
+})();
+</script>
+</body>
+</html>

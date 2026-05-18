@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="de">
+<head>
+<script>
+(function(){
+  function param(name,fallback=''){
+    try{return new URLSearchParams(location.search||'').get(name)||fallback;}catch(_){return fallback;}
+  }
+  function slug(value){
+    return String(value||'')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'_')
+      .replace(/^_+|_+$/g,'')||'zeiterfassung';
+  }
+  const ctx={
+    siteId:param('siteId','haus'),
+    siteName:param('siteName','Haus'),
+    unitId:param('unitId','zeiterfassung'),
+    unitName:param('unitName','Zeiterfassung'),
+    plannerKey:param('plannerKey',param('functionType','zeiterfassung')),
+    functionType:param('functionType','zeiterfassung'),
+    kind:'hausfunktion',
+    slug
+  };
+  window.__ULMI_DYNAMIC_CONTEXT__=ctx;
+  const PREFIX='ulmipoint_site_'+slug(ctx.siteId)+'__page_'+slug(ctx.plannerKey||ctx.functionType||ctx.unitId)+'__';
+  const SHARED=[
+    'polypoint_server_config_v2',
+    'polypoint_server_session_v1',
+    'polypoint_server_sync_meta_v1',
+    'polypoint_server_autosave_v1',
+    'polypoint_employee_wishes_v1',
+    'ulmipoint_selected_site_v1',
+    'ulmipoint_org_structure_draft_v1',
+    'ulmipoint_org_admin_token_v1'
+  ];
+  function isShared(k){return SHARED.indexOf(String(k||''))>=0;}
+  const real=window.localStorage;
+  function mapKey(k){k=String(k||'');return isShared(k)?k:PREFIX+k;}
+  function keys(){
+    const out=[];const seen={};
+    for(let i=0;i<real.length;i++){
+      const k=real.key(i);
+      if(!k) continue;
+      if(k.indexOf(PREFIX)===0){const c=k.slice(PREFIX.length);if(!seen[c]){seen[c]=1;out.push(c);}}
+      else if(isShared(k)&&!seen[k]){seen[k]=1;out.push(k);}
+    }
+    return out;
+  }
+  const proxy={
+    getItem(k){return real.getItem(mapKey(k));},
+    setItem(k,v){return real.setItem(mapKey(k),String(v));},
+    removeItem(k){return real.removeItem(mapKey(k));},
+    clear(){keys().forEach(k=>real.removeItem(mapKey(k)));},
+    key(i){return keys()[i]||null;},
+    get length(){return keys().length;}
+  };
+  try{Object.defineProperty(window,'localStorage',{value:proxy,configurable:true});}catch(_){}
+})();
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ULMIPOINT Zeiterfassung</title>
+<style>
+:root{--bg:#f6f8fc;--card:#fff;--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--yellow:#9a6700;--shadow:0 12px 30px rgba(16,24,40,.08)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+.app{max-width:1220px;margin:0 auto;padding:14px}
+.hero{background:#fff;border:1px solid var(--line);border-radius:24px;padding:16px;box-shadow:var(--shadow);display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.eyebrow{font-size:12px;font-weight:950;color:var(--blue);letter-spacing:.06em;text-transform:uppercase}
+h1{margin:3px 0 2px;font-size:clamp(30px,4vw,48px);line-height:.96;letter-spacing:-.06em}
+h2{margin:0 0 8px;font-size:20px;letter-spacing:-.03em}.mini{font-size:12px;color:var(--muted);font-weight:850;line-height:1.35}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:var(--shadow);margin-top:12px}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}.filters{display:grid;grid-template-columns:repeat(3,minmax(140px,1fr));gap:10px;margin-top:10px}
+input,select{width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;padding:9px;font-weight:850;color:var(--text)}
+button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:950;cursor:pointer;color:var(--text)}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button.ok{background:#e7f7ef;border-color:#b7e4ca;color:var(--green)}button.warn{background:#fff7e6;border-color:#f3d28f;color:var(--yellow)}
+.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:14px;padding:10px;font-size:12px;font-weight:850;white-space:pre-wrap}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}.notice.warn{border-color:#f3d28f;background:#fffdf5;color:#9a6700}
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.stat{border:1px solid var(--line);border-radius:16px;background:#fbfcfe;padding:10px}.stat b{display:block;font-size:24px;letter-spacing:-.05em}.stat span{font-size:11px;color:var(--muted);font-weight:900}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;margin-top:10px}table{border-collapse:collapse;width:100%;min-width:880px}th,td{text-align:left;border-bottom:1px solid #edf1f6;padding:9px 10px;font-size:12px;vertical-align:top}th{position:sticky;top:0;background:#f8fafc;font-size:11px;color:#475467;text-transform:uppercase;letter-spacing:.04em}td{font-weight:850}.pill{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:950;background:#eef2f7;color:#475467}.pill.qr{background:#eaf2ff;color:#2563eb}.pill.nfc{background:#f0e9ff;color:#6f42c1}.pill.open{background:#fff7e6;color:#9a6700}.pill.sent{background:#e7f7ef;color:#0f8a5f}.pill.error{background:#ffe7e7;color:#c73636}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.muted{color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;word-break:break-all}
+@media(max-width:820px){.app{padding:10px}.grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}.statgrid{grid-template-columns:1fr 1fr}.hero{border-radius:0 0 24px 24px;margin:-10px -10px 10px}.card{padding:12px;border-radius:18px}}
+@media(max-width:520px){.filters{grid-template-columns:1fr}.statgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">ULMIPOINT Admin</div>
+      <h1>Zeiterfassung</h1>
+    </div>
+    <div class="toolbar">
+      <button class="primary" id="loadBtn">Aktualisieren</button>
+      <button id="todayBtn">Heute</button>
+      <button class="ok" id="csvBtn">CSV herunterladen</button>
+    </div>
+  </section>
+
+  <div class="grid">
+    <article class="card">
+      <h2>Filter</h2>
+      <div class="filters">
+        <label><span class="mini">Datum</span><input id="dateFilter" type="date"></label>
+        <label><span class="mini">Bereich</span><input id="groupFilter" type="text" placeholder="z. B. Delos"></label>
+        <label><span class="mini">Mitarbeiter</span><input id="employeeFilter" type="text" placeholder="Name"></label>
+      </div>
+      <div class="actions">
+        <button class="primary" id="sessionBtn">Sitzung prüfen</button>
+        <button class="warn" id="last50Btn">Letzte 50</button>
+      </div>
+      <div id="status" class="notice" style="margin-top:10px">Noch nicht geladen.</div>
+    </article>
+
+    <article class="card">
+      <h2>Status</h2>
+      <div class="statgrid">
+        <div class="stat"><b id="statTotal">0</b><span>Einträge</span></div>
+        <div class="stat"><b id="statKommen">0</b><span>Kommen</span></div>
+        <div class="stat"><b id="statGehen">0</b><span>Gehen</span></div>
+        <div class="stat"><b id="statOpen">0</b><span>API offen</span></div>
+      </div>
+      <div class="mini" id="updatedInfo" style="margin-top:10px">API-Status: vorbereitet.</div>
+    </article>
+  </div>
+
+  <article class="card">
+    <div class="toolbar" style="justify-content:space-between">
+      <h2 style="margin:0">Stempelungen</h2>
+      <span class="pill" id="countPill">0 Einträge</span>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>Zeit</th><th>Mitarbeiter</th><th>Bereich</th><th>Aktion</th><th>Ort</th><th>Quelle</th><th>API</th><th>Code</th>
+        </tr></thead>
+        <tbody id="rows"><tr><td colspan="8" class="muted">Noch nicht geladen.</td></tr></tbody>
+      </table>
+    </div>
+  </article>
+</div>
+
+<script>
+(function(){
+  const SERVER_TOKEN_KEY='polypoint_server_session_v1';
+  let currentEvents=[];
+
+  const $=id=>document.getElementById(id);
+  function today(){return new Date().toISOString().slice(0,10)}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+  function status(text,kind=''){const el=$('status');el.textContent=text;el.className='notice'+(kind?' '+kind:'')}
+  function apiStatusClass(s){s=String(s||'open').toLowerCase();return s==='sent'?'sent':s==='error'?'error':'open'}
+  function sourceClass(s){s=String(s||'').toLowerCase();return s.includes('nfc')?'nfc':'qr'}
+
+  function loadSession(){
+    try{
+      const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}');
+      if(s && s.access_token) return s;
+    }catch(_){}
+    return null;
+  }
+  function requireSession(){
+    const s=loadSession();
+    if(!s || !s.access_token) throw new Error('Keine Admin-/Planer-Sitzung gefunden. Bitte zuerst im Hauptplaner über ☁️ Server einloggen.');
+    if(s.expires_at && s.expires_at < Date.now()+30000) throw new Error('Server-Sitzung ist abgelaufen. Bitte im Hauptplaner über ☁️ Server neu einloggen.');
+    return s;
+  }
+  function checkSession(){
+    try{
+      const s=requireSession();
+      status('Sitzung gefunden: '+((s.user&&s.user.email)||'eingeloggt')+'. Zeiterfassung kann geladen werden.','ok');
+      return s;
+    }catch(e){
+      status(e.message,'bad');
+      return null;
+    }
+  }
+  function payload(limit=200){
+    return {
+      mode:'admin',
+      date:$('dateFilter').value,
+      group:$('groupFilter').value.trim(),
+      employeeName:$('employeeFilter').value.trim(),
+      limit
+    };
+  }
+  async function loadEvents(limit=200){
+    const s=requireSession();
+    status('Zeiterfassung wird geladen …');
+    const resp=await fetch('/api/time-clock-list',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.access_token},
+      body:JSON.stringify(payload(limit))
+    });
+    const txt=await resp.text();
+    let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+    if(!resp.ok || data.ok===false) throw new Error(data.message || ('HTTP '+resp.status));
+    currentEvents=Array.isArray(data.events)?data.events:[];
+    render(currentEvents,data);
+    status('Geladen: '+currentEvents.length+' Einträge.','ok');
+  }
+  function render(events,data){
+    const rows=$('rows');
+    if(!events.length){
+      rows.innerHTML='<tr><td colspan="8" class="muted">Keine Einträge gefunden.</td></tr>';
+    }else{
+      rows.innerHTML=events.map(e=>{
+        const api=(e.api&&e.api.status)||'open';
+        return '<tr>'+
+          '<td>'+esc(e.timeText||e.at||'')+'</td>'+
+          '<td><strong>'+esc(e.employeeName||'')+'</strong><div class="muted">'+esc(e.employeeId||'')+'</div></td>'+
+          '<td>'+esc(e.group||'')+'</td>'+
+          '<td><span class="pill">'+esc(e.actionLabel||e.action||'')+'</span></td>'+
+          '<td>'+esc(e.locationLabel||e.locationId||'')+'</td>'+
+          '<td><span class="pill '+sourceClass(e.source)+'">'+esc(e.source||'')+'</span></td>'+
+          '<td><span class="pill '+apiStatusClass(api)+'">'+esc(api)+'</span></td>'+
+          '<td class="mono">'+esc(e.token||e.raw||'')+'</td>'+
+        '</tr>';
+      }).join('');
+    }
+    $('countPill').textContent=events.length+' Einträge';
+    $('statTotal').textContent=events.length;
+    $('statKommen').textContent=events.filter(e=>String(e.action).includes('kommen')).length;
+    $('statGehen').textContent=events.filter(e=>String(e.action).includes('gehen')).length;
+    $('statOpen').textContent=events.filter(e=>!e.api || !e.api.status || e.api.status==='open').length;
+    $('updatedInfo').textContent='Letzter Stand: '+(data.updatedAt||'-')+' · Zugriff: '+(data.access||'admin-session')+' · API: '+((data.api&&data.api.mode)||'prepared');
+  }
+  function csv(){
+    const head=['Zeit','Mitarbeiter','Mitarbeiter-ID','Bereich','Aktion','Ort','Quelle','API-Status','Token'];
+    const lines=[head].concat(currentEvents.map(e=>[
+      e.timeText||e.at||'', e.employeeName||'', e.employeeId||'', e.group||'', e.actionLabel||e.action||'', e.locationLabel||e.locationId||'', e.source||'', (e.api&&e.api.status)||'open', e.token||e.raw||''
+    ]));
+    const text=lines.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
+    const blob=new Blob([text],{type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='ulmipoint-zeiterfassung-'+($('dateFilter').value||today())+'.csv';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }
+
+  $('loadBtn').onclick=()=>loadEvents().catch(e=>status('Fehler: '+e.message,'bad'));
+  $('last50Btn').onclick=()=>{ $('dateFilter').value=''; loadEvents(50).catch(e=>status('Fehler: '+e.message,'bad')); };
+  $('todayBtn').onclick=()=>{ $('dateFilter').value=today(); loadEvents().catch(e=>status('Fehler: '+e.message,'bad')); };
+  $('csvBtn').onclick=csv;
+  $('sessionBtn').onclick=checkSession;
+
+  $('dateFilter').value=today();
+  checkSession();
+})();
+</script>
+<script>
+(function(){
+  function applyDynamicLabels(){
+    const dyn=window.__ULMI_DYNAMIC_CONTEXT__||{};
+    const site=dyn.siteName||'';
+    document.querySelectorAll('.eyebrow').forEach(e=>{
+      const t=e.textContent||'';
+      if(t.match(/ULMIPOINT/i)) e.textContent=site?('ULMIPOINT · '+site):'ULMIPOINT';
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',applyDynamicLabels);
+  else applyDynamicLabels();
+  setTimeout(applyDynamicLabels,250);
+})();
+</script>
+</body>
+</html>

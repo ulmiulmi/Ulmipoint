@@ -1,0 +1,2196 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ULMIPOINT Adapter</title>
+<style>
+  :root { --bg:#f6f8fc; --card:#fff; --text:#172033; --muted:#667085; --line:#d9e2ef; --blue:#2563eb; --green:#0f8a5f; --brown:#7c2d12; --red:#c73636; --shadow:0 12px 30px rgba(16,24,40,.08); }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);overflow:hidden}
+  .shell{height:100%;display:grid;grid-template-rows:auto 1fr;gap:0}
+  .top{background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);box-shadow:0 8px 24px rgba(16,24,40,.07);padding:9px 12px;z-index:20}
+  .head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px 14px;margin-bottom:8px}
+  h1{font-size:32px;line-height:1.04;margin:0;letter-spacing:-.05em;white-space:nowrap}
+
+  .brand{grid-column:1;display:flex;align-items:center;min-width:0}
+  .liv-logo{display:block;height:64px;width:auto;max-width:min(360px,34vw);object-fit:contain;background:#fff;border-radius:8px}
+  @media(max-width:740px){.liv-logo{height:44px;max-width:min(210px,42vw)}}
+
+  .liv-logo{display:block;height:64px;width:auto;max-width:min(360px,34vw);object-fit:contain;background:#fff;border-radius:8px}
+  @media(max-width:740px){.liv-logo{height:44px;max-width:min(210px,42vw)}}
+  .brand-logo{grid-column:3;grid-row:1;justify-self:end;align-self:stretch;display:block;height:96px;width:auto;max-width:min(440px,38vw);border-radius:17px;background:#08101a;box-shadow:0 8px 18px rgba(16,24,40,.10);object-fit:contain}
+  .brand-copy{min-width:0}
+  .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+  .mini{font-size:12px;color:var(--muted);font-weight:850;line-height:1.35}
+  .pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:950;background:#eef2f7;color:#475467;white-space:nowrap}
+  .pill.blue{background:#eaf2ff;color:var(--blue)} .pill.green{background:#e7f7ef;color:var(--green)} .pill.brown{background:#fff4ed;color:var(--brown)}
+  .tabs{display:flex;gap:7px;flex-wrap:nowrap;align-items:center;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+  button{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:8px 12px;font-weight:950;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+  button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(16,24,40,.08)}
+  button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  button.pikett.active{background:var(--brown);border-color:var(--brown)} button.closed-tab{color:var(--red);background:#fffafa;border-color:#f2a3a3}
+  .frame-wrap{position:relative;min-height:0;background:#fff}
+  .planner-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}
+  .planner-frame.active{display:block}
+  .loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f6f8fc;color:#667085;font-weight:950}
+  @media(max-width:740px){.top{padding:6px 8px}.head{grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;margin-bottom:6px}.brand-logo{height:60px;max-width:min(295px,58vw);border-radius:14px}.brand-copy{display:block}.head .mini{display:none}h1{font-size:20px}button{padding:7px 10px;font-size:12px}.pill{font-size:11px;padding:4px 8px}.top-actions{grid-column:1/-1;grid-row:2;flex-wrap:nowrap;overflow-x:auto;margin-top:2px}}
+
+  .top-actions{grid-column:2;grid-row:1;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-start;min-width:0}
+  @media(max-width:740px){.top-actions{grid-column:1/-1!important;grid-row:2!important;flex-wrap:nowrap;overflow-x:auto;margin-top:2px}}
+  .server-btn{background:#eef7ff!important;color:#175cd3!important;border-color:#bcd3ff!important}
+  .server-btn.server-connected{background:#e7f7ef!important;color:#0f8a5f!important;border-color:#64c59a!important;box-shadow:0 0 0 2px rgba(15,138,95,.12)!important}
+  .server-btn.server-connected::after{content:" verbunden";font-size:11px;font-weight:950;margin-left:3px}
+  .server-btn.server-dirty{background:#fff7e6!important;color:#9a6700!important;border-color:#f3d28f!important;box-shadow:0 0 0 2px rgba(154,103,0,.10)!important}
+  .server-btn.server-dirty::after{content:" ungespeichert";font-size:11px;font-weight:950;margin-left:3px}
+  .server-btn.server-ready{background:#fff!important;color:#175cd3!important;border-color:#bcd3ff!important}
+  .server-btn.server-error{background:#fffafa!important;color:#c73636!important;border-color:#f2a3a3!important}
+  .emp-modal-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;padding:14px}
+  .emp-modal-backdrop.show{display:flex}
+  .emp-modal{width:min(860px,100%);max-height:min(90vh,820px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 24px 80px rgba(15,23,42,.32);padding:18px;line-height:1.35}
+  .emp-modal h2{margin:0 0 4px;font-size:24px;letter-spacing:-.04em}
+  .emp-modal h3{margin:14px 0 7px;font-size:16px}
+  .emp-note{border:1px solid #c9dcff;background:#f7fbff;color:#2563eb;border-radius:14px;padding:9px 10px;font-size:12px;font-weight:850;margin-top:8px}
+  .emp-box{border:1px solid var(--line);border-radius:16px;background:#fbfcfe;padding:10px}
+  .emp-modal-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}
+  .emp-modal .primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .emp-modal .danger{background:#ffe7e7;color:#c73636;border-color:#f2a3a3}
+  .server-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .server-grid .emp-box input{width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px;font-weight:850;color:var(--text)}
+  .server-status{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:14px;padding:9px 10px;font-size:12px;font-weight:850;margin-top:8px;white-space:pre-wrap}
+  .server-status.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}
+  .server-status.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}
+  .server-small{font-size:11px;color:var(--muted);font-weight:850;line-height:1.35;margin-top:6px}
+  .central-export-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+
+  .server-conflict-box{grid-column:1/-1}
+  .server-conflict-info{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:14px;padding:9px 10px;font-size:12px;font-weight:850;margin-top:8px;white-space:pre-wrap}
+  .server-conflict-info.warn{border-color:#f3d28f;background:#fffdf5;color:#9a6700}
+  .server-conflict-info.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}
+  .server-conflict-info.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}
+
+  .server-history-box{grid-column:1/-1}
+  .server-activity-box{grid-column:1/-1}
+  .server-history-list{border:1px solid var(--line);border-radius:14px;background:#fff;margin-top:8px;overflow:auto;max-height:300px}
+  .server-history-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:9px 10px;border-bottom:1px solid #edf1f6}
+  .server-history-row:last-child{border-bottom:0}
+  .server-history-title{font-weight:950;font-size:13px;color:var(--text)}
+  .server-history-meta{font-size:11px;color:var(--muted);font-weight:850;line-height:1.35;margin-top:2px}
+  .server-history-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .server-history-actions button{padding:6px 9px;font-size:11px}
+  .server-history-current{background:#f7fbff}
+  .server-access-badge{display:inline-flex;align-items:center;border-radius:999px;padding:2px 7px;font-size:11px;font-weight:950;border:1px solid #d9e2ef;background:#fbfcfe;color:#475467;margin-right:4px}
+  .server-access-badge.ok{background:#e7f7ef;color:#0f8a5f;border-color:#b7e4ca}
+  .server-access-badge.warn{background:#fff7e6;color:#9a6700;border-color:#f3d28f}
+  .server-access-badge.bad{background:#fffafa;color:#c73636;border-color:#f2a3a3}
+  .server-access-summary{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+    .server-history-compare{border:1px solid #c9dcff;background:#f7fbff;border-radius:14px;margin-top:8px;padding:10px;display:none}
+  .server-history-compare.show{display:block}
+  .compare-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px}
+  .compare-title{font-weight:950;font-size:14px;color:var(--text)}
+  .compare-meta{font-size:11px;color:var(--muted);font-weight:850;line-height:1.35;margin-top:2px}
+  .compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:8px}
+  .compare-card{border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px}
+  .compare-card.changed{border-color:#f3d28f;background:#fffdf5}
+  .compare-card.same{border-color:#b7e4ca;background:#f7fff9}
+  .compare-card.empty{opacity:.66}
+  .compare-area{font-weight:950;font-size:12px;color:var(--text)}
+  .compare-counts{font-size:11px;color:var(--muted);font-weight:850;line-height:1.45;margin-top:4px}
+  .compare-pill{display:inline-flex;border-radius:999px;padding:2px 6px;font-size:10px;font-weight:950;margin:2px 4px 0 0;background:#eef2f7;color:#475467}
+  .compare-pill.warn{background:#fff4d8;color:#9a6700}.compare-pill.ok{background:#e7f7ef;color:#0f8a5f}.compare-pill.bad{background:#ffe7e7;color:#c73636}.compare-pill.blue{background:#eaf2ff;color:#2563eb}
+  @media(max-width:740px){.server-history-row{grid-template-columns:1fr}.server-history-actions{justify-content:flex-start}.server-history-list{max-height:260px}.compare-grid{grid-template-columns:1fr}}
+  @media(max-width:740px){.server-grid{grid-template-columns:1fr}.server-btn{font-size:12px}.top-actions{flex-wrap:nowrap;overflow-x:auto}.emp-modal{padding:14px;border-radius:20px}.emp-modal h2{font-size:20px}}
+
+
+
+  .role-gate{position:fixed;inset:0;z-index:2500;background:rgba(15,23,42,.76);display:flex;align-items:center;justify-content:center;padding:14px}
+  .role-gate.hidden{display:none!important}
+  .role-card{width:min(760px,100%);background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:0 28px 90px rgba(15,23,42,.42);padding:18px;color:var(--text)}
+  .role-card h2{margin:0 0 4px;font-size:24px;letter-spacing:-.04em}
+  .role-card .notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:14px;padding:10px;font-size:12px;font-weight:850;white-space:pre-wrap;margin-top:10px}
+  .role-card .notice.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}
+  .role-card .notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}
+  .role-card .notice.warn{border-color:#f3d28f;background:#fffdf5;color:#9a6700}
+  .role-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .role-form input{width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;padding:9px;font-weight:850;color:var(--text)}
+  .role-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .role-actions .primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .server-role-box{grid-column:1/-1}
+  @media(max-width:740px){.role-form{grid-template-columns:1fr}.role-card{padding:14px;border-radius:20px}.role-card h2{font-size:20px}}
+
+</style>
+</head>
+<body>
+
+<div id="adminRoleGate" class="role-gate" aria-hidden="false">
+  <div class="role-card" role="dialog" aria-modal="true" aria-labelledby="adminRoleGateTitle">
+    <h2 id="adminRoleGateTitle">Admin-Planer geschützt</h2>
+    <div class="mini">Der normale Dienstplaner ist nur für Admin/Planer gedacht. Mitarbeiter benutzen das Wunschportal.</div>
+    <div id="adminRoleGateStatus" class="notice">Rolle wird geprüft…</div>
+    <div class="role-form">
+      <label><span class="mini">E-Mail</span><input id="adminGateEmail" type="email" autocomplete="username" placeholder="name@example.ch"></label>
+      <label><span class="mini">Passwort</span><input id="adminGatePassword" type="password" autocomplete="current-password" placeholder="Passwort"></label>
+    </div>
+    <div class="role-actions">
+      <button type="button" class="primary" id="adminGateLoginBtn">Als Admin/Planer einloggen</button>
+      <button type="button" id="adminGatePortalBtn">Zum Wunschportal</button>
+      <button type="button" id="adminGateRetryBtn">Rolle erneut prüfen</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <header class="top">
+    <div class="head">
+      <div class="brand">
+        <img class="liv-logo" src="assets/liv-logo-titlebar.jpg?v=20260516-2" alt="LIV – Leben in Vielfalt">
+        <h1 class="visually-hidden">ULMIPOINT Adapter</h1>
+      </div>
+      <img class="brand-logo" src="assets/ulmipoint-titlebar.png?v=20260515-3" alt="ULMIPOINT KI-Planer">
+      <div class="top-actions">
+        <span class="pill blue" id="activeLabel">geladen: Startseite</span>
+        <span class="pill green">GitHub Pages</span>
+        <span class="pill brown">aufgeteilt</span>
+        <button type="button" onclick="window.open('wunschportal.html','_blank')">👤 Wunschportal</button>
+        <button type="button" onclick="location.href='organisation-admin.html'">🏢 Organisation verwalten</button>
+        <button id="serverSyncBtn" class="server-btn" type="button">☁️ Server</button>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Bereiche">
+      <button type="button" data-planner="overview" class="active  " aria-pressed="true">🏠 Startseite</button>
+      <button type="button" data-planner="azoren" class="  " aria-pressed="false">Azoren</button>
+      <button type="button" data-planner="bali" class="  " aria-pressed="false">Bali</button>
+      <button type="button" data-planner="capri" class="  closed-tab" aria-pressed="false">Capri</button>
+      <button type="button" data-planner="delos" class="  " aria-pressed="false">Delos</button>
+      <button type="button" data-planner="nachtwache" class="  " aria-pressed="false">Nachtwache</button>
+      <button type="button" data-planner="pikett" class=" pikett " aria-pressed="false">Haus-Pikett</button>
+      <button type="button" data-planner="hausdienstplan" class="  " aria-pressed="false">Haus-Dienstplan</button>
+      <button type="button" data-planner="zeiterfassung" class="  " aria-pressed="false">⏱️ Zeiterfassung</button>
+      <button type="button" data-planner="monatsabschluss" class="  " aria-pressed="false">📊 Monatsabschluss</button>
+    </nav>
+  </header>
+  <main class="frame-wrap" id="frameWrap">
+    <div class="loader" id="loader">Bereich wird geladen…</div>
+  </main>
+</div>
+
+<div id="serverSyncModal" class="emp-modal-backdrop" aria-hidden="true">
+  <div class="emp-modal" role="dialog" aria-modal="true" aria-labelledby="serverSyncTitle">
+    <h2 id="serverSyncTitle">Server-Speicher</h2>
+    <div class="mini">Der Server ist der Hauptspeicher. Der lokale Speicher dient als Arbeitskopie und Notfall-Backup.</div>
+    <div class="emp-note">Supabase ist fest verbunden. Nach dem Einloggen kann der Serverstand geladen und gespeichert werden. Vor dem Überschreiben wird lokal eine Notfallkopie angelegt.</div>
+    <div class="server-grid">
+      <div class="emp-box">
+        <h3>Supabase Verbindung</h3>
+        <label class="mini" for="serverUrlInput">Project URL</label>
+        <input id="serverUrlInput" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off" readonly>
+        <label class="mini" for="serverAnonInput" style="margin-top:8px;display:block">publishable key</label>
+        <input id="serverAnonInput" type="password" placeholder="fest eingebaut" autocomplete="off" readonly>
+        <label class="mini" for="serverStoreInput" style="margin-top:8px;display:block">Speicher-ID</label>
+        <input id="serverStoreInput" type="text" value="default" autocomplete="off">
+        <div class="emp-modal-actions" style="justify-content:flex-start">
+          <button type="button" id="serverSaveConfigBtn">Verbindung prüfen</button>
+          <button type="button" id="serverForgetConfigBtn">Vergessen</button>
+        </div>
+      </div>
+      <div class="emp-box">
+        <h3>Login</h3>
+        <label class="mini" for="serverEmailInput">E-Mail</label>
+        <input id="serverEmailInput" type="email" autocomplete="username" placeholder="name@example.ch">
+        <label class="mini" for="serverPasswordInput" style="margin-top:8px;display:block">Passwort</label>
+        <input id="serverPasswordInput" type="password" autocomplete="current-password" placeholder="Passwort">
+        <div class="emp-modal-actions" style="justify-content:flex-start">
+          <button type="button" class="primary" id="serverLoginBtn">Einloggen</button>
+          <button type="button" id="serverSignupBtn">Registrieren</button>
+          <button type="button" id="serverLogoutBtn">Abmelden</button>
+        </div>
+        <div class="server-small">Wenn der Benutzer im Supabase-Dashboard erstellt wurde, reicht „Einloggen“.</div>
+      </div>
+
+      <div class="emp-box server-role-box">
+        <h3>🔐 Rollen-Sperre</h3>
+        <div class="mini">Vorsichtig: Admin/Planer dürfen den normalen Planer öffnen. Mitarbeiter werden zum Wunschportal geschickt. Wenn noch keine Rollen eingerichtet sind, bleibt der Admin-Planer nach Login im Übergangsmodus offen.</div>
+        <div class="central-export-actions">
+          <button type="button" id="serverRoleCheckBtn">Rolle prüfen</button>
+          <button type="button" class="primary" id="serverRoleMarkAdminBtn">Mich als Admin speichern</button>
+        </div>
+        <div id="serverRoleInfo" class="server-status">Noch nicht geprüft.</div>
+      </div>
+      <div class="emp-box">
+        <h3>Server-Hauptspeicher</h3>
+        <div class="central-export-actions">
+          <button type="button" class="primary" id="serverUploadBtn">Jetzt auf Server speichern</button>
+          <button type="button" id="serverDownloadBtn">Serverstand neu laden</button>
+          <button type="button" id="serverDownloadBackupBtn">Server-Sicherung herunterladen</button>
+        </div>
+        <div class="server-small">Speichert/lädt alle ULMIPOINT-Browserdaten dieser GitHub-Seite, also auch die aufgeteilten Bereiche.</div>
+      </div>
+      <div class="emp-box">
+        <h3>Arbeitskopie</h3>
+        <div class="mini">Gespeichert werden Gruppenstände, Haus-Pikett, Haus-Dienstplan-Quellen und Profile. Login-Sitzung und Notfallkopien werden nicht auf den Server geschrieben.</div>
+        <div class="server-small" id="serverLocalInfo">Lokale Arbeitskopie wird gezählt.</div>
+      </div>
+      <div class="emp-box">
+        <h3>Notfall / Sync</h3>
+        <label style="display:flex;gap:8px;align-items:center;font-size:13px;font-weight:900;margin:6px 0"><input type="checkbox" id="serverAutosaveToggle" style="width:18px;height:18px" checked> Auto-Speichern auf Server</label>
+        <div class="central-export-actions">
+          <button type="button" id="serverCheckStatusBtn">Serverstatus prüfen</button>
+          <button type="button" id="serverLocalBackupBtn">Notfallkopie herunterladen</button>
+          <button type="button" id="serverRestoreBackupBtn">Letzte Notfallkopie wiederherstellen</button>
+        </div>
+        <div class="server-small" id="serverSyncInfo">Noch kein Sync-Status.</div>
+      </div>
+
+
+      <div class="emp-box server-conflict-box">
+        <h3>🛡️ Konflikt-Schutz</h3>
+        <div class="mini">Passiver Schutz: Es wird nichts extra auf den Server geschrieben. Vor jedem Speichern wird geprüft, ob der Server seit deinem letzten Laden/Speichern von einem anderen Benutzer verändert wurde.</div>
+        <div class="central-export-actions">
+          <button type="button" id="serverConflictCheckBtn">Konflikt prüfen</button>
+          <button type="button" id="serverConflictLoadBtn">Serverstand laden</button>
+        </div>
+        <div id="serverConflictInfo" class="server-conflict-info">Noch nicht geprüft.</div>
+      </div>
+      <div class="emp-box server-history-box">
+        <h3>🕘 Speicherstände</h3>
+        <div class="mini">Zeigt den aktuellen Serverstand und die letzten 20 früheren Speicherstände mit Benutzer/E-Mail, Aktion und Zeit.</div>
+        <div class="central-export-actions">
+          <button type="button" id="serverHistoryRefreshBtn">Speicherstände laden</button>
+          <button type="button" id="serverHistoryDownloadCurrentBtn">Aktuellen Stand herunterladen</button>
+        </div>
+        <div id="serverHistoryList" class="server-history-list">Noch nicht geladen.</div>
+        <div id="serverHistoryCompare" class="server-history-compare"></div>
+        <div id="serverHistoryRestorePreview" class="server-history-compare"></div>
+      </div>
+      <div class="emp-box server-activity-box">
+        <h3>📋 Aktivität</h3>
+        <div class="mini">Vorsichtiges Protokoll: Es werden nur echte Server-Schreibaktionen protokolliert, zum Beispiel Speichern und Wiederherstellen. Kein zusätzlicher Server-Lock.</div>
+        <div class="central-export-actions">
+          <button type="button" id="serverActivityRefreshBtn">Aktivität laden</button>
+          <button type="button" id="serverActivityDownloadBtn">Aktivität herunterladen</button>
+        </div>
+        <div id="serverActivityList" class="server-history-list">Noch nicht geladen.</div>
+      </div>
+      <div class="emp-box server-wish-report-box">
+        <h3>✅ Wunsch-Erfüllung</h3>
+        <div class="mini">Prüft Mitarbeiter-Wünsche aus dem Wunschportal gegen den aktuellen Server-Dienstplan. Es wird nichts geschrieben, nur ausgewertet.</div>
+        <div class="central-export-actions">
+          <input id="serverWishMonthInput" type="month" style="border:1px solid var(--line);border-radius:999px;padding:8px 10px;font-weight:900">
+          <button type="button" id="serverWishReportBtn">Wünsche prüfen</button>
+          <button type="button" id="serverWishReportDownloadBtn">Auswertung herunterladen</button>
+          <button type="button" id="serverWishCacheRefreshBtn">Wünsche jetzt aktualisieren</button>
+        </div>
+        <div class="server-small" id="serverWishAutoSyncInfo">Wünsche werden im Hintergrund gelesen, ohne den Dienstplan zu überschreiben.</div>
+        <div id="serverWishReportList" class="server-history-list">Noch nicht geladen.</div>
+      </div>
+      <div class="emp-box server-wish-settings-box">
+        <h3>⚙️ Wunschfrist</h3>
+        <div class="mini">Legt fest, wie früh Wünsche vor Monatsbeginn geschlossen werden. Standard: 6 Wochen.</div>
+        <div class="central-export-actions">
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:900">Wochen vor Monatsbeginn
+            <input id="serverWishDeadlineWeeksInput" type="number" min="0" max="26" step="1" value="6" style="width:90px;border:1px solid var(--line);border-radius:999px;padding:8px 10px;font-weight:900">
+          </label>
+          <button type="button" id="serverWishSettingsLoadBtn">Wunschfrist laden</button>
+          <button type="button" id="serverWishSettingsSaveBtn">Wunschfrist speichern</button>
+        </div>
+        <div id="serverWishSettingsInfo" class="server-history-list"><div class="server-history-row"><div><div class="server-history-title">Noch nicht geladen.</div><div class="server-history-meta">Diese Einstellung gilt für das Wunschportal.</div></div></div></div>
+      </div>
+      <div class="emp-box server-access-overview-box">
+        <h3>👥 Wunschzugänge</h3>
+        <div class="mini">Admin-Übersicht: zeigt Mitarbeiter, Gruppe, Login-E-Mail, Wunsch-Code, ob ein Zugang bereit ist und wann zuletzt Wünsche gespeichert wurden. Es wird nichts geschrieben.</div>
+        <div class="central-export-actions">
+          <button type="button" id="serverAccessOverviewBtn">Wunschzugänge prüfen</button>
+          <button type="button" id="serverAccessOverviewDownloadBtn">Übersicht herunterladen</button>
+        </div>
+        <div id="serverAccessOverviewList" class="server-history-list">Noch nicht geladen.</div>
+      </div>
+    </div>
+    <div id="serverSyncStatus" class="server-status">Nicht verbunden.</div>
+    <div class="emp-modal-actions">
+      <button type="button" class="danger" id="serverSyncCloseBtn">Schliessen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const labels = {"overview": "Startseite", "azoren": "Azoren", "bali": "Bali", "capri": "Capri", "delos": "Delos", "nachtwache": "Nachtwache", "pikett": "Haus-Pikett", "hausdienstplan": "Haus-Dienstplan", "zeiterfassung": "Zeiterfassung", "monatsabschluss": "Monatsabschluss"};
+
+  const EXISTING_PLAN_PAGES = new Set(["azoren","bali","capri","delos","nachtwache","pikett","hausdienstplan","zeiterfassung","monatsabschluss"]);
+  const HOUSE_STORAGE_KEY = "ulmipoint_selected_site_v1";
+  const ORG_DRAFT_KEY = "ulmipoint_org_structure_draft_v1";
+  const PLANNER_LAST_TARGET_KEY = "ulmipoint_planner_last_target_v1";
+  const SERVER_TOKEN_KEY = "polypoint_server_session_v1";
+
+  function safeJsonParse(value){
+    try{ return JSON.parse(value || "null"); }catch(_){ return null; }
+  }
+  function querySiteId(){
+    try{ return new URLSearchParams(location.search || "").get("site") || ""; }catch(_){ return ""; }
+  }
+  function currentHouseContext(){
+    const stored = safeJsonParse(localStorage.getItem(HOUSE_STORAGE_KEY));
+    const q = querySiteId();
+
+    if(stored && stored.id && (!q || String(stored.id) === String(q))) return stored;
+
+    if(q){
+      const draft = safeJsonParse(localStorage.getItem(ORG_DRAFT_KEY));
+      const org = draft && draft.organisationStructure ? draft.organisationStructure : null;
+      const sites = org && Array.isArray(org.sites) ? org.sites : [];
+      const found = sites.find(s => String(s.id) === String(q));
+      if(found){
+        try{
+          localStorage.setItem(HOUSE_STORAGE_KEY, JSON.stringify(Object.assign({}, found, {selectedAt:new Date().toISOString()})));
+        }catch(_){}
+        return found;
+      }
+      return defaultSite(q);
+    }
+
+    if(stored && stored.id) return stored;
+    return defaultSite("haus_1");
+  }
+  const HOUSE_CONTEXT = currentHouseContext();
+  const HOUSE_ID = HOUSE_CONTEXT && HOUSE_CONTEXT.id ? String(HOUSE_CONTEXT.id) : "haus_1";
+  const IS_HAUS_1 = !HOUSE_CONTEXT || HOUSE_ID === "haus_1" || HOUSE_ID === "haus1";
+
+  function realHouseUnits(){
+    const units = HOUSE_CONTEXT && Array.isArray(HOUSE_CONTEXT.units) ? HOUSE_CONTEXT.units : [];
+    return units.filter(u => u && !["pikett","hausdienstplan","nachtwache"].includes(String(u.type || "")));
+  }
+
+  function defaultAutoFunctionsForSite(site){
+    const type = site && site.type ? String(site.type) : "wohnheim";
+    return type === "wohnheim"
+      ? {nachtwache:true,pikett:true,hausdienstplan:true}
+      : {nachtwache:false,pikett:false,hausdienstplan:false};
+  }
+  function autoFunctionEnabled(name){
+    const site = HOUSE_CONTEXT || {type:"wohnheim"};
+    const def = defaultAutoFunctionsForSite(site);
+    const a = site.automaticFunctions && typeof site.automaticFunctions === "object" ? site.automaticFunctions : {};
+    return a[name] === undefined ? !!def[name] : !!a[name];
+  }
+
+  function slugId(value){
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]+/g,"_")
+      .replace(/^_+|_+$/g,"") || "bereich";
+  }
+  function defaultSite(id){
+    return {
+      id:id || "haus_1",
+      name:(id && id!=="haus_1") ? id.replace(/_/g," ") : "Haus 1",
+      type:"wohnheim",
+      canton:"BS",
+      active:true,
+      automaticFunctions:{nachtwache:true,pikett:true,hausdienstplan:true},
+      units:[
+        {id:"azoren",name:"Azoren",type:"wohngruppe",plannerKey:"azoren",active:true},
+        {id:"bali",name:"Bali",type:"wohngruppe",plannerKey:"bali",active:true},
+        {id:"capri",name:"Capri",type:"wohngruppe",plannerKey:"capri",active:false},
+        {id:"delos",name:"Delos",type:"wohngruppe",plannerKey:"delos",active:true}
+      ]
+    };
+  }
+  function defaultOrg(){return {version:"1.0",organisation:{id:"liv",name:"LIV – Leben in Vielfalt"},payrollProfileDefault:"CH_BS_PERSONALRECHT_DEFAULT",sites:[defaultSite("haus_1")]};}
+  function ensureOrg(org){return org&&Array.isArray(org.sites)&&org.sites.length?org:defaultOrg();}
+
+  const UNIT_CONTEXT_BY_PLANNER = {};
+  function plannerIdForUnit(unit){
+    const raw = unit && (unit.plannerKey || unit.id || unit.name);
+    return slugId(raw);
+  }
+
+  function applyHouseContextToLabels(){
+    if(!HOUSE_CONTEXT) return;
+
+    const allowed = new Set(["overview"]);
+    const units = realHouseUnits();
+
+    units.forEach(u => {
+      const id = plannerIdForUnit(u);
+      if(!id) return;
+      labels[id] = u.name || id;
+      allowed.add(id);
+      UNIT_CONTEXT_BY_PLANNER[id] = {
+        id: u.id || id,
+        name: u.name || id,
+        type: u.type || "bereich",
+        plannerKey: id,
+        siteId: HOUSE_ID,
+        siteName: HOUSE_CONTEXT.name || HOUSE_ID
+      };
+    });
+
+    // Hausfunktionen sind je nach Standorttyp optional.
+    if(autoFunctionEnabled("nachtwache") && labels.nachtwache) allowed.add("nachtwache");
+    if(autoFunctionEnabled("pikett") && labels.pikett) allowed.add("pikett");
+    if(autoFunctionEnabled("hausdienstplan") && labels.hausdienstplan) allowed.add("hausdienstplan");
+
+    // Zeiterfassung und Monatsabschluss bleiben für berechtigte Planung verfügbar.
+    ["zeiterfassung","monatsabschluss"].forEach(id => {
+      if(labels[id]) allowed.add(id);
+    });
+
+    // Kein zweites altes Haus-1-Schema mehr: die Bereiche kommen aus der Organisation.
+    // Falls ausnahmsweise noch keine Einheiten im Browser gespeichert sind, liefert defaultSite() Azoren/Bali/Capri/Delos.
+    if(!units.length){
+      ["azoren","bali","capri","delos"].forEach(id => allowed.add(id));
+      if(autoFunctionEnabled("nachtwache")) allowed.add("nachtwache");
+      if(autoFunctionEnabled("pikett")) allowed.add("pikett");
+      if(autoFunctionEnabled("hausdienstplan")) allowed.add("hausdienstplan");
+    }
+
+    Object.keys(labels).forEach(id => {
+      if(!allowed.has(id)) delete labels[id];
+    });
+
+    document.querySelectorAll("[data-planner]").forEach(btn => {
+      const id = btn.dataset.planner;
+      if(!labels[id]) btn.remove();
+      else btn.textContent = (id === "overview" ? "🏠 " : "") + labels[id];
+    });
+
+    const tabs = document.querySelector(".tabs");
+    if(tabs){
+      Object.keys(labels).forEach(id => {
+        if(document.querySelector('[data-planner="'+id+'"]')) return;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.dataset.planner = id;
+        btn.className = id === "pikett" ? "pikett" : "";
+        btn.setAttribute("aria-pressed","false");
+        btn.textContent = labels[id];
+        tabs.appendChild(btn);
+      });
+    }
+
+    const activeLabelEl = document.getElementById("activeLabel");
+    if(activeLabelEl && HOUSE_CONTEXT && HOUSE_CONTEXT.name){
+      activeLabelEl.textContent = "aktiv: " + HOUSE_CONTEXT.name;
+    }
+  }
+  applyHouseContextToLabels();
+
+  function escapeHtml(value){
+    return String(value == null ? "" : value).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function dynamicHouseUrl(){
+    const site = HOUSE_CONTEXT || {id:HOUSE_ID,name:HOUSE_ID,type:"wohnheim",canton:"BS",units:[]};
+    const p = new URLSearchParams();
+    p.set("siteId", site.id || HOUSE_ID);
+    p.set("siteName", site.name || HOUSE_ID);
+    p.set("siteType", site.type || "wohnheim");
+    p.set("canton", site.canton || "BS");
+    try{ p.set("units", JSON.stringify(realHouseUnits().slice(0,4))); }catch(_){}
+    try{ p.set("auto", JSON.stringify(site.automaticFunctions || {})); }catch(_){}
+    return "haus.html?" + p.toString();
+  }
+
+  function genericPageUrl(id){
+    const isFunc = id==="pikett" || id==="hausdienstplan" || id==="nachtwache" || id==="zeiterfassung" || id==="monatsabschluss";
+    const ctx = UNIT_CONTEXT_BY_PLANNER[id] || {
+      id:id,
+      name:labels[id] || id,
+      type:isFunc ? "hausfunktion" : "bereich",
+      plannerKey:id,
+      siteId:HOUSE_ID,
+      siteName:HOUSE_CONTEXT?.name || HOUSE_ID
+    };
+    const p = new URLSearchParams();
+    p.set("siteId", ctx.siteId || HOUSE_ID);
+    p.set("siteName", ctx.siteName || HOUSE_CONTEXT?.name || HOUSE_ID);
+    p.set("unitId", ctx.id || id);
+    p.set("unitName", ctx.name || labels[id] || id);
+    p.set("unitType", ctx.type || "bereich");
+    p.set("plannerKey", id);
+    if(isFunc) p.set("functionType", id);
+
+    if(id==="nachtwache") return "nachtwache-dyn.html?" + p.toString();
+    if(id==="pikett") return "pikett-dyn.html?" + p.toString();
+    if(id==="hausdienstplan") return "hausdienstplan-dyn.html?" + p.toString();
+    if(id==="zeiterfassung") return "zeiterfassung-dyn.html?" + p.toString();
+    if(id==="monatsabschluss") return "monatsabschluss-dyn.html?" + p.toString();
+
+    return "bereich-dyn.html?" + p.toString();
+  }
+
+
+  const ids = Object.keys(labels);
+  const frameWrap = document.getElementById('frameWrap');
+  const loader = document.getElementById('loader');
+  const activeLabel = document.getElementById('activeLabel');
+  const frames = new Map();
+  let activeId = null;
+
+  function normalize(id){
+    id = String(id || '').replace(/^#/, '').trim().toLowerCase();
+    return labels[id] ? id : 'overview';
+  }
+
+  function ensureFrame(id){
+    if(frames.has(id)) return frames.get(id);
+    const iframe = document.createElement('iframe');
+    iframe.className = 'planner-frame';
+    iframe.dataset.planner = id;
+    iframe.title = labels[id];
+
+    // EINSPURIG: Auch Haus 1 benutzt die neue dynamische Hausseite.
+    // Die alte eingebettete overview.html wird nicht mehr als zweite Schiene verwendet.
+    if(id === "overview"){
+      iframe.src = dynamicHouseUrl();
+    } else {
+      iframe.src = genericPageUrl(id);
+    }
+
+    iframe.addEventListener('load', () => { cleanVisibleLocalButtonsInFrame(iframe); if(activeId === id) loader.style.display = 'none'; });
+    frameWrap.appendChild(iframe);
+    frames.set(id, iframe);
+    return iframe;
+  }
+
+  function setActiveButton(id){
+    document.querySelectorAll('[data-planner]').forEach(btn => {
+      const on = btn.dataset.planner === id;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+
+  function cleanVisibleLocalButtonsInFrame(frame){
+    let doc;
+    try{ doc = frame && frame.contentDocument; }catch(_){ return; }
+    if(!doc || !doc.body) return;
+    try{ if(doc.title) doc.title = doc.title.replace(/V13\.0\.(203|204|205|206|207|208|209|210|211|212|213|214|215|216|217|218|219|220)/g,''); }catch(_){ }
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(n => { if(n.nodeValue) n.nodeValue = n.nodeValue.replace(/V13\.0\.(203|204|205|206|207|208|209|210|211|212|213|214|215|216|217|218|219|220)/g,''); });
+    doc.querySelectorAll('button').forEach(btn => {
+      const onclick = btn.getAttribute('onclick') || '';
+      const text = (btn.textContent || '').trim();
+      if(onclick.startsWith('saveState(') || onclick.startsWith('loadState(') || onclick.startsWith('rescueBestStoredState(') || text === 'Speichern' || text === 'Laden' || text === 'Daten retten'){
+        btn.remove();
+      }
+    });
+    doc.querySelectorAll('.action-group').forEach(group => {
+      const title = group.querySelector('.action-title');
+      if(title && (title.textContent || '').trim() === 'Speicher') group.remove();
+    });
+    if(!frame.dataset.localButtonObserver){
+      frame.dataset.localButtonObserver = '1';
+      try{
+        const obs = new MutationObserver(() => {
+          if(frame.dataset.localButtonCleaning === '1') return;
+          frame.dataset.localButtonCleaning = '1';
+          setTimeout(() => { frame.dataset.localButtonCleaning = '0'; cleanVisibleLocalButtonsInFrame(frame); }, 50);
+        });
+        obs.observe(doc.body, {childList:true, subtree:true, characterData:true});
+      }catch(_){ }
+    }
+  }
+
+
+  function loadPlanner(id, pushHash=true){
+    id = normalize(id);
+    activeId = id;
+    loader.style.display = 'flex';
+    frames.forEach(frame => frame.classList.remove('active'));
+    const frame = ensureFrame(id);
+    frame.classList.add('active');
+    setActiveButton(id);
+    activeLabel.textContent = 'geladen: ' + labels[id];
+    try{
+      localStorage.setItem(PLANNER_LAST_TARGET_KEY, JSON.stringify({
+        siteId: HOUSE_ID,
+        siteName: (HOUSE_CONTEXT && HOUSE_CONTEXT.name) || HOUSE_ID,
+        plannerId: id,
+        label: labels[id] || id,
+        href: 'planer.html?site=' + encodeURIComponent(HOUSE_ID) + '#' + encodeURIComponent(id),
+        savedAt: new Date().toISOString()
+      }));
+    }catch(_){}
+    if(pushHash && location.hash.replace('#','') !== id) history.replaceState(null, '', '#' + id);
+    setTimeout(() => { if(activeId === id) loader.style.display = 'none'; }, 900);
+  }
+
+  document.addEventListener('click', event => {
+    const btn = event.target.closest && event.target.closest('[data-planner]');
+    if(btn) loadPlanner(btn.dataset.planner);
+  });
+
+  window.addEventListener('message', event => {
+    const data = event.data || {};
+    if(data && data.type === 'loadPlanner') loadPlanner(data.id || data.planner || data.target);
+    if(typeof data === 'string' && labels[data]) loadPlanner(data);
+  });
+
+
+  function serverSession(){
+    try{
+      const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}');
+      if(s && s.access_token && (!s.expires_at || s.expires_at > Date.now()+30000)) return s;
+    }catch(_){}
+    return null;
+  }
+  function saveOrgDraft(org, updatedAt){
+    if(!org || !Array.isArray(org.sites)) return false;
+    try{
+      localStorage.setItem(ORG_DRAFT_KEY, JSON.stringify({
+        organisationStructure: ensureOrg(org),
+        savedAt: new Date().toISOString(),
+        serverUpdatedAt: updatedAt || ''
+      }));
+    }catch(_){}
+    return true;
+  }
+  async function ensureHouseContextFromServer(){
+    const q = querySiteId();
+    if(!q) return false;
+    if(HOUSE_CONTEXT && Array.isArray(HOUSE_CONTEXT.units) && HOUSE_CONTEXT.units.length) return false;
+    const s = serverSession();
+
+    try{
+      const headers = {'Content-Type':'application/json'};
+      if(s && s.access_token) headers.Authorization = 'Bearer '+s.access_token;
+      const resp = await fetch('/api/org-structure', {
+        method:'POST',
+        headers,
+        body:JSON.stringify({mode:'load'})
+      });
+      const txt = await resp.text();
+      let data = {};
+      try{ data = txt ? JSON.parse(txt) : {}; }catch(_){ data = {message:txt}; }
+      if(!resp.ok || data.ok===false || !data.organisationStructure) return false;
+
+      const safeOrg = ensureOrg(data.organisationStructure);
+      saveOrgDraft(safeOrg, data.updatedAt);
+      const sites = Array.isArray(safeOrg.sites) ? safeOrg.sites : [];
+      const found = sites.find(site => String(site.id) === String(q));
+      if(found && Array.isArray(found.units) && found.units.length){
+        localStorage.setItem(HOUSE_STORAGE_KEY, JSON.stringify(Object.assign({}, found, {selectedAt:new Date().toISOString()})));
+        location.replace('planer.html?site=' + encodeURIComponent(found.id) + (location.hash || '#overview'));
+        return true;
+      }
+    }catch(_){}
+    return false;
+  }
+
+  window.addEventListener('hashchange', () => loadPlanner(location.hash, false));
+  ensureHouseContextFromServer().then(reloading => { if(!reloading) loadPlanner(location.hash || 'overview', false); });
+
+
+  // Supabase Server-Speicher für Split-Version
+  const SERVER_CONFIG_KEY = 'polypoint_server_config_v2';
+  // SERVER_TOKEN_KEY ist oben definiert, weil die Organisations-Ladung vor dem Server-Modul startet.
+  const SERVER_META_KEY = 'polypoint_server_sync_meta_v1';
+  const SERVER_AUTOSAVE_KEY = 'polypoint_server_autosave_v1';
+  const WISH_CACHE_KEY = 'polypoint_employee_wishes_v1';
+  const SERVER_DEFAULT_URL = 'https://ezjufsxacihfdwpyoibs.supabase.co';
+  const SERVER_DEFAULT_ANON = 'sb_publishable_3AsChws4K7YjRusOk4m6Mw_aA6iBmdg';
+  let serverAutosaveTimer = null;
+  let serverAutosaveBusy = false;
+  let lastObservedServerHash = '';
+  let serverWishAutoTimer = null;
+  let serverWishAutoBusy = false;
+  let lastObservedWishHash = '';
+  let serverHistoryCache = [];
+  let serverActivityCache = [];
+  let serverAccessOverviewCache = null;
+
+  function serverModal(){ return document.getElementById('serverSyncModal'); }
+  function serverStatus(text, kind=''){
+    const el = document.getElementById('serverSyncStatus');
+    if(!el) return;
+    el.textContent = text || '';
+    el.classList.toggle('bad', kind === 'bad');
+    el.classList.toggle('ok', kind === 'ok');
+  }
+  function setServerButtonState(state, label){
+    const btn = document.getElementById('serverSyncBtn');
+    if(!btn) return;
+    btn.classList.remove('server-connected','server-ready','server-error','server-dirty');
+    if(state) btn.classList.add('server-' + state);
+    btn.textContent = state === 'connected' ? '☁️ Server ✓' : state === 'dirty' ? '☁️ Server •' : state === 'error' ? '☁️ Server !' : '☁️ Server';
+    btn.title = label || (state === 'connected' ? 'Server verbunden' : state === 'dirty' ? 'Lokale Änderungen noch nicht auf Server gespeichert' : state === 'error' ? 'Server-Verbindung prüfen' : 'Server bereit, bitte einloggen');
+    btn.setAttribute('aria-label', btn.title);
+  }
+  function normalizeServerUrl(url){ return String(url || '').trim().replace(/\/+$/, ''); }
+  function getServerInputs(){
+    return {
+      url: normalizeServerUrl(SERVER_DEFAULT_URL || document.getElementById('serverUrlInput')?.value || ''),
+      anon: String(SERVER_DEFAULT_ANON || document.getElementById('serverAnonInput')?.value || '').trim(),
+      store: String(document.getElementById('serverStoreInput')?.value || 'default').trim() || 'default',
+      email: String(document.getElementById('serverEmailInput')?.value || '').trim(),
+      password: String(document.getElementById('serverPasswordInput')?.value || '')
+    };
+  }
+  function loadServerMeta(){ try { return JSON.parse(localStorage.getItem(SERVER_META_KEY) || '{}') || {}; } catch(_) { return {}; } }
+  function saveServerMeta(meta){ localStorage.setItem(SERVER_META_KEY, JSON.stringify(Object.assign({}, loadServerMeta(), meta, {metaSavedAt:new Date().toISOString()}))); }
+  function relevantStorageKey(key){
+    key = String(key || '');
+    if(!/^polypoint_/i.test(key)) return false;
+    if(key === SERVER_CONFIG_KEY || key === SERVER_TOKEN_KEY || key === SERVER_META_KEY || key === SERVER_AUTOSAVE_KEY || key === WISH_CACHE_KEY) return false;
+    if(/^polypoint_sicherung__/i.test(key)) return false;
+    return true;
+  }
+
+  // V13.0.226jf: Mitarbeiter-Wünsche aus dem Serverstand lokal cachen,
+  // damit die aufgeteilten Planseiten sie anzeigen können. Der Cache wird nicht als Planungsdaten hochgeladen.
+  function stableWishHash(wishes){
+    let raw = '';
+    try{ raw = JSON.stringify(wishes || {people:{}}); }catch(_){ raw = String(Date.now()); }
+    let h = 2166136261 >>> 0;
+    for(let i=0;i<raw.length;i++){ h ^= raw.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return raw.length + '-' + h.toString(16);
+  }
+  function countWishEntries(wishes){
+    let count = 0;
+    try{
+      const people = wishes && wishes.people ? wishes.people : {};
+      Object.values(people).forEach(p => Object.values(p.months || {}).forEach(m => { count += Object.keys(m.days || {}).length; }));
+    }catch(_){ }
+    return count;
+  }
+  function setWishAutoSyncInfo(text, kind=''){
+    const el = document.getElementById('serverWishAutoSyncInfo');
+    if(!el) return;
+    el.textContent = text || '';
+    el.style.color = kind === 'bad' ? '#c73636' : kind === 'ok' ? '#0f8a5f' : '';
+  }
+  function cacheServerWishesFromData(data, opts={}){
+    try{
+      const wishes = data && data.wishes && typeof data.wishes === 'object' ? data.wishes : {version:'13.0.221', people:{}, updatedAt:''};
+      const nextHash = stableWishHash(wishes);
+      const changed = nextHash !== lastObservedWishHash;
+      localStorage.setItem(WISH_CACHE_KEY, JSON.stringify(wishes));
+      window.__polypointEmployeeWishes = wishes;
+      lastObservedWishHash = nextHash;
+      try{ frames && frames.forEach(frame => frame.contentWindow?.postMessage({type:'polypointWishesUpdated'}, '*')); }catch(_){ }
+      if(!opts.quiet || changed){
+        const n = countWishEntries(wishes);
+        const when = new Date().toLocaleTimeString('de-CH', {hour:'2-digit', minute:'2-digit'});
+        setWishAutoSyncInfo((changed ? 'Wünsche aktualisiert: ' : 'Wünsche geprüft: ') + n + ' Einträge · ' + when, changed ? 'ok' : '');
+      }
+      return {changed, count:countWishEntries(wishes), hash:nextHash};
+    }catch(e){
+      console.warn('Wünsche konnten nicht lokal bereitgestellt werden', e);
+      setWishAutoSyncInfo('Wünsche konnten nicht aktualisiert werden: ' + e.message, 'bad');
+      return {changed:false,count:0,hash:''};
+    }
+  }
+
+  function collectUlmipointStorage(){
+    const items = {};
+    for(let i=0;i<localStorage.length;i++){
+      const key = localStorage.key(i);
+      if(relevantStorageKey(key)) items[key] = localStorage.getItem(key);
+    }
+    return items;
+  }
+  function stableHashFromItems(items){
+    const keys = Object.keys(items || {}).sort();
+    let h = 2166136261 >>> 0;
+    function mix(str){
+      str = String(str ?? '');
+      for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+      h ^= 124; h = Math.imul(h, 16777619) >>> 0;
+    }
+    keys.forEach(k => { mix(k); mix(items[k]); });
+    return keys.length + '-' + h.toString(16);
+  }
+  function localStorageSnapshot(){ const items = collectUlmipointStorage(); return {items, hash: stableHashFromItems(items), count: Object.keys(items).length}; }
+  function isServerSessionFresh(s){ return !!(s && s.access_token && (!s.expires_at || s.expires_at > Date.now() + 30000)); }
+  function loadServerSession(){
+    try { const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY) || '{}'); if(s && (s.access_token || s.refresh_token)) return s; } catch(e){ console.warn(e); }
+    return null;
+  }
+  function refreshServerLocalInfo(){
+    const info = document.getElementById('serverLocalInfo');
+    if(!info) return;
+    const snap = localStorageSnapshot();
+    const bytes = Object.entries(snap.items).reduce((n,[k,v]) => n + k.length + String(v || '').length, 0);
+    info.textContent = 'Arbeitskopie: ' + snap.count + ' Planungs-Einträge · ca. ' + Math.round(bytes/1024) + ' KB · Hash ' + snap.hash + ' · Notfallkopien lokal: ' + countLocalEmergencyBackups();
+  }
+  function refreshServerSyncInfo(){
+    const el = document.getElementById('serverSyncInfo');
+    if(!el) return;
+    const meta = loadServerMeta();
+    const snap = localStorageSnapshot();
+    const same = meta.lastHash && snap.hash === meta.lastHash;
+    const last = meta.lastSyncAt ? new Date(meta.lastSyncAt).toLocaleString('de-CH') : 'noch nie';
+    el.textContent = (same ? 'Arbeitskopie entspricht dem letzten Serverstand.' : 'Arbeitskopie hat Änderungen oder Server wurde noch nie geladen.') + ' Letzter Server-Sync: ' + last + (meta.count != null ? ' · ' + meta.count + ' Planungs-Einträge' : '');
+  }
+  function refreshServerButtonFromSession(){
+    const s = loadServerSession();
+    const snap = localStorageSnapshot();
+    const meta = loadServerMeta();
+    if(isServerSessionFresh(s)){
+      if(meta.lastHash && snap.hash !== meta.lastHash) setServerButtonState('dirty','Server verbunden · lokale Änderungen noch nicht gespeichert');
+      else setServerButtonState('connected','Server verbunden' + (s.user?.email ? ' · ' + s.user.email : ''));
+    } else setServerButtonState('ready','Server bereit, bitte einloggen');
+    refreshServerSyncInfo();
+  }
+  function saveServerConfig(){
+    const cfg = getServerInputs();
+    if(!cfg.url || !cfg.anon){ serverStatus('Server-Verbindung ist unvollständig.', 'bad'); return null; }
+    localStorage.setItem(SERVER_CONFIG_KEY, JSON.stringify({url:cfg.url, anon:cfg.anon, store:cfg.store, email:cfg.email, savedAt:new Date().toISOString()}));
+    serverStatus('Server-Verbindung ist bereit. Login und Speichern/Laden sind aktiv.', 'ok');
+    refreshServerButtonFromSession();
+    refreshServerLocalInfo();
+    return cfg;
+  }
+  function loadServerConfig(){
+    try{
+      const cfg = JSON.parse(localStorage.getItem(SERVER_CONFIG_KEY) || '{}');
+      const urlEl = document.getElementById('serverUrlInput');
+      const anonEl = document.getElementById('serverAnonInput');
+      const storeEl = document.getElementById('serverStoreInput');
+      const emailEl = document.getElementById('serverEmailInput');
+      if(urlEl) urlEl.value = SERVER_DEFAULT_URL || cfg.url || '';
+      if(anonEl) anonEl.value = SERVER_DEFAULT_ANON || cfg.anon || '';
+      if(storeEl) storeEl.value = cfg.store || 'default';
+      if(emailEl && cfg.email) emailEl.value = cfg.email;
+      const autosaveEl = document.getElementById('serverAutosaveToggle');
+      if(autosaveEl) autosaveEl.checked = localStorage.getItem(SERVER_AUTOSAVE_KEY) !== '0';
+    } catch(e){ console.warn(e); }
+  }
+  function forgetServerConfig(){
+    localStorage.removeItem(SERVER_TOKEN_KEY);
+    localStorage.removeItem(SERVER_META_KEY);
+    ['serverEmailInput','serverPasswordInput'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    const urlEl = document.getElementById('serverUrlInput'); if(urlEl) urlEl.value = SERVER_DEFAULT_URL || '';
+    const anonEl = document.getElementById('serverAnonInput'); if(anonEl) anonEl.value = SERVER_DEFAULT_ANON || '';
+    const sid = document.getElementById('serverStoreInput'); if(sid) sid.value = 'default';
+    serverStatus('Sitzung und Sync-Merker gelöscht. Server-Verbindung bleibt fest eingebaut.', 'ok');
+    setServerButtonState('ready','Server bereit, bitte einloggen');
+    refreshServerLocalInfo(); refreshServerSyncInfo();
+  }
+  function storeServerSession(data, cfg){
+    const userWithFallback = Object.assign({}, data.user || {});
+    if(!userWithFallback.email && cfg?.email) userWithFallback.email = cfg.email;
+    const session = {access_token:data.access_token, refresh_token:data.refresh_token, user:userWithFallback, expires_at:Date.now() + Math.max(60, (data.expires_in || 3600)) * 1000};
+    localStorage.setItem(SERVER_TOKEN_KEY, JSON.stringify(session));
+    if(cfg) localStorage.setItem(SERVER_CONFIG_KEY, JSON.stringify({url:cfg.url, anon:cfg.anon, store:cfg.store, email:cfg.email, savedAt:new Date().toISOString()}));
+    setServerButtonState('connected','Server verbunden' + (session.user?.email ? ' · ' + session.user.email : ''));
+    refreshServerSyncInfo();
+    return session;
+  }
+  async function supabaseRequest(path, options={}){
+    const cfg = getServerInputs();
+    if(!cfg.url || !cfg.anon) throw new Error('Project URL oder anon key fehlt.');
+    const headers = Object.assign({'apikey':cfg.anon}, options.headers || {});
+    const res = await fetch(cfg.url + path, Object.assign({}, options, {headers}));
+    const txt = await res.text();
+    let data = null;
+    try { data = txt ? JSON.parse(txt) : null; } catch(_) { data = txt; }
+    if(!res.ok){ const msg = (data && data.msg) || (data && data.message) || (typeof data === 'string' ? data : ('HTTP ' + res.status)); throw new Error(msg); }
+    return data;
+  }
+  async function refreshServerSession(){
+    const cfg = getServerInputs(); const old = loadServerSession();
+    if(!old?.refresh_token || !cfg.url || !cfg.anon) return null;
+    try{
+      const data = await supabaseRequest('/auth/v1/token?grant_type=refresh_token', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({refresh_token:old.refresh_token})});
+      return storeServerSession(data, cfg);
+    } catch(e){ console.warn('Server-Session konnte nicht erneuert werden', e); setServerButtonState('ready','Server bereit, bitte neu einloggen'); return null; }
+  }
+  async function getActiveServerSession(){
+    const s = loadServerSession();
+    if(isServerSessionFresh(s)){ refreshServerButtonFromSession(); return s; }
+    return await refreshServerSession();
+  }
+  async function serverLogin(){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    if(!cfg.email || !cfg.password){ serverStatus('Bitte E-Mail und Passwort eintragen.', 'bad'); return; }
+    try{
+      const data = await supabaseRequest('/auth/v1/token?grant_type=password', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:cfg.email, password:cfg.password})});
+      storeServerSession(data, cfg);
+      serverStatus('Eingeloggt als ' + (data.user?.email || cfg.email) + '. Die Sitzung wird automatisch weiterverwendet.', 'ok');
+      await serverCheckStatus(false);
+      await evaluateAdminAccess(true);
+    } catch(e){ setServerButtonState('error','Login nicht möglich'); serverStatus('Login nicht möglich: ' + e.message, 'bad'); }
+  }
+  async function serverSignup(){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    if(!cfg.email || !cfg.password){ serverStatus('Bitte E-Mail und Passwort eintragen.', 'bad'); return; }
+    try{
+      const data = await supabaseRequest('/auth/v1/signup', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:cfg.email, password:cfg.password})});
+      serverStatus(data?.user ? 'Registriert. Falls E-Mail-Bestätigung aktiv ist, bitte Mail bestätigen. Danach einloggen.' : 'Registrierung gesendet.', 'ok');
+    } catch(e){ serverStatus('Registrierung nicht möglich: ' + e.message, 'bad'); }
+  }
+  function serverLogout(){ localStorage.removeItem(SERVER_TOKEN_KEY); setServerButtonState('ready','Server bereit, bitte einloggen'); serverStatus('Abgemeldet.', 'ok'); refreshServerSyncInfo(); setAdminGate(true, 'Abgemeldet. Bitte als Admin/Planer einloggen.', 'warn'); }
+  function countLocalEmergencyBackups(){
+    let n = 0;
+    for(let i=0;i<localStorage.length;i++){ if(/^polypoint_sicherung__/i.test(localStorage.key(i) || '')) n++; }
+    return n;
+  }
+  function makeFullLocalBackup(reason, download=false){
+    const payload = {kind:'polypoint-local-backup', version:'13.0.226-split', createdAt:new Date().toISOString(), reason:reason || 'server_sync', items:collectUlmipointStorage()};
+    const key = 'polypoint_sicherung__' + String(reason || 'server_sync') + '__' + new Date().toISOString().replace(/[:.]/g,'-');
+    try { localStorage.setItem(key, JSON.stringify(payload)); } catch(e){ console.warn(e); }
+    if(download){
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = key + '.json'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    }
+    refreshServerLocalInfo();
+    return key;
+  }
+  function latestLocalEmergencyBackup(){
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if(/^polypoint_sicherung__/i.test(k || '')) keys.push(k); }
+    keys.sort().reverse();
+    for(const key of keys){ try { const payload = JSON.parse(localStorage.getItem(key) || '{}'); if(payload && payload.items) return {key, payload}; } catch(_){} }
+    return null;
+  }
+  function reloadSplitFrames(){
+    frames.forEach(frame => { try { frame.remove(); } catch(_){} });
+    frames.clear();
+    loadPlanner(activeId || 'overview', false);
+  }
+  function restoreLatestLocalEmergencyBackup(){
+    const found = latestLocalEmergencyBackup();
+    if(!found){ serverStatus('Keine lokale Notfallkopie gefunden.', 'bad'); return; }
+    if(!confirm('Letzte lokale Notfallkopie wiederherstellen? Der aktuelle Arbeitsstand wird vorher nochmals als Notfallkopie gesichert.')) return;
+    const currentBackup = makeFullLocalBackup('before_restore_emergency_backup', false);
+    const incoming = found.payload.items || {};
+    Object.keys(collectUlmipointStorage()).forEach(key => { if(!(key in incoming) && relevantStorageKey(key)) localStorage.removeItem(key); });
+    Object.entries(incoming).forEach(([key,val]) => { if(relevantStorageKey(key)) localStorage.setItem(key, String(val ?? '')); });
+    reloadSplitFrames();
+    saveServerMeta({lastHash:'', lastSyncAt:'', restoredFrom:found.key, restoredAt:new Date().toISOString()});
+    setServerButtonState('dirty','Notfallkopie wiederhergestellt · noch nicht auf Server gespeichert');
+    serverStatus('Notfallkopie wiederhergestellt: ' + found.key + '\nVorherige Arbeitskopie gesichert als: ' + currentBackup + '\nBitte prüfen und danach auf Server speichern.', 'ok');
+    refreshServerLocalInfo(); refreshServerSyncInfo(); scheduleServerAutosave('restore_backup');
+  }
+  async function fetchServerRow(cfg, session){
+    const data = await supabaseRequest('/rest/v1/planer_store?id=eq.' + encodeURIComponent(cfg.store) + '&select=id,data,updated_at', {method:'GET', headers:{'Authorization':'Bearer ' + session.access_token}});
+    return Array.isArray(data) ? data[0] : null;
+  }
+
+
+  const ROLE_ADMIN = 'admin';
+  const ROLE_PLANNER = 'planner';
+  const ROLE_EMPLOYEE = 'employee';
+  function normEmail(v){ return String(v || '').trim().toLowerCase(); }
+  function roleStore(data){
+    if(!data || typeof data !== 'object') return {};
+    const roles = data.accessRoles || data.roles || {};
+    return (roles && typeof roles === 'object') ? roles : {};
+  }
+  function normalizeRoleValue(v){
+    v = String(v || '').trim().toLowerCase();
+    if(['admin','administrator','leitung'].includes(v)) return ROLE_ADMIN;
+    if(['planner','planer','planung'].includes(v)) return ROLE_PLANNER;
+    if(['employee','mitarbeiter','ma'].includes(v)) return ROLE_EMPLOYEE;
+    return v || '';
+  }
+  function userRoleFromData(data, session){
+    const email = normEmail(session?.user?.email || storedServerEmail());
+    const roles = roleStore(data);
+    const entry = roles[email] || null;
+    const role = normalizeRoleValue(typeof entry === 'string' ? entry : entry?.role);
+    const configuredCount = Object.keys(roles).length;
+    return {email, entry, role, configuredCount, allowed: !configuredCount || role === ROLE_ADMIN || role === ROLE_PLANNER, employee: role === ROLE_EMPLOYEE};
+  }
+  function setAdminGate(show, msg='', kind=''){
+    const gate = document.getElementById('adminRoleGate');
+    const status = document.getElementById('adminRoleGateStatus');
+    if(!gate) return;
+    gate.classList.toggle('hidden', !show);
+    gate.setAttribute('aria-hidden', show ? 'false' : 'true');
+    if(status){ status.textContent = msg || ''; status.className = 'notice ' + kind; }
+  }
+  function setServerRoleInfo(msg, kind=''){
+    const el = document.getElementById('serverRoleInfo');
+    if(!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('ok', kind === 'ok');
+    el.classList.toggle('bad', kind === 'bad');
+  }
+  async function evaluateAdminAccess(showStatus=false){
+    loadServerConfig();
+    const cfg = getServerInputs();
+    const session = await getActiveServerSession();
+    if(!session){
+      const email = storedServerEmail();
+      const ge = document.getElementById('adminGateEmail'); if(ge && email) ge.value = email;
+      setAdminGate(true, 'Bitte als Admin/Planer einloggen. Mitarbeiter benutzen das Wunschportal.', 'warn');
+      if(showStatus) setServerRoleInfo('Nicht eingeloggt. Admin-Planer gesperrt.', 'bad');
+      return false;
+    }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      const info = userRoleFromData(row?.data || {}, session);
+      const label = info.email || serverUserLabel(serverUserFromSession(session));
+      if(info.employee){
+        setAdminGate(true, 'Diese Anmeldung ist als Mitarbeiter hinterlegt: ' + label + '\nDer Admin-Planer bleibt gesperrt. Bitte Wunschportal verwenden.', 'bad');
+        if(showStatus) setServerRoleInfo('Rolle: Mitarbeiter · Admin-Planer gesperrt · ' + label, 'bad');
+        return false;
+      }
+      if(info.configuredCount && !info.allowed){
+        setAdminGate(true, 'Für diese E-Mail ist keine Admin/Planer-Rolle hinterlegt: ' + label + '\nBitte mit einem Admin-Konto einloggen oder im Wunschportal arbeiten.', 'bad');
+        if(showStatus) setServerRoleInfo('Keine Admin/Planer-Rolle für ' + label, 'bad');
+        return false;
+      }
+      setAdminGate(false);
+      if(showStatus){
+        const roleText = info.role || 'Übergangsmodus: noch keine Rollenliste vorhanden';
+        setServerRoleInfo('Zugriff erlaubt · Benutzer: ' + label + ' · Rolle: ' + roleText + ' · Rollen im Server: ' + info.configuredCount, 'ok');
+      }
+      return true;
+    }catch(e){
+      setAdminGate(true, 'Rollenprüfung nicht möglich: ' + e.message + '\nBitte Verbindung/Login prüfen.', 'bad');
+      if(showStatus) setServerRoleInfo('Rollenprüfung nicht möglich: ' + e.message, 'bad');
+      return false;
+    }
+  }
+  async function adminGateLogin(){
+    const email = String(document.getElementById('adminGateEmail')?.value || '').trim();
+    const password = String(document.getElementById('adminGatePassword')?.value || '');
+    const emailInput = document.getElementById('serverEmailInput'); if(emailInput) emailInput.value = email;
+    const passInput = document.getElementById('serverPasswordInput'); if(passInput) passInput.value = password;
+    const cfg = saveServerConfig();
+    if(!email || !password){ setAdminGate(true, 'Bitte E-Mail und Passwort eintragen.', 'bad'); return; }
+    try{
+      const data = await supabaseRequest('/auth/v1/token?grant_type=password', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password})});
+      storeServerSession(data, cfg);
+      setAdminGate(true, 'Login OK. Rolle wird geprüft…', 'ok');
+      await evaluateAdminAccess(true);
+      serverLoadPrimaryOnStart();
+    }catch(e){ setAdminGate(true, 'Login nicht möglich: ' + e.message, 'bad'); }
+  }
+  async function serverRoleMarkAdmin(){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      const data = row?.data && typeof row.data === 'object' ? row.data : {kind:'polypoint-server-store', version:'13.0.226-split', items:{}, history:[], activity:[]};
+      const user = serverUserFromSession(session);
+      const email = normEmail(user.email);
+      if(!email) throw new Error('Keine E-Mail im Login gefunden.');
+      const roles = Object.assign({}, roleStore(data));
+      roles[email] = {role:ROLE_ADMIN, email, name:user.name || email, updatedAt:new Date().toISOString(), updatedBy:user, source:'admin-planer'};
+      data.accessRoles = roles;
+      data.roleVersion = '13.0.219';
+      data.activity = buildActivityLog(data, makeActivityEntry('Admin-Rolle gespeichert', session, {area:'Rollen', count:Object.keys(roles).length, note:email}));
+      await supabaseRequest('/rest/v1/planer_store', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + session.access_token,'Prefer':'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({id:cfg.store, data, updated_at:new Date().toISOString()})});
+      setServerRoleInfo('Admin-Rolle gespeichert für ' + email + '. Rollen im Server: ' + Object.keys(roles).length, 'ok');
+      serverStatus('Admin-Rolle gespeichert: ' + email, 'ok');
+      cacheServerWishesFromData(data);
+      renderServerActivity({data, updated_at:new Date().toISOString()});
+      await evaluateAdminAccess(false);
+    }catch(e){ setServerRoleInfo('Admin-Rolle konnte nicht gespeichert werden: ' + e.message, 'bad'); serverStatus('Admin-Rolle konnte nicht gespeichert werden: ' + e.message, 'bad'); }
+  }
+
+  function storedServerEmail(){
+    try{
+      const input = document.getElementById('serverEmailInput');
+      const fromInput = String(input?.value || '').trim();
+      if(fromInput) return fromInput;
+    }catch(_){}
+    try{
+      const cfg = JSON.parse(localStorage.getItem(SERVER_CONFIG_KEY) || '{}') || {};
+      const fromConfig = String(cfg.email || '').trim();
+      if(fromConfig) return fromConfig;
+    }catch(_){}
+    return '';
+  }
+  function serverUserFromSession(session){
+    const user = session?.user || {};
+    const meta = user.user_metadata || {};
+    const email = String(user.email || storedServerEmail() || '').trim();
+    const rawName = meta.full_name || meta.name || meta.display_name || '';
+    const name = String(rawName || email || user.id || 'unbekannt');
+    return {id:user.id || '', email:email, name:name};
+  }
+  function serverUserLabel(user){
+    user = user || {};
+    const name = String(user.name || '').trim();
+    const email = String(user.email || '').trim();
+    const id = String(user.id || '').trim();
+    if(name && name !== 'unbekannt') return name;
+    if(email) return email;
+    if(id) return id;
+    return 'unbekannt';
+  }
+  function escapeHtml(txt){
+    return String(txt ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function formatHistoryDate(iso){
+    if(!iso) return 'ohne Zeit';
+    try{ return new Date(iso).toLocaleString('de-CH'); }catch(_){ return String(iso); }
+  }
+
+  function setServerConflictInfo(text, kind=''){
+    const el = document.getElementById('serverConflictInfo');
+    if(!el) return;
+    el.textContent = text || '';
+    el.classList.toggle('ok', kind === 'ok');
+    el.classList.toggle('warn', kind === 'warn');
+    el.classList.toggle('bad', kind === 'bad');
+  }
+  function serverRowHash(row){
+    if(!row || !row.data) return '';
+    return row.data.hash || stableHashFromItems(row.data.items || {});
+  }
+  function serverRowCount(row){
+    if(!row || !row.data) return 0;
+    if(row.data.count != null) return row.data.count;
+    return Object.keys(row.data.items || {}).length;
+  }
+  function serverRowTime(row){
+    return row?.data?.savedAt || row?.updated_at || '';
+  }
+  function serverConflictState(row, meta, snap){
+    const serverHash = serverRowHash(row);
+    const hasServer = !!(row && row.data && row.data.items && Object.keys(row.data.items || {}).length);
+    const neverSyncedHere = hasServer && !meta.lastHash;
+    const serverChanged = !!(hasServer && meta.lastHash && serverHash && serverHash !== meta.lastHash);
+    const localChanged = !!(meta.lastHash && snap.hash !== meta.lastHash);
+    return {hasServer, serverHash, neverSyncedHere, serverChanged, localChanged};
+  }
+  function renderServerConflict(row, meta, session, showOk=true){
+    const snap = localStorageSnapshot();
+    meta = meta || loadServerMeta();
+    const st = serverConflictState(row, meta, snap);
+    const who = row?.data ? serverUserLabel(row.data.savedBy || loadServerMeta().user || serverUserFromSession(loadServerSession())) : 'unbekannt';
+    const when = row ? formatHistoryDate(serverRowTime(row)) : 'ohne Serverstand';
+    const serverLine = row ? ('Server: ' + serverRowCount(row) + ' Einträge · ' + (st.serverHash || 'ohne Hash') + ' · ' + when + ' · Benutzer: ' + who) : 'Server: noch leer';
+    const localLine = 'Lokal: ' + snap.count + ' Einträge · ' + snap.hash;
+    if(st.neverSyncedHere){
+      setServerConflictInfo('🟡 Dieser Browser hat den vorhandenen Serverstand noch nie geladen.\n' + serverLine + '\n' + localLine + '\n\nSchutz: Auto-Speichern überschreibt diesen Serverstand nicht. Erst „Serverstand laden“ benutzen oder bewusst manuell überschreiben.', 'warn');
+      return st;
+    }
+    if(st.serverChanged){
+      setServerConflictInfo('🔴 Konflikt möglich: Der Server wurde seit deinem letzten Sync verändert.\n' + serverLine + '\n' + localLine + '\nLetzter lokaler Sync: ' + (meta.lastSyncAt ? formatHistoryDate(meta.lastSyncAt) : 'nie') + '\n\nSchutz: Auto-Speichern ist pausiert. Erst Serverstand laden oder bewusst manuell überschreiben.', 'bad');
+      return st;
+    }
+    if(st.localChanged){
+      setServerConflictInfo('🟡 Lokale Änderungen sind noch nicht auf dem Server.\n' + serverLine + '\n' + localLine + '\n\nBeim Speichern wird der Server vorher nochmals geprüft.', 'warn');
+      return st;
+    }
+    if(showOk) setServerConflictInfo('🟢 Kein Konflikt erkannt.\n' + serverLine + '\n' + localLine + '\n\nServer und Arbeitskopie passen zum letzten Sync-Merker.', 'ok');
+    return st;
+  }
+  async function serverConflictCheck(showStatus=true){
+    const cfg = saveServerConfig(); if(!cfg) return null;
+    const session = await getActiveServerSession();
+    if(!session){ setServerConflictInfo('Bitte zuerst einloggen.', 'bad'); if(showStatus) serverStatus('Bitte zuerst einloggen.', 'bad'); return null; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      const st = renderServerConflict(row, loadServerMeta(), session, true);
+      if(showStatus) serverStatus(st && (st.serverChanged || st.neverSyncedHere) ? 'Konflikt-Schutz: Bitte zuerst Serverstand laden oder bewusst entscheiden.' : 'Konflikt-Schutz geprüft.', st && st.serverChanged ? 'bad' : (st && st.neverSyncedHere ? '' : 'ok'));
+      return st;
+    }catch(e){ setServerConflictInfo('Konfliktprüfung nicht möglich: ' + e.message, 'bad'); if(showStatus) serverStatus('Konfliktprüfung nicht möglich: ' + e.message, 'bad'); return null; }
+  }
+  function serverHistoryFromData(data){
+    return Array.isArray(data?.history) ? data.history.filter(h => h && h.items && typeof h.items === 'object').slice(0, 20) : [];
+  }
+  function makeHistoryId(prefix='stand'){
+    return prefix + '_' + new Date().toISOString().replace(/[:.]/g,'-') + '_' + Math.random().toString(36).slice(2,8);
+  }
+  function makeHistoryEntryFromData(data, action, session, extra={}){
+    if(!data || !data.items) return null;
+    const items = data.items || {};
+    const hash = data.hash || stableHashFromItems(items);
+    return {
+      id: extra.id || data.id || makeHistoryId('stand'),
+      savedAt: extra.savedAt || data.savedAt || data.createdAt || new Date().toISOString(),
+      action: action || data.action || 'Serverstand',
+      user: extra.user || data.savedBy || serverUserFromSession(session),
+      hash,
+      count: data.count != null ? data.count : Object.keys(items).length,
+      origin: data.origin || location.href,
+      version: data.version || '13.0.213-split',
+      restoredFrom: data.restoredFrom || null,
+      items
+    };
+  }
+
+  function serverActivityFromData(data){
+    return Array.isArray(data?.activity) ? data.activity.filter(a => a && (a.at || a.action)).slice(0, 50) : [];
+  }
+  function makeActivityEntry(action, session, extra={}){
+    return {
+      id: extra.id || makeHistoryId('act'),
+      at: extra.at || new Date().toISOString(),
+      action: action || 'Aktion',
+      user: extra.user || serverUserFromSession(session),
+      area: extra.area || 'Server',
+      hash: extra.hash || '',
+      count: extra.count != null ? extra.count : null,
+      note: extra.note || ''
+    };
+  }
+  function buildActivityLog(previousData, entry){
+    const old = serverActivityFromData(previousData);
+    const merged = entry ? [entry].concat(old) : old.slice();
+    const unique = [];
+    const seen = new Set();
+    for(const a of merged){
+      if(!a) continue;
+      const key = (a.id || '') + '|' + (a.at || '') + '|' + (a.action || '') + '|' + serverUserLabel(a.user);
+      if(seen.has(key)) continue;
+      seen.add(key);
+      unique.push(a);
+      if(unique.length >= 50) break;
+    }
+    return unique;
+  }
+  function renderServerActivity(row){
+    const list = document.getElementById('serverActivityList');
+    if(!list) return;
+    serverActivityCache = serverActivityFromData(row?.data);
+    if(!serverActivityCache.length){
+      list.innerHTML = '<div class="server-history-row"><div><div class="server-history-title">Noch keine Aktivität protokolliert.</div><div class="server-history-meta">Ab jetzt werden Server-Speichern und Wiederherstellen hier aufgeführt.</div></div></div>';
+      return;
+    }
+    list.innerHTML = serverActivityCache.map(a => {
+      const title = escapeHtml(formatHistoryDate(a.at)) + ' · ' + escapeHtml(a.action || 'Aktion');
+      const metaParts = [
+        'Benutzer: ' + serverUserLabel(a.user),
+        'Bereich: ' + (a.area || 'Server')
+      ];
+      if(a.count != null) metaParts.push(String(a.count) + ' Einträge');
+      if(a.hash) metaParts.push(String(a.hash));
+      if(a.note) metaParts.push(String(a.note));
+      return '<div class="server-history-row"><div><div class="server-history-title">' + title + '</div><div class="server-history-meta">' + escapeHtml(metaParts.join(' · ')) + '</div></div></div>';
+    }).join('');
+  }
+  async function serverActivityLoad(showStatus=true){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      renderServerActivity(row);
+      if(showStatus) serverStatus(row ? 'Aktivität geladen: ' + serverActivityCache.length + ' Einträge.' : 'Noch kein Serverstand vorhanden.', row ? 'ok' : '');
+    } catch(e){ serverStatus('Aktivität konnte nicht geladen werden: ' + e.message, 'bad'); }
+  }
+  function downloadServerActivity(){
+    if(!serverActivityCache.length){ serverStatus('Keine Aktivität zum Herunterladen geladen.', 'bad'); return; }
+    const payload = {kind:'polypoint-activity-log', version:'13.0.226-split', exportedAt:new Date().toISOString(), activity:serverActivityCache};
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'polypoint_aktivitaet_' + new Date().toISOString().replace(/[:.]/g,'-').slice(0,19) + '.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    serverStatus('Aktivitätsprotokoll heruntergeladen.', 'ok');
+  }
+  function buildServerPayload(snap, action, session, previousData, extra={}){
+    const now = new Date().toISOString();
+    const user = serverUserFromSession(session);
+    const activityEntry = makeActivityEntry(action || 'gespeichert', session, {area:'Server', hash:snap.hash, count:snap.count});
+    const activity = buildActivityLog(previousData, activityEntry);
+    const history = serverHistoryFromData(previousData);
+    if(previousData && previousData.items){
+      const previous = makeHistoryEntryFromData(previousData, previousData.action || 'vorheriger Serverstand', session, {id:makeHistoryId('prev')});
+      if(previous && previous.hash !== snap.hash) history.unshift(previous);
+    }
+    const unique = [];
+    const seen = new Set();
+    for(const h of history){
+      if(!h || !h.items) continue;
+      const key = (h.id || '') + '|' + (h.hash || '') + '|' + (h.savedAt || '') + '|' + (h.action || '');
+      if(seen.has(key)) continue;
+      seen.add(key);
+      unique.push(h);
+      if(unique.length >= 20) break;
+    }
+    const payload = {
+      kind:'polypoint-server-store',
+      version:'13.0.226-split',
+      savedAt:now,
+      action: action || 'manuell gespeichert',
+      savedBy:user,
+      origin:location.href,
+      hash:snap.hash,
+      count:snap.count,
+      items:snap.items,
+      history:unique,
+      activity:activity,
+      restoredFrom: extra.restoredFrom || null
+    };
+    if(previousData && typeof previousData === 'object'){
+      if(previousData.wishes) payload.wishes = previousData.wishes;
+      if(previousData.wishSettings) payload.wishSettings = previousData.wishSettings;
+      if(previousData.accessRoles) payload.accessRoles = previousData.accessRoles;
+      if(previousData.roleVersion) payload.roleVersion = previousData.roleVersion;
+    }
+    return payload;
+  }
+  function serverHistoryEntriesFromRow(row){
+    const data = row?.data || null;
+    if(!data || !data.items) return [];
+    const fallbackCurrentUser = data.savedBy || loadServerMeta().user || serverUserFromSession(loadServerSession()) || {name:'unbekannt'};
+    const current = makeHistoryEntryFromData(data, data.action || 'aktueller Serverstand', null, {id:'current', savedAt:data.savedAt || row.updated_at || new Date().toISOString(), user:fallbackCurrentUser});
+    if(current) current.current = true;
+    return [current].concat(serverHistoryFromData(data));
+  }
+  function renderServerHistory(row){
+    const list = document.getElementById('serverHistoryList');
+    if(!list) return;
+    serverHistoryCache = serverHistoryEntriesFromRow(row);
+    if(!serverHistoryCache.length){
+      list.innerHTML = '<div class="server-history-row"><div><div class="server-history-title">Noch keine Speicherstände gefunden.</div><div class="server-history-meta">Nach dem ersten Server-Speichern erscheint hier der Verlauf.</div></div></div>';
+      return;
+    }
+    list.innerHTML = serverHistoryCache.map((h, idx) => {
+      const current = h.current ? ' server-history-current' : '';
+      const title = (h.current ? 'Aktueller Serverstand' : 'Speicherstand') + ' · ' + escapeHtml(formatHistoryDate(h.savedAt));
+      const meta = escapeHtml(serverUserLabel(h.user)) + ' · ' + escapeHtml(h.action || 'gespeichert') + ' · ' + escapeHtml(String(h.count ?? Object.keys(h.items || {}).length)) + ' Einträge · ' + escapeHtml(h.hash || '');
+      return '<div class="server-history-row' + current + '"><div><div class="server-history-title">' + title + '</div><div class="server-history-meta">' + meta + '</div></div><div class="server-history-actions"><button type="button" data-history-action="download" data-history-index="' + idx + '">Herunterladen</button>' + (h.current ? '' : '<button type="button" data-history-action="compare" data-history-index="' + idx + '">Vergleichen</button><button type="button" class="primary" data-history-action="restore" data-history-index="' + idx + '">Wiederherstellen</button>') + '</div></div>';
+    }).join('');
+  }
+  async function serverHistoryLoad(showStatus=true){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      renderServerHistory(row);
+      if(showStatus) serverStatus(row ? 'Speicherstände geladen: ' + serverHistoryCache.length + ' Stand/stände.' : 'Noch kein Serverstand vorhanden.', row ? 'ok' : '');
+    } catch(e){ serverStatus('Speicherstände konnten nicht geladen werden: ' + e.message, 'bad'); }
+  }
+  function classifyHistoryKey(key){
+    const k = String(key || '').toLowerCase();
+    const areas = [
+      ['azoren','Azoren'],['bali','Bali'],['capri','Capri'],['delos','Delos'],['nachtwache','Nachtwache'],['pikett','Haus-Pikett'],['hausdienstplan','Haus-Dienstplan'],['overview','Startseite'],['start','Startseite']
+    ];
+    for(const [needle,label] of areas){ if(k.includes(needle)) return label; }
+    if(k.includes('employee') || k.includes('mitarbeiter') || k.includes('profile')) return 'Profile / Mitarbeiter';
+    if(k.includes('rules') || k.includes('regel') || k.includes('duty') || k.includes('dienst')) return 'Regeln / Dienste';
+    return 'Sonstiges';
+  }
+  function compareItemMaps(currentItems, oldItems){
+    const groups = {};
+    function ensure(area){
+      if(!groups[area]) groups[area] = {area, gleich:0, geaendert:0, nurAktuell:0, nurAlt:0, beispiele:[]};
+      return groups[area];
+    }
+    const keys = new Set(Object.keys(currentItems || {}).concat(Object.keys(oldItems || {})));
+    keys.forEach(key => {
+      const area = classifyHistoryKey(key);
+      const g = ensure(area);
+      const hasCur = Object.prototype.hasOwnProperty.call(currentItems || {}, key);
+      const hasOld = Object.prototype.hasOwnProperty.call(oldItems || {}, key);
+      if(hasCur && hasOld){
+        if(String(currentItems[key] ?? '') === String(oldItems[key] ?? '')) g.gleich++;
+        else { g.geaendert++; if(g.beispiele.length < 3) g.beispiele.push(key); }
+      } else if(hasCur){ g.nurAktuell++; if(g.beispiele.length < 3) g.beispiele.push(key); }
+      else { g.nurAlt++; if(g.beispiele.length < 3) g.beispiele.push(key); }
+    });
+    const order = ['Azoren','Bali','Capri','Delos','Nachtwache','Haus-Pikett','Haus-Dienstplan','Startseite','Profile / Mitarbeiter','Regeln / Dienste','Sonstiges'];
+    return order.filter(a => groups[a]).map(a => groups[a]).concat(Object.keys(groups).filter(a => !order.includes(a)).sort().map(a => groups[a]));
+  }
+  function renderHistoryCompare(index){
+    const box = document.getElementById('serverHistoryCompare');
+    if(!box) return;
+    const entry = serverHistoryCache[Number(index)];
+    const current = serverHistoryCache[0];
+    if(!entry || !current){ serverStatus('Vergleich nicht möglich: Speicherstände fehlen.', 'bad'); return; }
+    if(entry.current){ box.classList.remove('show'); box.innerHTML = ''; serverStatus('Der aktuelle Stand wird gegen einen älteren Speicherstand verglichen. Bitte einen alten Stand wählen.', ''); return; }
+    const groups = compareItemMaps(current.items || {}, entry.items || {});
+    const total = groups.reduce((n,g) => n + g.geaendert + g.nurAktuell + g.nurAlt, 0);
+    const oldLabel = formatHistoryDate(entry.savedAt) + ' · ' + serverUserLabel(entry.user) + ' · ' + (entry.action || 'gespeichert');
+    const currentLabel = formatHistoryDate(current.savedAt) + ' · ' + serverUserLabel(current.user) + ' · ' + (current.action || 'aktueller Serverstand');
+    const cards = groups.map(g => {
+      const changed = g.geaendert + g.nurAktuell + g.nurAlt;
+      const cls = changed ? 'changed' : (g.gleich ? 'same' : 'empty');
+      const examples = g.beispiele.length ? '<div class="compare-meta">Beispiele: ' + escapeHtml(g.beispiele.join(', ')) + '</div>' : '';
+      return '<div class="compare-card ' + cls + '"><div class="compare-area">' + escapeHtml(g.area) + '</div><div class="compare-counts"><span class="compare-pill ' + (changed ? 'warn' : 'ok') + '">' + (changed ? 'anders' : 'gleich') + '</span><span class="compare-pill blue">gleich ' + g.gleich + '</span><span class="compare-pill warn">geändert ' + g.geaendert + '</span><span class="compare-pill bad">nur alt ' + g.nurAlt + '</span><span class="compare-pill blue">nur aktuell ' + g.nurAktuell + '</span></div>' + examples + '</div>';
+    }).join('') || '<div class="compare-card same"><div class="compare-area">Keine Unterschiede gefunden.</div></div>';
+    box.innerHTML = '<div class="compare-head"><div><div class="compare-title">Speicherstand-Vergleich</div><div class="compare-meta">Alt: ' + escapeHtml(oldLabel) + '</div><div class="compare-meta">Aktuell: ' + escapeHtml(currentLabel) + '</div></div><button type="button" id="serverHistoryCompareCloseBtn">Schliessen</button></div><div class="compare-meta"><b>' + (total ? total + ' Unterschied(e) gefunden.' : 'Keine Unterschiede gefunden.') + '</b> Vergleich nach gespeicherten ULMIPOINT-Browserdaten.</div><div class="compare-grid">' + cards + '</div>';
+    box.classList.add('show');
+    document.getElementById('serverHistoryCompareCloseBtn')?.addEventListener('click', () => { box.classList.remove('show'); box.innerHTML=''; });
+    serverStatus(total ? 'Vergleich erstellt: ' + total + ' Unterschied(e).' : 'Vergleich erstellt: keine Unterschiede.', total ? '' : 'ok');
+  }
+
+
+  function renderHistoryRestorePreview(index){
+    const box = document.getElementById('serverHistoryRestorePreview');
+    if(!box){ serverStatus('Wiederherstellungs-Vorschau nicht gefunden.', 'bad'); return; }
+    const entry = serverHistoryCache[Number(index)];
+    const current = serverHistoryCache[0];
+    if(!entry || entry.current){ serverStatus('Dieser Speicherstand kann nicht wiederhergestellt werden.', 'bad'); return; }
+    if(!current){ serverStatus('Aktueller Serverstand fehlt. Bitte zuerst Speicherstände laden.', 'bad'); return; }
+    const compareBox = document.getElementById('serverHistoryCompare');
+    if(compareBox){ compareBox.classList.remove('show'); compareBox.innerHTML=''; }
+    const groups = compareItemMaps(current.items || {}, entry.items || {});
+    const total = groups.reduce((n,g) => n + g.geaendert + g.nurAktuell + g.nurAlt, 0);
+    const oldLabel = formatHistoryDate(entry.savedAt) + ' · ' + serverUserLabel(entry.user) + ' · ' + (entry.action || 'gespeichert');
+    const currentLabel = formatHistoryDate(current.savedAt) + ' · ' + serverUserLabel(current.user) + ' · ' + (current.action || 'aktueller Serverstand');
+    const cards = groups.map(g => {
+      const changed = g.geaendert + g.nurAktuell + g.nurAlt;
+      const cls = changed ? 'changed' : (g.gleich ? 'same' : 'empty');
+      const examples = g.beispiele.length ? '<div class="compare-meta">Beispiele: ' + escapeHtml(g.beispiele.join(', ')) + '</div>' : '';
+      return '<div class="compare-card ' + cls + '"><div class="compare-area">' + escapeHtml(g.area) + '</div><div class="compare-counts"><span class="compare-pill ' + (changed ? 'warn' : 'ok') + '">' + (changed ? 'wird geändert' : 'bleibt gleich') + '</span><span class="compare-pill blue">gleich ' + g.gleich + '</span><span class="compare-pill warn">geändert ' + g.geaendert + '</span><span class="compare-pill bad">nur alter Stand ' + g.nurAlt + '</span><span class="compare-pill blue">nur aktuell ' + g.nurAktuell + '</span></div>' + examples + '</div>';
+    }).join('') || '<div class="compare-card same"><div class="compare-area">Keine Unterschiede gefunden.</div></div>';
+    box.innerHTML = '<div class="compare-head"><div><div class="compare-title">Wiederherstellen mit Sicherheitsvorschau</div><div class="compare-meta">Wiederherstellen auf: ' + escapeHtml(oldLabel) + '</div><div class="compare-meta">Aktueller Serverstand: ' + escapeHtml(currentLabel) + '</div></div><button type="button" id="serverHistoryRestoreCloseBtn">Schliessen</button></div>' +
+      '<div class="server-conflict-info warn"><b>Achtung:</b> Du stellst einen alten Speicherstand wieder her. Vorher wird der aktuelle Serverstand automatisch im Verlauf als <b>„vor Wiederherstellung gesichert“</b> abgelegt und zusätzlich lokal als Notfallkopie gesichert.</div>' +
+      '<div class="compare-meta" style="margin-top:8px"><b>' + (total ? total + ' Unterschied(e) gegenüber aktuell.' : 'Keine Unterschiede gegenüber aktuell.') + '</b> Bitte prüfen, dann erst wirklich wiederherstellen.</div>' +
+      '<div class="compare-grid">' + cards + '</div>' +
+      '<div class="central-export-actions" style="justify-content:flex-end"><button type="button" id="serverHistoryRestoreCancelBtn">Abbrechen</button><button type="button" id="serverHistoryRestoreDownloadCurrentBtn">Aktuellen Stand herunterladen</button><button type="button" class="primary" id="serverHistoryRestoreConfirmBtn">Wirklich wiederherstellen</button></div>';
+    box.classList.add('show');
+    const close = () => { box.classList.remove('show'); box.innerHTML=''; };
+    document.getElementById('serverHistoryRestoreCloseBtn')?.addEventListener('click', close);
+    document.getElementById('serverHistoryRestoreCancelBtn')?.addEventListener('click', close);
+    document.getElementById('serverHistoryRestoreDownloadCurrentBtn')?.addEventListener('click', () => downloadHistoryEntry(0));
+    document.getElementById('serverHistoryRestoreConfirmBtn')?.addEventListener('click', () => { close(); restoreHistoryEntry(index, true); });
+    serverStatus('Wiederherstellungs-Vorschau erstellt. Bitte prüfen und erst dann bestätigen.', total ? '' : 'ok');
+  }
+
+  function downloadHistoryEntry(index){
+    const entry = serverHistoryCache[Number(index)];
+    if(!entry){ serverStatus('Speicherstand nicht gefunden.', 'bad'); return; }
+    const payload = {kind:'polypoint-history-entry', exportedAt:new Date().toISOString(), entry};
+    const safeTime = String(entry.savedAt || new Date().toISOString()).replace(/[:.]/g,'-').slice(0,19);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'polypoint_speicherstand_' + (entry.current ? 'aktuell' : safeTime) + '.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    serverStatus('Speicherstand heruntergeladen: ' + formatHistoryDate(entry.savedAt), 'ok');
+  }
+  async function restoreHistoryEntry(index, confirmed=false){
+    const entry = serverHistoryCache[Number(index)];
+    if(!entry || entry.current){ serverStatus('Dieser Speicherstand kann nicht wiederhergestellt werden.', 'bad'); return; }
+    if(!confirmed){ renderHistoryRestorePreview(index); return; }
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      const currentEntry = makeHistoryEntryFromData(row?.data, 'vor Wiederherstellung gesichert', session, {id:makeHistoryId('restore_prev')});
+      const existingHistory = serverHistoryFromData(row?.data).filter(h => h.id !== entry.id);
+      const items = entry.items || {};
+      const snap = {items, hash:entry.hash || stableHashFromItems(items), count:Object.keys(items).length};
+      const restoreActivity = buildActivityLog(row?.data, makeActivityEntry('Speicherstand wiederhergestellt', session, {area:'Server', hash:snap.hash, count:snap.count, note:'wiederhergestellt: ' + formatHistoryDate(entry.savedAt)}));
+      const payload = {
+        kind:'polypoint-server-store',
+        version:'13.0.226-split',
+        savedAt:new Date().toISOString(),
+        action:'Speicherstand wiederhergestellt',
+        savedBy:serverUserFromSession(session),
+        origin:location.href,
+        hash:snap.hash,
+        count:snap.count,
+        items:snap.items,
+        restoredFrom:{id:entry.id, savedAt:entry.savedAt, hash:entry.hash, user:entry.user, action:entry.action},
+        wishSettings: row?.data?.wishSettings || null,
+        history:(currentEntry ? [currentEntry] : []).concat(existingHistory).slice(0,20),
+        activity:restoreActivity
+      };
+      makeFullLocalBackup('before_history_restore', false);
+      await supabaseRequest('/rest/v1/planer_store', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + session.access_token,'Prefer':'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({id:cfg.store, data:payload, updated_at:new Date().toISOString()})});
+      Object.keys(collectUlmipointStorage()).forEach(key => { if(!(key in items) && relevantStorageKey(key)) localStorage.removeItem(key); });
+      Object.entries(items).forEach(([key,val]) => { if(relevantStorageKey(key)) localStorage.setItem(key, String(val ?? '')); });
+      reloadSplitFrames();
+      saveServerMeta({store:cfg.store, lastHash:snap.hash, lastSyncAt:new Date().toISOString(), serverUpdatedAt:payload.savedAt, count:snap.count, origin:location.href, restoredFrom:entry.id});
+      lastObservedServerHash = snap.hash;
+      setServerButtonState('connected','Speicherstand wiederhergestellt');
+      renderServerHistory({data:payload, updated_at:payload.savedAt});
+      renderServerActivity({data:payload, updated_at:payload.savedAt});
+      renderServerConflict({data:payload, updated_at:payload.savedAt}, loadServerMeta(), session, true);
+      refreshServerLocalInfo(); refreshServerSyncInfo();
+      serverStatus('Speicherstand wiederhergestellt: ' + formatHistoryDate(entry.savedAt) + ' · ' + snap.count + ' Einträge.', 'ok');
+    } catch(e){ setServerButtonState('error','Speicherstand konnte nicht wiederhergestellt werden'); serverStatus('Speicherstand konnte nicht wiederhergestellt werden: ' + e.message, 'bad'); }
+  }
+
+  async function serverUpload(opts={}){
+    const cfg = saveServerConfig(); if(!cfg) return false;
+    const session = await getActiveServerSession();
+    if(!session){ if(!opts.auto) serverStatus('Bitte zuerst einloggen.', 'bad'); return false; }
+    if(serverAutosaveBusy) return false;
+    serverAutosaveBusy = true;
+    const snap = localStorageSnapshot();
+    try{
+      const meta = loadServerMeta();
+      let row = null;
+      try { row = await fetchServerRow(cfg, session); } catch(e){ if(!opts.auto) console.warn(e); }
+      const serverHash = row?.data?.hash || stableHashFromItems(row?.data?.items || {});
+      const conflict = renderServerConflict(row, meta, session, false);
+      const protectedConflict = row && conflict && (conflict.serverChanged || conflict.neverSyncedHere);
+      if(protectedConflict && !opts.force){
+        const who = row?.data ? serverUserLabel(row.data.savedBy || loadServerMeta().user || serverUserFromSession(loadServerSession())) : 'unbekannt';
+        const when = row ? formatHistoryDate(serverRowTime(row)) : 'unbekannt';
+        if(opts.auto){
+          serverStatus('Auto-Speichern pausiert: Serverstand ist geschützt. Letzter Serverstand von ' + who + ' · ' + when + '. Bitte ☁️ Server öffnen und Konflikt prüfen.', 'bad');
+          setServerButtonState('error','Konflikt-Schutz: Auto-Speichern pausiert');
+          return false;
+        }
+        const msg = conflict.neverSyncedHere
+          ? 'Dieser Browser hat den vorhandenen Serverstand noch nie geladen.\nLetzter Serverstand: ' + who + ' · ' + when + '\n\nTrotzdem mit diesem lokalen Stand überschreiben?'
+          : 'Der Serverstand wurde seit deinem letzten Sync geändert.\nLetzter Serverstand: ' + who + ' · ' + when + '\n\nLokalen Stand trotzdem auf den Server schreiben?';
+        if(!confirm(msg)){
+          serverStatus('Speichern abgebrochen. Bitte zuerst Serverstand laden oder Sicherung machen.', 'bad');
+          return false;
+        }
+      }
+      if(!opts.auto) makeFullLocalBackup('before_server_upload', false);
+      const action = opts.auto ? 'Auto-Speicherung' : (opts.manual ? 'manuell gespeichert' : 'gespeichert');
+      const payload = buildServerPayload(snap, action, session, row?.data || null);
+      cacheServerWishesFromData(payload);
+      await supabaseRequest('/rest/v1/planer_store', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + session.access_token,'Prefer':'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({id:cfg.store, data:payload, updated_at:new Date().toISOString()})});
+      saveServerMeta({store:cfg.store, lastHash:snap.hash, lastSyncAt:new Date().toISOString(), serverUpdatedAt:payload.savedAt, count:snap.count, origin:location.href, user:payload.savedBy});
+      lastObservedServerHash = snap.hash;
+      setServerButtonState('connected', opts.auto ? 'Server verbunden · automatisch gespeichert' : 'Server verbunden · zuletzt gespeichert');
+      serverStatus((opts.auto ? 'Automatisch auf Server gespeichert: ' : 'Auf Server gespeichert: ') + snap.count + ' Planungs-Einträge · Benutzer: ' + serverUserLabel(payload.savedBy) + ' · Speicherstände: ' + (1 + payload.history.length), 'ok');
+      renderServerHistory({data:payload, updated_at:payload.savedAt});
+      renderServerActivity({data:payload, updated_at:payload.savedAt});
+      renderServerConflict({data:payload, updated_at:payload.savedAt}, loadServerMeta(), session, true);
+      refreshServerLocalInfo(); refreshServerSyncInfo();
+      return true;
+    } catch(e){ setServerButtonState('error','Server speichern nicht möglich'); serverStatus('Server speichern nicht möglich: ' + e.message, 'bad'); return false; }
+    finally { serverAutosaveBusy = false; }
+  }
+
+  async function serverDownload(){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      if(!row || !row.data || !row.data.items) throw new Error('Keine Serverdaten für Speicher-ID ' + cfg.store + ' gefunden.');
+      const snap = localStorageSnapshot(); const meta = loadServerMeta();
+      if(meta.lastHash && snap.hash !== meta.lastHash){
+        if(!confirm('Lokale Änderungen sind noch nicht auf dem Server gespeichert. Trotzdem Serverstand laden? Eine lokale Sicherung wird vorher erstellt.')){ serverStatus('Server laden abgebrochen.', 'bad'); return; }
+      }
+      const backupKey = makeFullLocalBackup('before_server_download', false);
+      cacheServerWishesFromData(row.data);
+      const incoming = row.data.items || {};
+      Object.keys(collectUlmipointStorage()).forEach(key => { if(!(key in incoming) && relevantStorageKey(key)) localStorage.removeItem(key); });
+      Object.entries(incoming).forEach(([key,val]) => { if(relevantStorageKey(key)) localStorage.setItem(key, String(val ?? '')); });
+      reloadSplitFrames();
+      const newHash = row.data.hash || stableHashFromItems(incoming);
+      saveServerMeta({store:cfg.store, lastHash:newHash, lastSyncAt:new Date().toISOString(), serverUpdatedAt:row.updated_at, count:Object.keys(incoming).length, origin:row.data.origin || ''});
+      lastObservedServerHash = newHash;
+      refreshServerLocalInfo(); refreshServerSyncInfo();
+      setServerButtonState('connected','Server verbunden · zuletzt geladen');
+      renderServerHistory(row);
+      renderServerActivity(row);
+      renderServerConflict(row, loadServerMeta(), session, true);
+      serverStatus('Server-Hauptspeicher geladen: ' + Object.keys(incoming).length + ' Einträge. Vorherige Arbeitskopie als Notfallkopie: ' + backupKey, 'ok');
+    } catch(e){ setServerButtonState('error','Server laden nicht möglich'); serverStatus('Server laden nicht möglich: ' + e.message, 'bad'); }
+  }
+  async function serverBackupDownload(){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      if(!row) throw new Error('Keine Serverdaten gefunden.');
+      const blob = new Blob([JSON.stringify(row, null, 2)], {type:'application/json;charset=utf-8'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'polypoint_server_sicherung_' + cfg.store + '_' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      serverStatus('Server-Sicherung heruntergeladen.', 'ok');
+    } catch(e){ serverStatus('Server-Sicherung nicht möglich: ' + e.message, 'bad'); }
+  }
+  async function serverCheckStatus(showStatus=true){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      const snap = localStorageSnapshot(); const meta = loadServerMeta();
+      const serverHash = row?.data?.hash || stableHashFromItems(row?.data?.items || {});
+      let msg = 'Lokal: ' + snap.count + ' Einträge · ' + snap.hash + '\n';
+      msg += 'Server: ' + (row ? ((row.data?.count || Object.keys(row.data?.items || {}).length) + ' Einträge · ' + serverHash + ' · ' + new Date(row.updated_at).toLocaleString('de-CH')) : 'noch leer') + '\n';
+      msg += 'Letzter Sync-Merker: ' + (meta.lastSyncAt ? new Date(meta.lastSyncAt).toLocaleString('de-CH') : 'nie');
+      if(row && row.data){ msg += '\nBenutzer letzter Serverstand: ' + serverUserLabel(row.data.savedBy) + ' · Speicherstände: ' + (1 + serverHistoryFromData(row.data).length); }
+      const conflict = renderServerConflict(row, meta, session, showStatus);
+      if(conflict && conflict.neverSyncedHere){ setServerButtonState('error','Konflikt-Schutz: Server zuerst laden'); serverStatus(msg + '\n\nKonflikt-Schutz: Dieser Browser hat den vorhandenen Serverstand noch nie geladen. Erst Serverstand laden.', 'bad'); }
+      else if(conflict && conflict.serverChanged){ setServerButtonState('error','Server wurde seit dem letzten Sync verändert'); serverStatus(msg + '\n\nAchtung: Server wurde seit dem letzten Sync verändert. Erst laden oder bewusst überschreiben.', 'bad'); }
+      else if(meta.lastHash && snap.hash !== meta.lastHash){ setServerButtonState('dirty','Lokale Änderungen noch nicht gespeichert'); serverStatus(msg + '\n\nLokale Änderungen sind noch nicht auf Server gespeichert.', ''); }
+      else { setServerButtonState('connected','Server und lokaler Stand passen zum Sync-Merker'); if(showStatus) serverStatus(msg + '\n\nAlles synchron.', 'ok'); }
+      refreshServerSyncInfo();
+    } catch(e){ setServerButtonState('error','Serverstatus nicht möglich'); serverStatus('Serverstatus nicht möglich: ' + e.message, 'bad'); }
+  }
+  function isAutosaveEnabled(){ return localStorage.getItem(SERVER_AUTOSAVE_KEY) !== '0'; }
+  function setAutosaveEnabled(on){ localStorage.setItem(SERVER_AUTOSAVE_KEY, on ? '1' : '0'); refreshServerSyncInfo(); }
+  function scheduleServerAutosave(reason='change'){
+    if(!isAutosaveEnabled()) return;
+    const session = loadServerSession();
+    if(!isServerSessionFresh(session)) return;
+    const snap = localStorageSnapshot(); const meta = loadServerMeta();
+    if(meta.lastHash && snap.hash === meta.lastHash){ setServerButtonState('connected','Server verbunden'); return; }
+    setServerButtonState('dirty','Arbeitskopie geändert · Server-Speichern geplant');
+    clearTimeout(serverAutosaveTimer);
+    serverAutosaveTimer = setTimeout(() => serverUpload({auto:true}), 9000);
+  }
+  function startServerAutosaveWatcher(){
+    lastObservedServerHash = localStorageSnapshot().hash;
+    setInterval(() => {
+      const snap = localStorageSnapshot();
+      if(snap.hash !== lastObservedServerHash){ lastObservedServerHash = snap.hash; scheduleServerAutosave('poll'); refreshServerLocalInfo(); refreshServerSyncInfo(); }
+    }, 12000);
+    window.addEventListener('storage', ev => { if(relevantStorageKey(ev.key)){ lastObservedServerHash = localStorageSnapshot().hash; scheduleServerAutosave('storage'); refreshServerLocalInfo(); refreshServerSyncInfo(); } });
+  }
+  async function serverLoadPrimaryOnStart(){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Server ist Hauptspeicher. Bitte einloggen; bis dahin wird nur die lokale Arbeitskopie angezeigt.', ''); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      const localSnap = localStorageSnapshot();
+      if(!row || !row.data || !row.data.items){
+        if(localSnap.count > 0){ serverStatus('Server ist noch leer. Lokale Arbeitskopie wird als erster Serverstand gespeichert…', ''); await serverUpload({auto:true, force:true}); }
+        else { saveServerMeta({store:cfg.store, lastHash:localSnap.hash, lastSyncAt:new Date().toISOString(), serverUpdatedAt:'', count:0, origin:location.href}); setServerButtonState('connected','Server verbunden · noch leer'); }
+        return;
+      }
+      cacheServerWishesFromData(row.data);
+      const incoming = row.data.items || {};
+      const serverHash = row.data.hash || stableHashFromItems(incoming);
+      if(localSnap.hash !== serverHash){
+        const backupKey = makeFullLocalBackup('before_auto_server_primary_load', false);
+        Object.keys(collectUlmipointStorage()).forEach(key => { if(!(key in incoming) && relevantStorageKey(key)) localStorage.removeItem(key); });
+        Object.entries(incoming).forEach(([key,val]) => { if(relevantStorageKey(key)) localStorage.setItem(key, String(val ?? '')); });
+        reloadSplitFrames();
+        serverStatus('Server-Hauptspeicher automatisch geladen. Vorherige lokale Arbeitskopie als Notfallkopie gesichert: ' + backupKey, 'ok');
+      } else {
+        serverStatus('Server-Hauptspeicher verbunden. Arbeitskopie ist aktuell.', 'ok');
+      }
+      saveServerMeta({store:cfg.store, lastHash:serverHash, lastSyncAt:new Date().toISOString(), serverUpdatedAt:row.updated_at, count:Object.keys(incoming).length, origin:row.data.origin || ''});
+      lastObservedServerHash = localStorageSnapshot().hash;
+      setServerButtonState('connected','Server-Hauptspeicher aktiv');
+      renderServerHistory(row);
+      renderServerActivity(row);
+      refreshServerLocalInfo(); refreshServerSyncInfo();
+    } catch(e){
+      setServerButtonState('error','Server-Hauptspeicher nicht erreichbar');
+      serverStatus('Server-Hauptspeicher nicht erreichbar. Lokale Arbeitskopie bleibt sichtbar: ' + e.message, 'bad');
+    }
+  }
+
+
+  // V13.0.226jf: Wunsch-Erfüllung gegen aktuellen Server-Dienstplan prüfen. Nur Anzeige, kein Server-Schreibzugriff.
+  let serverWishReportCache = null;
+  function parseServerStateValue(val){
+    if(!val) return null;
+    if(typeof val === 'object') return val;
+    try{ return JSON.parse(String(val)); }catch(_){ return null; }
+  }
+  function wishReportMonthDefault(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  function setWishReportDefaultMonth(){
+    const input = document.getElementById('serverWishMonthInput');
+    if(input && !input.value) input.value = wishReportMonthDefault();
+  }
+  function wishReportTypeText(type){
+    type=String(type||'');
+    const fixed={F:'Frühdienst gewünscht',M:'Mitteldienst gewünscht',S:'Spätdienst gewünscht',N:'Nachtwache gewünscht',FR:'frei gewünscht',NO:'nicht verfügbar',P:'Pikett möglich',OTHER:'anderer Wunsch','AREA:NACHTWACHE':'Nachtwache / Nachtdienst gewünscht'};
+    return fixed[type] || (type ? ('Dienst '+type+' gewünscht') : 'Wunsch');
+  }
+  function wishReportDutyFamily(code){
+    const c = String(code || '').toUpperCase();
+    if(/^F/.test(c)) return 'F';
+    if(/^M/.test(c)) return 'M';
+    if(/^S/.test(c)) return 'S';
+    if(/^N/.test(c) || c === 'NW') return 'N';
+    if(c === 'P') return 'P';
+    return '';
+  }
+  function wishReportCodeMatches(type, code, comment, group=''){
+    const c = String(code || '').toUpperCase();
+    type = String(type || '').toUpperCase();
+    if(type && type === c) return true;
+    if(type === 'AREA:NACHTWACHE') return /nacht/i.test(String(group||'')) && !!c && !['FR','WF','KGL','KF','FER','RAUS'].includes(c);
+    if(type === 'F' || type === 'M' || type === 'S' || type === 'N' || type === 'P') return wishReportDutyFamily(c) === type || (type==='N' && /nacht/i.test(String(group||'')));
+    if(type === 'FR') return !c || ['FR','WF','KGL','KF','FER','RAUS'].includes(c);
+    if(type === 'NO') return !c || ['FR','WF','KGL','KF','FER','RAUS'].includes(c);
+    if(type === 'OTHER'){
+      const txt = String(comment || '').toUpperCase();
+      return !!(c && txt.includes(c));
+    }
+    return false;
+  }
+  function wishReportBuildPlanIndex(data){
+    const index = {byEmployeeDate:{}, groups:[]};
+    const items = data?.items || {};
+    Object.entries(items).forEach(([key,val]) => {
+      const st = parseServerStateValue(val);
+      if(!st || !st.plan || !Array.isArray(st.employees)) return;
+      const group = String(st.planerGroupName || st.groupName || key || '').replace(/^polypoint_/,'').replace(/_/g,' ');
+      index.groups.push(group);
+      const empById = {};
+      st.employees.forEach(emp => {
+        if(!emp) return;
+        const id = String(emp.id || '').trim();
+        if(id) empById[id] = emp;
+      });
+      Object.entries(st.plan || {}).forEach(([planKey,entry]) => {
+        if(!entry || entry.removed) return;
+        let date='', empId='';
+        const m = String(planKey).match(/^(\d{4}-\d{2}-\d{2})__(.+)$/);
+        if(m){ date=m[1]; empId=m[2]; }
+        else {
+          const parts = String(planKey).split('__');
+          date = parts.find(x=>/^\d{4}-\d{2}-\d{2}$/.test(x)) || '';
+          empId = parts.find(x=>x!==date) || '';
+        }
+        if(!date) return;
+        const emp = empById[empId] || {};
+        const code = String(entry.code || '').trim();
+        const names = [empId, emp.id, emp.name].map(x=>String(x||'').trim().toLowerCase()).filter(Boolean);
+        names.forEach(nameKey => {
+          const k = nameKey + '|' + date;
+          if(!index.byEmployeeDate[k]) index.byEmployeeDate[k] = [];
+          index.byEmployeeDate[k].push({code, group, empName:emp.name||empId, date});
+        });
+      });
+    });
+    return index;
+  }
+  function wishReportFindPlanEntries(planIndex, person, date){
+    const keys = [person.employeeId, person.id, person.employeeName, person.name].map(x=>String(x||'').trim().toLowerCase()).filter(Boolean);
+    const out = [];
+    const seen = new Set();
+    keys.forEach(k => {
+      (planIndex.byEmployeeDate[k + '|' + date] || []).forEach(e => {
+        const sig = e.group + '|' + e.code + '|' + e.date;
+        if(!seen.has(sig)){ seen.add(sig); out.push(e); }
+      });
+    });
+    return out;
+  }
+  function buildWishFulfillmentReport(data, monthKey){
+    const wishes = data?.wishes || {people:{}};
+    const people = wishes.people || {};
+    const planIndex = wishReportBuildPlanIndex(data || {});
+    const rows = [];
+    Object.entries(people).forEach(([personKey,person]) => {
+      const months = person?.months || {};
+      const month = months[monthKey];
+      if(!month || !month.days) return;
+      Object.entries(month.days || {}).forEach(([date,wish]) => {
+        const type = String(wish?.type || '');
+        const comment = String(wish?.comment || '');
+        if(!type && !comment) return;
+        const entries = wishReportFindPlanEntries(planIndex, person || {}, date);
+        const codes = entries.map(e => e.code).filter(Boolean);
+        let status = 'offen';
+        if(type){
+          if(type === 'NO') status = entries.some(e => !wishReportCodeMatches(type, e.code, comment, e.group)) ? 'verletzt' : 'erfüllt';
+          else status = entries.some(e => wishReportCodeMatches(type, e.code, comment, e.group)) ? 'erfüllt' : 'offen';
+        }
+        rows.push({
+          date,
+          employee: person?.employeeName || person?.name || personKey,
+          email: person?.email || personKey,
+          wish: wishReportTypeText(type) + (comment ? ' · ' + comment : ''),
+          code: codes.length ? codes.join(', ') : 'frei/leer',
+          groups: entries.map(e=>e.group).filter(Boolean).join(', '),
+          status,
+          type,
+          comment
+        });
+      });
+    });
+    rows.sort((a,b) => (a.date+a.employee).localeCompare(b.date+b.employee,'de'));
+    const totals = {all:rows.length, fulfilled:rows.filter(r=>r.status==='erfüllt').length, open:rows.filter(r=>r.status==='offen').length, violated:rows.filter(r=>r.status==='verletzt').length};
+    return {month:monthKey, rows, totals, groups:[...new Set(planIndex.groups)].filter(Boolean)};
+  }
+  function renderWishFulfillmentReport(report){
+    const el = document.getElementById('serverWishReportList');
+    if(!el) return;
+    serverWishReportCache = report;
+    const t = report.totals;
+    if(!report.rows.length){
+      el.innerHTML = '<div class="server-history-row"><div><div class="server-history-title">Keine Wünsche gefunden</div><div class="server-history-meta">Monat ' + escapeHtml(report.month) + '</div></div></div>';
+      return;
+    }
+    const head = '<div class="server-history-row server-history-current"><div><div class="server-history-title">Monat ' + escapeHtml(report.month) + ' · ' + t.all + ' Wünsche</div><div class="server-history-meta">erfüllt: ' + t.fulfilled + ' · offen: ' + t.open + ' · verletzt: ' + t.violated + '</div></div><div class="server-history-actions"></div></div>';
+    const rows = report.rows.map(r => {
+      const badge = r.status === 'erfüllt' ? '✅ erfüllt' : (r.status === 'verletzt' ? '⛔ verletzt' : '🟡 offen');
+      return '<div class="server-history-row"><div><div class="server-history-title">' + escapeHtml(r.date) + ' · ' + escapeHtml(r.employee) + ' · ' + badge + '</div><div class="server-history-meta">Wunsch: ' + escapeHtml(r.wish) + ' · Plan: ' + escapeHtml(r.code) + (r.groups ? ' · Bereich: ' + escapeHtml(r.groups) : '') + (r.email ? ' · ' + escapeHtml(r.email) : '') + '</div></div></div>';
+    }).join('');
+    el.innerHTML = head + rows;
+  }
+  async function serverWishReportLoad(showStatus=true){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      setWishReportDefaultMonth();
+      const monthKey = document.getElementById('serverWishMonthInput')?.value || wishReportMonthDefault();
+      const row = await fetchServerRow(cfg, session);
+      if(!row || !row.data) throw new Error('Kein Serverstand gefunden.');
+      const report = buildWishFulfillmentReport(row.data, monthKey);
+      renderWishFulfillmentReport(report);
+      if(showStatus) serverStatus('Wunsch-Erfüllung geprüft: ' + report.totals.all + ' Wünsche · erfüllt ' + report.totals.fulfilled + ' · offen ' + report.totals.open + ' · verletzt ' + report.totals.violated, report.totals.violated ? 'bad' : 'ok');
+    }catch(e){ serverStatus('Wunsch-Erfüllung konnte nicht geprüft werden: ' + e.message, 'bad'); }
+  }
+  function downloadWishReport(){
+    if(!serverWishReportCache){ serverWishReportLoad(true); return; }
+    const payload = {kind:'polypoint-wunsch-erfuellung', version:'13.0.221', createdAt:new Date().toISOString(), report:serverWishReportCache};
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'polypoint_wunsch_erfuellung_' + String(serverWishReportCache.month || 'monat') + '.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    serverStatus('Wunsch-Erfüllung heruntergeladen.', 'ok');
+  }
+
+
+
+  // V13.0.226jf: Wunsch-Sync liest nur Wunschdaten vom Server. Der Dienstplan wird dabei nicht geladen oder überschrieben.
+  async function refreshWishCacheFromServer(opts={}){
+    if(serverWishAutoBusy) return false;
+    const cfg = getServerInputs();
+    const showStatus = !!opts.showStatus;
+    if(!cfg.url || !cfg.anon){ if(showStatus) serverStatus('Server-Verbindung ist unvollständig.', 'bad'); return false; }
+    let session = null;
+    try{ session = await getActiveServerSession(); }catch(_){ session = null; }
+    if(!session){
+      if(showStatus) serverStatus('Bitte zuerst im ☁️ Server einloggen.', 'bad');
+      setWishAutoSyncInfo('Wunsch-Sync wartet auf Server-Login.', '');
+      return false;
+    }
+    serverWishAutoBusy = true;
+    try{
+      const row = await fetchServerRow(cfg, session);
+      if(!row || !row.data) throw new Error('Keine Serverdaten gefunden.');
+      const result = cacheServerWishesFromData(row.data, {quiet: !showStatus});
+      if(showStatus) serverStatus('Wünsche im Plan aktualisiert: ' + result.count + ' Wunsch-Einträge. Der Dienstplan wurde nicht überschrieben.', 'ok');
+      return true;
+    }catch(e){
+      if(showStatus) serverStatus('Wünsche konnten nicht aktualisiert werden: ' + e.message, 'bad');
+      setWishAutoSyncInfo('Wunsch-Sync Fehler: ' + e.message, 'bad');
+      return false;
+    }finally{ serverWishAutoBusy = false; }
+  }
+  function scheduleWishAutoRefresh(){
+    clearTimeout(serverWishAutoTimer);
+    serverWishAutoTimer = setTimeout(() => refreshWishCacheFromServer({showStatus:false}), 1500);
+  }
+  function startWishAutoSyncWatcher(){
+    setWishAutoSyncInfo('Wunsch-Sync bereit. Aktualisiert automatisch nach Login und alle 60 Sekunden.', '');
+    scheduleWishAutoRefresh();
+    setInterval(() => refreshWishCacheFromServer({showStatus:false}), 60000);
+    document.addEventListener('visibilitychange', () => { if(!document.hidden) scheduleWishAutoRefresh(); });
+    window.addEventListener('hashchange', () => scheduleWishAutoRefresh());
+  }
+  async function serverWishCacheRefresh(){
+    await refreshWishCacheFromServer({showStatus:true});
+  }
+
+
+
+  // V13.0.226jf: Wunschfrist für das Wunschportal administrierbar machen.
+  function wishSettingsFromData(data){
+    const ws = data && typeof data.wishSettings === 'object' ? data.wishSettings : {};
+    let weeks = Number(ws.deadlineWeeks);
+    if(!Number.isFinite(weeks)) weeks = Number(ws.weeks);
+    if(!Number.isFinite(weeks)) weeks = 6;
+    weeks = Math.max(0, Math.min(26, Math.round(weeks)));
+    return {deadlineWeeks:weeks, deadlineDays:weeks*7, updatedAt:ws.updatedAt||'', updatedBy:ws.updatedBy||null};
+  }
+  function renderWishSettings(row){
+    const info = document.getElementById('serverWishSettingsInfo');
+    const input = document.getElementById('serverWishDeadlineWeeksInput');
+    if(!info) return;
+    const settings = wishSettingsFromData(row?.data || {});
+    if(input) input.value = settings.deadlineWeeks;
+    const minText = settings.deadlineWeeks === 1 ? '1 Woche' : settings.deadlineWeeks + ' Wochen';
+    const updated = settings.updatedAt ? formatHistoryDate(settings.updatedAt) : 'noch nicht separat gespeichert';
+    const by = settings.updatedBy ? serverUserLabel(settings.updatedBy) : 'Standardwert';
+    info.innerHTML = '<div class="server-history-row server-history-current"><div><div class="server-history-title">Aktuelle Wunschfrist: ' + escapeHtml(minText) + ' vor Monatsbeginn</div><div class="server-history-meta">Entspricht ' + settings.deadlineDays + ' Tagen · geändert: ' + escapeHtml(updated) + ' · ' + escapeHtml(by) + '</div></div></div>';
+  }
+  async function loadWishSettings(showStatus=true){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      renderWishSettings(row);
+      if(showStatus) serverStatus('Wunschfrist geladen.', 'ok');
+    }catch(e){ serverStatus('Wunschfrist konnte nicht geladen werden: ' + e.message, 'bad'); }
+  }
+  async function saveWishSettings(){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    const input = document.getElementById('serverWishDeadlineWeeksInput');
+    let weeks = Number(input?.value);
+    if(!Number.isFinite(weeks)) weeks = 6;
+    weeks = Math.max(0, Math.min(26, Math.round(weeks)));
+    try{
+      const row = await fetchServerRow(cfg, session);
+      const data = Object.assign({}, row?.data || {});
+      data.wishSettings = {deadlineWeeks:weeks, deadlineDays:weeks*7, updatedAt:new Date().toISOString(), updatedBy:serverUserFromSession(session), version:'13.0.226'};
+      data.activity = buildActivityLog(data, makeActivityEntry('Wunschfrist geändert', session, {area:'Wunschportal', count:weeks, note:weeks + ' Wochen vor Monatsbeginn'}));
+      await supabaseRequest('/rest/v1/planer_store', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + session.access_token,'Prefer':'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({id:cfg.store, data, updated_at:new Date().toISOString()})});
+      renderWishSettings({data, updated_at:new Date().toISOString()});
+      renderServerActivity({data, updated_at:new Date().toISOString()});
+      serverStatus('Wunschfrist gespeichert: ' + weeks + ' Wochen vor Monatsbeginn.', 'ok');
+    }catch(e){ serverStatus('Wunschfrist konnte nicht gespeichert werden: ' + e.message, 'bad'); }
+  }
+
+  // V13.0.226jf: Admin-Übersicht für Wunschzugänge und einstellbarer Wunschfrist. Nur lesen, kein Server-Schreiben.
+  function parseServerJsonMaybe(v){
+    if(!v || typeof v !== 'string') return null;
+    try{ return JSON.parse(v); }catch(_){ return null; }
+  }
+  function accessGroupFromKey(key){
+    key = String(key || '').toLowerCase();
+    const map = [['azoren','Azoren'],['bali','Bali'],['capri','Capri'],['delos','Delos'],['nachtwache','Nachtwache'],['pikett','Haus-Pikett'],['hausdienstplan','Haus-Dienstplan']];
+    for(const [needle,label] of map){ if(key.includes(needle)) return label; }
+    return '';
+  }
+  function accessEmployeeKey(name, group, id){
+    return [String(group||'').trim().toLowerCase(), String(id||'').trim().toLowerCase(), String(name||'').trim().toLowerCase()].join('|');
+  }
+  function extractAccessEmployeesFromData(data){
+    const out = [];
+    const seen = new Set();
+    const items = data?.items || {};
+    Object.entries(items).forEach(([key, value]) => {
+      const obj = parseServerJsonMaybe(value);
+      if(!obj || !Array.isArray(obj.employees)) return;
+      const group = String(obj.planerGroupName || obj.groupName || accessGroupFromKey(key) || obj.planerGroupId || '').trim();
+      const groupKey = String(obj.planerGroupId || group || accessGroupFromKey(key) || '').trim().toLowerCase();
+      obj.employees.forEach(emp => {
+        const name = String(emp?.name || '').trim();
+        if(!name) return;
+        const id = String(emp?.id || name).trim();
+        const unique = accessEmployeeKey(name, group, id);
+        if(seen.has(unique)) return;
+        seen.add(unique);
+        out.push({
+          id,
+          name,
+          group,
+          groupKey,
+          role: String(emp?.role || '').trim(),
+          pct: emp?.pct ?? '',
+          active: emp?.active !== false,
+          loginEmail: String(emp?.loginEmail || emp?.email || emp?.mail || '').trim(),
+          wishCode: String(emp?.wishCode || emp?.portalCode || emp?.wunschCode || '').trim(),
+          sourceKey: key
+        });
+      });
+    });
+    return out.sort((a,b) => (a.group + a.name).localeCompare(b.group + b.name, 'de'));
+  }
+  function accessPersonMatchesEmployee(person, emp){
+    if(!person || !emp) return false;
+    const peid = String(person.employeeId || '').trim();
+    const eid = String(emp.id || '').trim();
+    if(peid && eid && peid === eid) return true;
+    const pEmail = normEmail(person.email || '');
+    const eEmail = normEmail(emp.loginEmail || '');
+    if(pEmail && eEmail && pEmail === eEmail) return true;
+    const pn = String(person.employeeName || person.name || '').trim().toLowerCase();
+    const en = String(emp.name || '').trim().toLowerCase();
+    const pg = String(person.group || '').trim().toLowerCase();
+    const eg = String(emp.group || '').trim().toLowerCase();
+    return !!(pn && en && pn === en && (!pg || !eg || pg === eg));
+  }
+  function latestWishInfoForEmployee(data, emp){
+    const people = data?.wishes?.people || {};
+    let best = null;
+    Object.entries(people).forEach(([key, person]) => {
+      if(!accessPersonMatchesEmployee(person, emp)) return;
+      Object.entries(person.months || {}).forEach(([monthKey, month]) => {
+        const days = month?.days || {};
+        const count = Object.keys(days).filter(d => {
+          const w = days[d] || {};
+          return String(w.type || '').trim() || String(w.comment || '').trim();
+        }).length;
+        const at = String(month?.updatedAt || person?.updatedAt || '').trim();
+        const candidate = {key, month:monthKey, count, updatedAt:at, person};
+        if(!best || String(candidate.updatedAt || candidate.month).localeCompare(String(best.updatedAt || best.month)) > 0) best = candidate;
+      });
+    });
+    return best;
+  }
+  function roleForEmployee(data, emp){
+    const roles = roleStore(data || {});
+    const email = normEmail(emp.loginEmail || '');
+    const entry = email ? roles[email] : null;
+    if(entry){
+      const role = typeof entry === 'string' ? entry : (entry.role || '');
+      return String(role || '').trim() || 'gesetzt';
+    }
+    const byEmp = Object.values(roles).find(r => {
+      if(!r || typeof r === 'string') return false;
+      return accessPersonMatchesEmployee({employeeId:r.employeeId, employeeName:r.employeeName || r.name, email:r.email, group:r.group}, emp);
+    });
+    if(byEmp) return String(byEmp.role || 'gesetzt').trim() || 'gesetzt';
+    return '';
+  }
+  function buildAccessOverview(data){
+    const employees = extractAccessEmployeesFromData(data || {});
+    const rows = employees.map(emp => {
+      const wish = latestWishInfoForEmployee(data || {}, emp);
+      const hasCode = !!String(emp.wishCode || '').trim();
+      const hasEmail = !!normEmail(emp.loginEmail || '');
+      const ready = hasCode && (!!emp.name || hasEmail);
+      const role = roleForEmployee(data || {}, emp);
+      const status = !emp.active ? 'inaktiv' : (ready ? 'bereit' : 'Code fehlt');
+      return Object.assign({}, emp, {
+        hasCode,
+        hasEmail,
+        ready,
+        accessStatus: status,
+        portalRole: role,
+        lastWishMonth: wish?.month || '',
+        lastWishCount: wish?.count || 0,
+        lastWishAt: wish?.updatedAt || '',
+        lastWishKey: wish?.key || ''
+      });
+    });
+    const totals = {
+      all: rows.length,
+      active: rows.filter(r => r.active).length,
+      ready: rows.filter(r => r.ready && r.active).length,
+      missingCode: rows.filter(r => !r.hasCode && r.active).length,
+      missingEmail: rows.filter(r => !r.hasEmail && r.active).length,
+      withWishes: rows.filter(r => r.lastWishMonth).length,
+      groups: [...new Set(rows.map(r => r.group).filter(Boolean))].sort()
+    };
+    return {createdAt:new Date().toISOString(), totals, rows};
+  }
+  function renderAccessOverview(report){
+    const el = document.getElementById('serverAccessOverviewList');
+    if(!el) return;
+    serverAccessOverviewCache = report;
+    const t = report.totals || {};
+    const summary = '<div class="server-history-row server-history-current"><div><div class="server-history-title">Wunschzugänge · ' + (t.all||0) + ' Mitarbeiter</div><div class="server-history-meta">aktiv: ' + (t.active||0) + ' · bereit: ' + (t.ready||0) + ' · Code fehlt: ' + (t.missingCode||0) + ' · E-Mail fehlt: ' + (t.missingEmail||0) + ' · mit Wünschen: ' + (t.withWishes||0) + '</div></div></div>';
+    if(!report.rows.length){
+      el.innerHTML = summary + '<div class="server-history-row"><div><div class="server-history-title">Keine Mitarbeiter gefunden.</div><div class="server-history-meta">Bitte zuerst Serverstand laden/speichern.</div></div></div>';
+      return;
+    }
+    const rows = report.rows.map(r => {
+      const badgeCls = !r.active ? 'warn' : (r.ready ? 'ok' : 'bad');
+      const wishText = r.lastWishMonth ? (r.lastWishMonth + ' · ' + r.lastWishCount + ' Tage' + (r.lastWishAt ? ' · ' + new Date(r.lastWishAt).toLocaleString('de-CH') : '')) : 'noch keine Wünsche';
+      const meta = [
+        'Gruppe: ' + (r.group || '—'),
+        'Rolle: ' + (r.role || '—'),
+        'E-Mail: ' + (r.loginEmail || '—'),
+        'Wunsch-Code: ' + (r.hasCode ? 'vorhanden' : 'fehlt'),
+        'Portal-Rolle: ' + (r.portalRole || '—'),
+        'Wünsche: ' + wishText
+      ].join(' · ');
+      return '<div class="server-history-row"><div><div class="server-history-title"><span class="server-access-badge ' + badgeCls + '">' + escapeHtml(r.accessStatus) + '</span>' + escapeHtml(r.name || 'ohne Name') + '</div><div class="server-history-meta">' + escapeHtml(meta) + '</div></div></div>';
+    }).join('');
+    el.innerHTML = summary + rows;
+  }
+  async function serverAccessOverviewLoad(showStatus=true){
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      if(!row || !row.data) throw new Error('Kein Serverstand gefunden.');
+      const report = buildAccessOverview(row.data);
+      renderAccessOverview(report);
+      if(showStatus) serverStatus('Wunschzugänge geprüft: ' + report.totals.ready + ' bereit · ' + report.totals.missingCode + ' ohne Code · ' + report.totals.withWishes + ' mit Wünschen.', report.totals.missingCode ? '' : 'ok');
+    }catch(e){ serverStatus('Wunschzugänge konnten nicht geprüft werden: ' + e.message, 'bad'); }
+  }
+  function downloadAccessOverview(){
+    if(!serverAccessOverviewCache){ serverAccessOverviewLoad(true); return; }
+    const payload = {kind:'polypoint-wunschzugaenge', version:'13.0.225', exportedAt:new Date().toISOString(), report:serverAccessOverviewCache};
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'polypoint_wunschzugaenge_' + new Date().toISOString().replace(/[:.]/g,'-').slice(0,19) + '.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    serverStatus('Wunschzugänge-Übersicht heruntergeladen.', 'ok');
+  }
+
+  async function openServerSync(){
+    loadServerConfig(); refreshServerLocalInfo(); refreshServerSyncInfo();
+    serverStatus('Verbindung wird geprüft…', '');
+    serverModal().classList.add('show'); serverModal().setAttribute('aria-hidden','false');
+    const cfg = getServerInputs();
+    if(!cfg.anon){ serverStatus('Server-Verbindung ist unvollständig.', 'bad'); return; }
+    const s = await getActiveServerSession();
+    setServerButtonState(s ? 'connected' : 'ready', s ? 'Server verbunden' : 'Server bereit, bitte einloggen');
+    serverStatus(s ? 'Server-Hauptspeicher verbunden.' : 'Server erreichbar. Bitte einloggen, damit der Serverstand geladen wird.', s ? 'ok' : '');
+    if(s){ serverCheckStatus(false); serverHistoryLoad(false); serverActivityLoad(false); serverConflictCheck(false); serverWishReportLoad(false); loadWishSettings(false); serverAccessOverviewLoad(false); }
+  }
+  function closeServerSync(){ serverModal().classList.remove('show'); serverModal().setAttribute('aria-hidden','true'); }
+  document.getElementById('serverSyncBtn')?.addEventListener('click', openServerSync);
+  document.getElementById('serverSyncCloseBtn')?.addEventListener('click', closeServerSync);
+  document.getElementById('serverSyncModal')?.addEventListener('click', ev => { if(ev.target === serverModal()) closeServerSync(); });
+  document.getElementById('serverSaveConfigBtn')?.addEventListener('click', saveServerConfig);
+  document.getElementById('serverForgetConfigBtn')?.addEventListener('click', forgetServerConfig);
+  document.getElementById('serverLoginBtn')?.addEventListener('click', serverLogin);
+  document.getElementById('serverSignupBtn')?.addEventListener('click', serverSignup);
+  document.getElementById('serverLogoutBtn')?.addEventListener('click', serverLogout);
+  document.getElementById('serverUploadBtn')?.addEventListener('click', () => serverUpload({manual:true}));
+  document.getElementById('serverDownloadBtn')?.addEventListener('click', serverDownload);
+  document.getElementById('serverDownloadBackupBtn')?.addEventListener('click', serverBackupDownload);
+  document.getElementById('serverCheckStatusBtn')?.addEventListener('click', () => serverCheckStatus(true));
+  document.getElementById('serverConflictCheckBtn')?.addEventListener('click', () => serverConflictCheck(true));
+  document.getElementById('serverConflictLoadBtn')?.addEventListener('click', () => serverDownload());
+  document.getElementById('serverHistoryRefreshBtn')?.addEventListener('click', () => serverHistoryLoad(true));
+  document.getElementById('serverActivityRefreshBtn')?.addEventListener('click', () => serverActivityLoad(true));
+  document.getElementById('serverActivityDownloadBtn')?.addEventListener('click', downloadServerActivity);
+  document.getElementById('serverWishReportBtn')?.addEventListener('click', () => serverWishReportLoad(true));
+  document.getElementById('serverWishReportDownloadBtn')?.addEventListener('click', downloadWishReport);
+  document.getElementById('serverWishCacheRefreshBtn')?.addEventListener('click', serverWishCacheRefresh);
+  document.getElementById('serverWishSettingsLoadBtn')?.addEventListener('click', () => loadWishSettings(true));
+  document.getElementById('serverWishSettingsSaveBtn')?.addEventListener('click', saveWishSettings);
+  document.getElementById('serverAccessOverviewBtn')?.addEventListener('click', () => serverAccessOverviewLoad(true));
+  document.getElementById('serverAccessOverviewDownloadBtn')?.addEventListener('click', downloadAccessOverview);
+  document.getElementById('serverHistoryDownloadCurrentBtn')?.addEventListener('click', () => { if(serverHistoryCache[0]) downloadHistoryEntry(0); else serverHistoryLoad(true); });
+  document.getElementById('serverHistoryList')?.addEventListener('click', ev => { const btn = ev.target.closest('[data-history-action]'); if(!btn) return; const idx = btn.dataset.historyIndex; if(btn.dataset.historyAction === 'download') downloadHistoryEntry(idx); if(btn.dataset.historyAction === 'compare') renderHistoryCompare(idx); if(btn.dataset.historyAction === 'restore') restoreHistoryEntry(idx); });
+  document.getElementById('serverLocalBackupBtn')?.addEventListener('click', () => { const k = makeFullLocalBackup('manual_local_download', true); serverStatus('Notfallkopie heruntergeladen und lokal abgelegt: ' + k, 'ok'); });
+  document.getElementById('serverRestoreBackupBtn')?.addEventListener('click', restoreLatestLocalEmergencyBackup);
+  document.getElementById('serverAutosaveToggle')?.addEventListener('change', ev => { setAutosaveEnabled(!!ev.target.checked); serverStatus(ev.target.checked ? 'Auto-Speichern aktiv.' : 'Auto-Speichern ausgeschaltet.', 'ok'); });
+  document.getElementById('adminGateLoginBtn')?.addEventListener('click', adminGateLogin);
+  document.getElementById('adminGatePortalBtn')?.addEventListener('click', () => { location.href = 'wunschportal.html'; });
+  document.getElementById('adminGateRetryBtn')?.addEventListener('click', () => evaluateAdminAccess(true));
+  document.getElementById('serverRoleCheckBtn')?.addEventListener('click', () => evaluateAdminAccess(true));
+  document.getElementById('serverRoleMarkAdminBtn')?.addEventListener('click', serverRoleMarkAdmin);
+  loadServerConfig();
+  setWishReportDefaultMonth();
+  refreshServerButtonFromSession();
+  startServerAutosaveWatcher();
+  startWishAutoSyncWatcher();
+  evaluateAdminAccess(false).then(ok => { refreshServerButtonFromSession(); if(ok){ serverLoadPrimaryOnStart(); scheduleWishAutoRefresh(); } }).catch(() => setServerButtonState('error','Server-Verbindung prüfen'));
+
+})();
+</script>
+
+<style>
+#ulmiSiteContextBadge{display:inline-flex;align-items:center;gap:7px;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:7px 10px;font-weight:950;font-size:12px}
+#ulmiSiteContextBadge button{border:1px solid #c9dcff;background:#fff;color:#175cd3;border-radius:999px;padding:3px 7px;font-size:11px;font-weight:950}
+</style>
+<script>
+(function(){
+  function safeParse(v){try{return JSON.parse(v||'null')}catch(_){return null}}
+  function siteFromStorage(){return safeParse(localStorage.getItem('ulmipoint_selected_site_v1'))}
+  function ensureSiteBadge(){
+    var site=siteFromStorage();
+    if(!site||!site.name)return;
+    if(document.getElementById('ulmiSiteContextBadge'))return;
+    var badge=document.createElement('span');
+    badge.id='ulmiSiteContextBadge';
+    badge.innerHTML='🏠 aktiv: '+String(site.name).replace(/[<>&"]/g,function(m){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]});
+    var host=document.querySelector('.status-row')||document.querySelector('.top-actions')||document.querySelector('.hero-actions')||document.querySelector('header')||document.body;
+    host.appendChild(badge);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureSiteBadge);
+  else ensureSiteBadge();
+})();
+</script>
+
+</body>
+</html>

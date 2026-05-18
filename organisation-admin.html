@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ULMIPOINT Organisation verwalten</title>
+<style>
+:root{--bg:#f6f8fc;--card:#fff;--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--yellow:#9a6700;--shadow:0 12px 30px rgba(16,24,40,.08)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+.app{max-width:1320px;margin:0 auto;padding:14px}.hero,.card{background:#fff;border:1px solid var(--line);border-radius:26px;padding:16px;box-shadow:var(--shadow)}.card{margin-top:12px}
+.hero{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}.eyebrow{font-size:12px;font-weight:950;color:var(--blue);letter-spacing:.06em;text-transform:uppercase}
+h1{margin:3px 0 2px;font-size:clamp(34px,5vw,58px);line-height:.95;letter-spacing:-.07em}h2{margin:0 0 8px;font-size:22px;letter-spacing:-.04em}h3{margin:0;font-size:18px;letter-spacing:-.03em}.mini{font-size:12px;color:var(--muted);font-weight:850;line-height:1.35}
+.toolbar,.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+input,select{width:100%;border:1px solid var(--line);border-radius:13px;background:#fff;padding:9px;font-weight:850;color:var(--text)}
+button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:950;cursor:pointer;color:var(--text)}button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(16,24,40,.08)}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button.ok{background:#e7f7ef;border-color:#b7e4ca;color:var(--green)}button.bad{background:#ffe7e7;border-color:#f2a3a3;color:#c73636}
+.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:10px;font-size:12px;font-weight:850;white-space:pre-wrap}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}
+.site{background:#fff;border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+.site-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.site-title{display:flex;gap:9px;align-items:flex-start}.icon{width:42px;height:42px;border-radius:16px;background:#eaf2ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto}
+.pill{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:950;background:#eef2f7;color:#475467}.pill.green{background:#e7f7ef;color:#0f8a5f}.pill.yellow{background:#fff7e6;color:#9a6700}
+.units{display:flex;gap:7px;flex-wrap:wrap}.unit-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fbfcfe;border-radius:999px;padding:7px 9px;font-size:12px;font-weight:900}.unit-chip button{padding:2px 6px;font-size:10px;background:#fffafa;color:#c73636;border-color:#f2a3a3}
+.edit-panel{display:none;border:1px solid #c9dcff;background:#f7fbff;border-radius:18px;padding:10px}.edit-panel.show{display:block}.edit-grid{display:grid;grid-template-columns:1fr 150px 110px;gap:8px;margin-bottom:8px}.unit-row{display:grid;grid-template-columns:1fr 150px 150px auto;gap:8px;align-items:center;margin-top:6px}
+.empty{border:1px dashed #c9dcff;background:#f7fbff;border-radius:24px;padding:24px;text-align:center;color:#175cd3;font-weight:900}
+@media(max-width:760px){.app{padding:10px}.hero{border-radius:0 0 24px 24px;margin:-10px -10px 10px}.edit-grid,.unit-row{grid-template-columns:1fr}.site-head{display:block}.actions{margin-top:8px}}
+
+.lock{position:fixed;inset:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
+.lock-card{max-width:520px;width:100%;background:#fff;border:1px solid var(--line);border-radius:28px;padding:18px;box-shadow:var(--shadow)}
+.lock-card h1{font-size:42px;margin:0 0 10px}
+.auto-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0}
+.auto-toggle{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:9px;font-weight:950;font-size:12px}
+.auto-toggle input{width:auto}
+</style>
+</head>
+<body>
+<div id="orgLock" class="lock">
+  <div class="lock-card">
+    <div class="eyebrow">ULMIPOINT Verwaltung</div>
+    <h1>Admin-Zugriff</h1>
+    <div class="mini">Organisation verwalten ist geschützt.</div>
+    <div style="margin-top:12px">
+      <label><span class="mini">Admin-Passwort</span><input id="orgAdminPassword" type="password" autocomplete="current-password" placeholder="Admin-Passwort"></label>
+    </div>
+    <div class="actions" style="margin-top:12px">
+      <button class="primary" id="orgAdminLoginBtn" type="button">Freischalten</button>
+      <button type="button" onclick="location.href='index.html'">Zurück</button>
+    </div>
+    <div id="orgAdminLoginStatus" class="notice" style="margin-top:12px">Bitte Admin-Passwort eingeben.</div>
+  </div>
+</div>
+<div class="app">
+  <section class="hero">
+    <div><div class="eyebrow">ULMIPOINT Verwaltung</div><h1>Organisation</h1></div>
+    <div class="toolbar">
+      <button class="primary" id="loadBtn">Laden</button>
+      <button class="ok" id="saveBtn">Speichern</button>
+      <button id="newHouseBtn">+ Haus</button>
+      <button id="newDayBtn">+ Tageszentrum</button>
+      <button id="newOtherBtn">+ Standort</button>
+    </div>
+  </section>
+  <section class="card">
+    <h2>Grunddaten</h2>
+    <div class="grid">
+      <label><span class="mini">Name</span><input id="orgName" value="LIV – Leben in Vielfalt"></label>
+      <label><span class="mini">Standard-Regelwerk</span><input id="payrollProfile" value="CH_BS_PERSONALRECHT_DEFAULT"></label>
+    </div>
+    <div id="status" class="notice" style="margin-top:10px">Noch nicht geladen.</div>
+  </section>
+  <section class="card">
+    <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
+      <h2 style="margin:0">Häuser und Bereiche</h2>
+      <span class="pill" id="countPill">0 Standorte</span>
+    </div>
+    <div id="sites" class="grid"></div>
+  </section>
+</div>
+<script>
+(function(){
+  const SERVER_TOKEN_KEY='polypoint_server_session_v1';
+  const ORG_ADMIN_TOKEN_KEY='ulmipoint_org_admin_token_v1';
+  const ORG_DRAFT_KEY='ulmipoint_org_structure_draft_v1';
+  let org=defaultOrg();
+  const $=id=>document.getElementById(id);
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const slug=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'default';
+  function defaultOrg(){return {version:'1.0',organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',sites:[{id:'haus_1',name:'Haus 1',type:'wohnheim',canton:'BS',active:true,automaticFunctions:{nachtwache:true,pikett:true,hausdienstplan:true},units:[{id:'azoren',name:'Azoren',type:'wohngruppe',plannerKey:'azoren',active:true},{id:'bali',name:'Bali',type:'wohngruppe',plannerKey:'bali',active:true},{id:'capri',name:'Capri',type:'wohngruppe',plannerKey:'capri',active:false},{id:'delos',name:'Delos',type:'wohngruppe',plannerKey:'delos',active:true}]}],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};}
+  function mergeWithDefaultOrganisation(value){const def=defaultOrg(); const incoming=(value&&typeof value==='object')?value:{}; const sites=Array.isArray(incoming.sites)&&incoming.sites.length?incoming.sites:def.sites; return Object.assign({},def,incoming,{organisation:Object.assign({},def.organisation,incoming.organisation||{}),payrollProfileDefault:incoming.payrollProfileDefault||def.payrollProfileDefault,sites});}
+  function saveOrgDraft(updatedAt){try{localStorage.setItem(ORG_DRAFT_KEY,JSON.stringify({organisationStructure:org,savedAt:new Date().toISOString(),serverUpdatedAt:updatedAt||''}));}catch(_){}}
+  function status(t,k=''){const el=$('status');el.textContent=t;el.className='notice'+(k?' '+k:'')}
+  function icon(type){return type==='tageszentrum'?'☀️':type==='verwaltung'?'🗂️':type==='zentrale_dienste'?'⚙️':'🏠'}
+  function typeLabel(t){return ({wohnheim:'Haus',tageszentrum:'Tageszentrum',verwaltung:'Verwaltung',zentrale_dienste:'Zentrale Dienste',sonstiges:'Sonstiges'})[t]||t}
+  function defaultAutoFunctions(type){
+    return type==='wohnheim'
+      ? {nachtwache:true,pikett:true,hausdienstplan:true}
+      : {nachtwache:false,pikett:false,hausdienstplan:false};
+  }
+  function autoFunctions(site){
+    const def=defaultAutoFunctions(site&&site.type);
+    const a=(site&&site.automaticFunctions&&typeof site.automaticFunctions==='object')?site.automaticFunctions:{};
+    return {
+      nachtwache:a.nachtwache===undefined?def.nachtwache:!!a.nachtwache,
+      pikett:a.pikett===undefined?def.pikett:!!a.pikett,
+      hausdienstplan:a.hausdienstplan===undefined?def.hausdienstplan:!!a.hausdienstplan
+    };
+  }
+  function realUnits(site){return (site.units||[]).filter(u=>!['pikett','hausdienstplan','nachtwache'].includes(u.type))}
+  function autoFunctionChips(site){
+    const a=autoFunctions(site);
+    let out='';
+    if(a.nachtwache) out+='<span class="unit-chip">Nachtwache <small>automatisch</small></span>';
+    if(a.pikett) out+='<span class="unit-chip">Haus-Pikett <small>automatisch</small></span>';
+    if(a.hausdienstplan) out+='<span class="unit-chip">Haus-Dienstplan <small>automatisch</small></span>';
+    return out;
+  }
+  function cleanupAutoUnits(){
+    (org.sites||[]).forEach(site=>{
+      site.units=realUnits(site);
+      site.automaticFunctions=autoFunctions(site);
+      if(site.type==='wohnheim' && /^Wohnheim\s+\d+$/i.test(String(site.name||''))){
+        site.name=String(site.name).replace(/^Wohnheim/i,'Haus');
+        site.id=slug(site.name);
+      }
+    });
+  }
+  function session(){try{const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}'); if(s&&s.access_token&&(!s.expires_at||s.expires_at>Date.now()+30000))return s;}catch(_){} return null}
+  async function api(body){
+    const s=session();
+    const headers={'Content-Type':'application/json'};
+    if(s&&s.access_token)headers.Authorization='Bearer '+s.access_token;
+    const resp=await fetch('/api/org-structure',{method:'POST',headers,body:JSON.stringify(Object.assign({},body,{orgAdminToken:localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||''}))});
+    const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
+    return data;
+  }
+  function lockStatus(t,k=''){const el=$('orgAdminLoginStatus'); if(el){el.textContent=t; el.className='notice'+(k?' '+k:'');}}
+  function unlockOrgAdmin(){const el=$('orgLock'); if(el)el.style.display='none';}
+  async function orgAdminLogin(){
+    const pw=$('orgAdminPassword').value;
+    lockStatus('Admin-Zugriff wird geprüft …');
+    const resp=await fetch('/api/org-admin-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'login',password:pw})});
+    const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
+    localStorage.setItem(ORG_ADMIN_TOKEN_KEY,data.token);
+    unlockOrgAdmin();
+    status('Admin-Zugriff aktiv. Organisation kann gespeichert werden.','ok');
+    await load();
+  }
+  async function checkOrgAdmin(){
+    const tok=localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'';
+    if(!tok) return false;
+    try{
+      const resp=await fetch('/api/org-admin-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'check',token:tok})});
+      const data=await resp.json();
+      if(data.ok&&data.authenticated){unlockOrgAdmin();return true;}
+    }catch(_){}
+    return false;
+  }
+  function nextHouseNumber(){
+    const nums=(org.sites||[])
+      .filter(s=>s.type==='wohnheim')
+      .map(s=>{
+        const m=String(s.name||'').match(/(?:haus|wohnheim)\s*(\d+)/i);
+        return m?Number(m[1]):0;
+      })
+      .filter(Boolean);
+    let n=1;
+    while(nums.includes(n)) n++;
+    return n;
+  }
+  function defaultSite(type){
+    type=type||'wohnheim';
+    let base='Haus', n=1;
+    if(type==='wohnheim'){ n=nextHouseNumber(); base='Haus'; }
+    else {
+      base=type==='tageszentrum'?'Tageszentrum':type==='zentrale_dienste'?'Zentrale Dienste':type==='verwaltung'?'Verwaltung':'Standort';
+      n=(org.sites||[]).filter(s=>s.type===type).length+1;
+    }
+    return {
+      id:slug(base+' '+n),
+      name:base+' '+n,
+      type,
+      canton:'BS',
+      active:true,
+      automaticFunctions:defaultAutoFunctions(type),
+      units:[]
+    };
+  }
+  function defaultUnit(site,type='wohngruppe'){
+    const n=(site.units||[]).length+1;
+    const name = type==='tageszentrum' ? 'Team '+n : 'Gruppe '+n;
+    const id = slug(name);
+    return {id,name,type,plannerKey:id,active:true};
+  }
+  function syncBasics(){
+    org.organisation=org.organisation||{};
+    org.organisation.name=$('orgName').value.trim()||'LIV – Leben in Vielfalt';
+    org.organisation.id=slug(org.organisation.name);
+    org.payrollProfileDefault=$('payrollProfile').value.trim()||'CH_BS_PERSONALRECHT_DEFAULT';
+  }
+  function render(){
+    cleanupAutoUnits();
+    $('orgName').value=org.organisation?.name||'LIV – Leben in Vielfalt';
+    $('payrollProfile').value=org.payrollProfileDefault||'CH_BS_PERSONALRECHT_DEFAULT';
+    $('countPill').textContent=(org.sites||[]).length+' Standorte';
+    $('sites').innerHTML=(org.sites||[]).map((site,si)=>`
+      <article class="site">
+        <div class="site-head">
+          <div class="site-title">
+            <div class="icon">${icon(site.type)}</div>
+            <div>
+              <h3>${esc(site.name)}</h3>
+              <div><span class="pill green">${esc(typeLabel(site.type))}</span> <span class="pill">${esc(site.canton||'BS')}</span> <span class="pill yellow">${realUnits(site).length} Bereiche</span></div>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="button" class="primary" onclick="window.__orgOpenSite(${si})">öffnen</button>
+            <button type="button" onclick="window.__orgToggle(${si})">bearbeiten</button>
+            <button type="button" class="bad" onclick="window.__orgRemoveSite(${si})">löschen</button>
+          </div>
+        </div>
+        <div class="units">
+          ${realUnits(site).map((u,ui)=>`<span class="unit-chip">${esc(u.name)} <small>${esc(u.type)}</small><button onclick="window.__orgRemoveUnit(${si},${ui})">×</button></span>`).join('') || '<span class="mini">Noch keine Bereiche</span>'}
+          ${autoFunctionChips(site)}
+        </div>
+        <div class="edit-panel" id="edit-${si}">
+          <div class="edit-grid">
+            <label><span class="mini">Name</span><input data-site="${si}" data-field="name" value="${esc(site.name)}"></label>
+            <label><span class="mini">Typ</span><select data-site="${si}" data-field="type">
+              ${['wohnheim','tageszentrum','verwaltung','zentrale_dienste','sonstiges'].map(t=>`<option value="${t}" ${site.type===t?'selected':''}>${typeLabel(t)}</option>`).join('')}
+            </select></label>
+            <label><span class="mini">Kanton</span><input data-site="${si}" data-field="canton" value="${esc(site.canton||'BS')}"></label>
+          </div>
+          <div class="mini">Hausfunktionen für diesen Standort</div>
+          <div class="auto-grid">
+            <label class="auto-toggle"><input type="checkbox" data-site="${si}" data-auto="nachtwache" ${autoFunctions(site).nachtwache?'checked':''}> Nachtwache</label>
+            <label class="auto-toggle"><input type="checkbox" data-site="${si}" data-auto="pikett" ${autoFunctions(site).pikett?'checked':''}> Haus-Pikett</label>
+            <label class="auto-toggle"><input type="checkbox" data-site="${si}" data-auto="hausdienstplan" ${autoFunctions(site).hausdienstplan?'checked':''}> Haus-Dienstplan</label>
+          </div>
+          <div class="actions">
+            <button type="button" onclick="window.__orgAddUnit(${si})">+ Gruppe/Bereich</button>
+            <button type="button" onclick="window.__orgAddDayUnit(${si})">+ Tageszentrum-Team</button>
+          </div>
+          ${realUnits(site).map((u,ui)=>`
+            <div class="unit-row">
+              <label><span class="mini">Bereich</span><input data-site="${si}" data-unit="${ui}" data-field="name" value="${esc(u.name)}"></label>
+              <label><span class="mini">Typ</span><select data-site="${si}" data-unit="${ui}" data-field="type">
+                ${['wohngruppe','tageszentrum','team','sonstiges'].map(t=>`<option value="${t}" ${u.type===t?'selected':''}>${t}</option>`).join('')}
+              </select></label>
+              <label><span class="mini">Planer-Key</span><input data-site="${si}" data-unit="${ui}" data-field="plannerKey" value="${esc(u.plannerKey||u.id)}"></label>
+              <button type="button" class="bad" onclick="window.__orgRemoveUnit(${si},${ui})">löschen</button>
+            </div>
+          `).join('')}
+        </div>
+      </article>
+    `).join('') || '<div class="empty">Noch keine Häuser oder Tageszentren erstellt.</div>';
+    document.querySelectorAll('[data-site]').forEach(el=>{el.oninput=syncFromInputs;el.onchange=syncFromInputs;});
+  }
+  function syncFromInputs(){
+    cleanupAutoUnits();
+    syncBasics();
+    document.querySelectorAll('[data-site]:not([data-unit])').forEach(el=>{
+      const si=Number(el.dataset.site), f=el.dataset.field;
+      if(org.sites[si]){org.sites[si][f]=el.value; if(f==='name')org.sites[si].id=slug(el.value);}
+    });
+    document.querySelectorAll('[data-auto]').forEach(el=>{
+      const si=Number(el.dataset.site), f=el.dataset.auto;
+      if(org.sites[si]){
+        org.sites[si].automaticFunctions=autoFunctions(org.sites[si]);
+        org.sites[si].automaticFunctions[f]=!!el.checked;
+      }
+    });
+    document.querySelectorAll('[data-unit]').forEach(el=>{
+      const si=Number(el.dataset.site), ui=Number(el.dataset.unit), f=el.dataset.field;
+      if(org.sites[si]&&org.sites[si].units[ui]){org.sites[si].units[ui][f]=el.value; if(f==='name')org.sites[si].units[ui].id=slug(el.value);}
+    });
+  }
+  window.__orgOpenSite=si=>{
+    syncFromInputs();
+    const site=org.sites[si];
+    if(!site)return;
+    localStorage.setItem('ulmipoint_selected_site_v1',JSON.stringify({
+      id:site.id,
+      name:site.name,
+      type:site.type,
+      canton:site.canton||'BS',
+      units:site.units||[],
+      selectedAt:new Date().toISOString()
+    }));
+    window.open('planer.html?site='+encodeURIComponent(site.id),'_blank');
+  };
+  window.__orgToggle=si=>{const el=$('edit-'+si); if(el)el.classList.toggle('show')};
+  window.__orgAddUnit=si=>{syncFromInputs(); const s=org.sites[si]; if(!s)return; s.units=s.units||[]; if(realUnits(s).length>=4){status('Pro Haus sind maximal 4 Gruppen/Räume vorgesehen.','bad'); return;} s.units.push(defaultUnit(s,'wohngruppe')); render(); $('edit-'+si)?.classList.add('show')};
+  window.__orgAddDayUnit=si=>{syncFromInputs(); const s=org.sites[si]; if(!s)return; s.units=s.units||[]; if(realUnits(s).length>=4){status('Pro Haus sind maximal 4 Gruppen/Räume vorgesehen.','bad'); return;} s.units.push(defaultUnit(s,'tageszentrum')); render(); $('edit-'+si)?.classList.add('show')};
+  window.__orgRemoveUnit=(si,ui)=>{syncFromInputs(); if(org.sites[si])org.sites[si].units.splice(ui,1); render();};
+  window.__orgRemoveSite=si=>{syncFromInputs(); if(confirm('Standort wirklich löschen?')){org.sites.splice(si,1); render();}};
+  async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); org=mergeWithDefaultOrganisation(data.organisationStructure||org); saveOrgDraft(data.updatedAt); render(); status((data.seeded?'Organisation geladen – leere Serverstruktur wurde mit Haus 1 repariert.':'Organisation geladen.'),'ok');}catch(e){org=mergeWithDefaultOrganisation(org); saveOrgDraft('local-fallback'); render(); status('Server konnte nicht laden: '+e.message+' — Notfallstruktur lokal aktiv.','bad');}}
+  async function save(){syncFromInputs(); cleanupAutoUnits(); org=mergeWithDefaultOrganisation(org); status('Organisation wird gespeichert …'); try{const data=await api({mode:'save',organisationStructure:org}); org=mergeWithDefaultOrganisation(data.organisationStructure||org); saveOrgDraft(data.updatedAt); render(); status('Organisation gespeichert.','ok');}catch(e){saveOrgDraft('local-only'); render(); status('Server-Speichern fehlgeschlagen: '+e.message+' — lokal gesichert, Häuser bleiben sichtbar.','bad');}}
+  function addSite(type){syncFromInputs(); org.sites=org.sites||[]; org.sites.push(defaultSite(type)); render();}
+  $('newHouseBtn').onclick=()=>addSite('wohnheim'); $('newDayBtn').onclick=()=>addSite('tageszentrum'); $('newOtherBtn').onclick=()=>addSite('sonstiges');
+  $('loadBtn').onclick=()=>load().catch(e=>status('Fehler: '+e.message,'bad')); $('saveBtn').onclick=()=>save().catch(e=>status('Fehler: '+e.message,'bad'));
+  $('orgName').oninput=syncBasics; $('payrollProfile').oninput=syncBasics;
+  render();
+  const loginBtn=$('orgAdminLoginBtn');
+  if(loginBtn) loginBtn.onclick=()=>orgAdminLogin().catch(e=>lockStatus('Fehler: '+e.message,'bad'));
+  const pwInput=$('orgAdminPassword');
+  if(pwInput) pwInput.addEventListener('keydown',e=>{if(e.key==='Enter')orgAdminLogin().catch(err=>lockStatus('Fehler: '+err.message,'bad'));});
+  checkOrgAdmin().then(ok=>{ if(ok) load().catch(e=>status('Fehler: '+e.message,'bad')); });
+})();
+</script>
+</body>
+</html>

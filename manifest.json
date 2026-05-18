@@ -1,0 +1,29 @@
+{
+  "paket": "ulmipoint-vercel-produktionspaket-v54-vercel-ok",
+  "basis": "ulmipoint-vercel-produktionspaket-v53-einspurig",
+  "status": "einspurig, ohne vercel.json",
+  "geaendert": [
+    "vercel.json entfernt",
+    "deploy-check.html API-Pfad ohne Dateiendung",
+    "api/time-clock-list Endpunkt ergänzt",
+    "alte Einzel-Seiten bleiben Weiterleitungen zum neuen Planer"
+  ],
+  "api_referenzen_im_paket": {
+    "index.html": [
+      "/api/org-structure"
+    ],
+    "organisation-admin.html": [
+      "/api/org-admin-login",
+      "/api/org-structure"
+    ],
+    "planer.html": [
+      "/api/org-structure"
+    ],
+    "monatsabschluss-dyn.html": [
+      "/api/monthly-close"
+    ],
+    "zeiterfassung-dyn.html": [
+      "/api/time-clock-list"
+    ]
+  }
+}
