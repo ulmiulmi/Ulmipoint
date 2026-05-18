@@ -1,17 +1,1 @@
-# ULMIPOINT Produktionspaket v57
-
-Geprüfte saubere Einspur-Version für Vercel plus Android-App-Build.
-
-Enthalten:
-- Web/Vercel-Dateien für ULMIPOINT
-- API-Dateien
-- Wunschportal
-- Android-Projekt `android-wunschportal/`
-- GitHub Actions Workflow `.github/workflows/build-wunschportal-android.yml`
-- `.vercelignore`, damit Vercel Android/GitHub-Dateien ignoriert
-
-Nicht enthalten:
-- alte Bereichs-Einzel-HTML-Seiten wie azoren.html, bali.html, capri.html, delos.html
-- alte doppelte Planer-Seiten
-- alte Reparatur-README-Dateien
-- vercel.json
+ULMIPOINT ist ein beeindruckendes Praxisprojekt, das deutlich aus realem Bedarf entstanden ist. Es verbindet Dienstplanung, Mitarbeitenden-Wünsche, Organisation, Rollenverwaltung, Server-Speicherung und mobile Nutzung zu einem eigenständigen System. Besonders wertvoll ist, dass nicht nur geplant wird, sondern auch Mitarbeitende beteiligt, Zugriffe geschützt und Daten bewusst behandelt werden. Das Projekt zeigt Ausdauer, Problembewusstsein und einen starken Willen, eine komplexe Alltagssituation in eine brauchbare digitale Lösung zu verwandeln.
