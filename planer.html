@@ -91,38 +91,39 @@
   .planner-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}
   .planner-frame.active{display:block}
 
-  .overview-frame{overflow:auto;background:radial-gradient(circle at 12% 0%,#eaf2ff 0,#f8fbff 38%,#f4f7fb 100%);padding:22px clamp(14px,3vw,34px) 34px}
+  .overview-frame{overflow:auto;background:linear-gradient(135deg,#f4f8ff 0%,#ffffff 42%,#fff7ed 100%);padding:20px clamp(12px,3vw,34px) 34px}
   .overview-page{max-width:1180px;margin:0 auto;color:var(--text)}
-  .overview-hero{border:1px solid rgba(217,226,239,.95);border-radius:30px;background:linear-gradient(135deg,#ffffff 0%,#f7fbff 55%,#fff7ed 100%);box-shadow:var(--shadow);padding:22px;position:relative;overflow:hidden;margin-bottom:18px}
-  .overview-hero:before{content:"";position:absolute;right:-80px;top:-100px;width:260px;height:260px;border-radius:999px;background:rgba(37,99,235,.10)}
-  .overview-hero:after{content:"";position:absolute;right:110px;bottom:-90px;width:220px;height:220px;border-radius:999px;background:rgba(15,138,95,.08)}
-  .overview-hero-inner{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start}
-  .overview-eyebrow{display:inline-flex;align-items:center;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:12px}
-  .overview-hero h2{font-size:clamp(30px,5vw,58px);line-height:.98;letter-spacing:-.07em;margin:0 0 9px;color:#111827}
-  .overview-lead{font-size:clamp(14px,2vw,18px);line-height:1.45;color:#475467;font-weight:750;max-width:760px;margin:0}
-  .overview-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-  .overview-pill{display:inline-flex;align-items:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:950;color:#475467}
+  .overview-hero{border:1px solid rgba(217,226,239,.95);border-radius:30px;background:rgba(255,255,255,.88);box-shadow:var(--shadow);padding:18px 18px 16px;position:relative;overflow:hidden;margin-bottom:14px;backdrop-filter:blur(10px)}
+  .overview-hero:before{content:"";position:absolute;right:-80px;top:-110px;width:270px;height:270px;border-radius:999px;background:radial-gradient(circle,#dbeafe 0%,rgba(219,234,254,.0) 70%)}
+  .overview-hero:after{content:"";position:absolute;left:-90px;bottom:-130px;width:310px;height:310px;border-radius:999px;background:radial-gradient(circle,#ffedd5 0%,rgba(255,237,213,0) 68%)}
+  .overview-hero-inner{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start}
+  .overview-eyebrow{display:inline-flex;align-items:center;gap:7px;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:10px}
+  .overview-hero h2{font-size:clamp(28px,4.5vw,52px);line-height:.98;letter-spacing:-.07em;margin:0 0 8px;color:#111827}
+  .overview-lead{font-size:clamp(14px,1.8vw,17px);line-height:1.42;color:#475467;font-weight:800;max-width:760px;margin:0}
+  .overview-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .overview-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:950;color:#475467}
   .overview-pill.green{background:#e7f7ef;color:#0f8a5f;border-color:#b7e4ca}.overview-pill.blue{background:#eaf2ff;color:#175cd3;border-color:#c9dcff}.overview-pill.brown{background:#fff4ed;color:#7c2d12;border-color:#fed7aa}
-  .overview-quick{position:relative;z-index:1;display:grid;gap:8px;min-width:210px}
-  .overview-quick button{border:1px solid #c9dcff;background:#fff;color:#175cd3;border-radius:16px;padding:11px 12px;font-weight:950;text-align:left;box-shadow:0 8px 18px rgba(16,24,40,.06);cursor:pointer;white-space:normal}
+  .overview-quick{position:relative;z-index:1;display:grid;gap:8px;min-width:230px}
+  .overview-quick button{border:1px solid #d8e1ee;background:#fff;color:#175cd3;border-radius:18px;padding:12px 13px;font-weight:950;text-align:left;box-shadow:0 9px 22px rgba(16,24,40,.07);cursor:pointer;white-space:normal}
   .overview-section-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:18px 0 10px;padding:0 2px}
-  .overview-section-title{font-size:17px;font-weight:950;letter-spacing:-.03em}.overview-section-sub{font-size:12px;color:var(--muted);font-weight:850}
-  .overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-  .overview-card{position:relative;display:flex;flex-direction:column;text-align:left;min-height:142px;border:1px solid var(--line);border-radius:24px;background:var(--card);box-shadow:0 10px 26px rgba(16,24,40,.07);padding:16px;text-decoration:none;color:inherit;cursor:pointer;overflow:hidden;white-space:normal}
-  .overview-card:hover,.overview-quick button:hover,.overview-admin-card:hover{transform:translateY(-2px);box-shadow:0 18px 34px rgba(16,24,40,.12);border-color:#b8c7db}
-  .overview-card:before{content:"";position:absolute;inset:0 0 auto;height:6px;background:var(--accent,#2563eb)}
-  .overview-card-topline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
-  .overview-tag{display:inline-flex;border-radius:999px;padding:4px 8px;background:#f2f4f7;color:#475467;font-size:11px;font-weight:950;border:1px solid #e4e7ec}
-  .overview-dot{width:13px;height:13px;border-radius:999px;background:var(--accent,#2563eb);box-shadow:0 0 0 5px rgba(37,99,235,.10)}
-  .overview-card h3{font-size:22px;line-height:1.05;letter-spacing:-.05em;margin:0 0 8px}
-  .overview-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.35;font-weight:780}
-  .overview-open{margin-top:auto;padding-top:16px;font-size:12px;font-weight:950;color:var(--accent,#2563eb)}
-  .overview-blue{--accent:#2563eb}.overview-green{--accent:#0f8a5f}.overview-orange{--accent:#ea580c}.overview-violet{--accent:#7c3aed}.overview-brown{--accent:#7c2d12}.overview-slate{--accent:#475467}.overview-red{--accent:#c73636}.overview-teal{--accent:#0891b2}.overview-amber{--accent:#b45309}
+  .overview-section-title{font-size:18px;font-weight:950;letter-spacing:-.04em}.overview-section-sub{font-size:12px;color:var(--muted);font-weight:850}
+  .overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+  .overview-card{--accent:#2563eb;--soft:#eaf2ff;position:relative;display:flex;flex-direction:column;text-align:left;min-height:152px;border:1px solid rgba(216,225,238,.98);border-radius:28px;background:linear-gradient(135deg,var(--soft),#fff 58%);box-shadow:0 14px 32px rgba(16,24,40,.09);padding:16px 16px 14px;text-decoration:none;color:inherit;cursor:pointer;overflow:hidden;white-space:normal;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+  .overview-card:before{content:"";position:absolute;right:-28px;top:-32px;width:116px;height:116px;border-radius:999px;background:rgba(37,99,235,.10)}
+  .overview-card:after{content:"";position:absolute;left:-46px;bottom:-58px;width:128px;height:128px;border-radius:999px;background:rgba(255,255,255,.45)}
+  .overview-card:hover,.overview-quick button:hover,.overview-admin-card:hover{transform:translateY(-3px);box-shadow:0 20px 42px rgba(16,24,40,.14);border-color:#b8c7db}
+  .overview-card-topline{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:13px}
+  .overview-icon{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:18px;background:#fff;border:1px solid rgba(255,255,255,.78);box-shadow:0 8px 18px rgba(16,24,40,.10);font-size:25px;line-height:1}
+  .overview-tag{display:inline-flex;border-radius:999px;padding:5px 9px;background:rgba(255,255,255,.72);color:#475467;font-size:11px;font-weight:950;border:1px solid rgba(255,255,255,.9)}
+  .overview-card h3{position:relative;z-index:1;font-size:24px;line-height:1.02;letter-spacing:-.055em;margin:0 0 8px;color:#101828}
+  .overview-card p{position:relative;z-index:1;margin:0;color:#475467;font-size:12px;line-height:1.35;font-weight:820}
+  .overview-open{position:relative;z-index:1;margin-top:auto;padding-top:16px;font-size:12px;font-weight:950;color:var(--accent)}
+  .overview-blue{--accent:#2563eb;--soft:#eaf2ff}.overview-green{--accent:#0f8a5f;--soft:#e7f7ef}.overview-orange{--accent:#ea580c;--soft:#fff4ed}.overview-violet{--accent:#7c3aed;--soft:#f3e8ff}.overview-brown{--accent:#7c2d12;--soft:#fff4ed}.overview-slate{--accent:#475467;--soft:#f2f4f7}.overview-red{--accent:#c73636;--soft:#fff1f2}.overview-teal{--accent:#0891b2;--soft:#ecfeff}.overview-amber{--accent:#b45309;--soft:#fffbeb}.overview-pink{--accent:#be185d;--soft:#fdf2f8}
   .overview-admin-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
   .overview-admin-card{border:1px solid var(--line);border-radius:24px;background:rgba(255,255,255,.86);box-shadow:0 10px 26px rgba(16,24,40,.06);padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;text-align:left;white-space:normal}
   .overview-admin-card strong{font-size:17px;letter-spacing:-.03em}.overview-admin-card span{display:block;color:var(--muted);font-size:12px;font-weight:800;margin-top:3px}.overview-admin-card b{color:#175cd3;font-size:12px}
   @media(max-width:980px){.overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.overview-hero-inner{grid-template-columns:1fr}.overview-quick{grid-template-columns:repeat(3,minmax(0,1fr));min-width:0}.overview-quick button{text-align:center}.overview-admin-row{grid-template-columns:1fr}}
-  @media(max-width:620px){.overview-frame{padding:14px 10px 24px}.overview-hero{border-radius:24px;padding:17px}.overview-grid{grid-template-columns:1fr}.overview-quick{grid-template-columns:1fr}.overview-card{min-height:124px;border-radius:20px}.overview-admin-card{border-radius:20px}.overview-section-head{display:block}.overview-section-sub{margin-top:4px}.overview-meta{gap:6px}.overview-pill{font-size:11px;padding:6px 8px}}
+  @media(max-width:620px){.overview-frame{padding:14px 10px 24px}.overview-hero{border-radius:24px;padding:16px}.overview-grid{grid-template-columns:1fr}.overview-quick{grid-template-columns:1fr}.overview-card{min-height:132px;border-radius:22px}.overview-admin-card{border-radius:20px}.overview-section-head{display:block}.overview-section-sub{margin-top:4px}.overview-meta{gap:6px}.overview-pill{font-size:11px;padding:6px 8px}.overview-card h3{font-size:22px}}
   .loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f6f8fc;color:#667085;font-weight:950}
   @media(max-width:740px){.top{padding:6px 8px}.head{grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;margin-bottom:6px}.brand-logo{height:60px;max-width:min(295px,58vw);border-radius:14px}.brand-copy{display:block}.head .mini{display:none}h1{font-size:20px}button{padding:7px 10px;font-size:12px}.pill{font-size:11px;padding:4px 8px}.top-actions{grid-column:1/-1;grid-row:2;flex-wrap:nowrap;overflow-x:auto;margin-top:2px}}
 
@@ -640,25 +641,20 @@
   }
 
   function overviewCardMeta(id){
-    const meta = {
-      azoren:['Azoren','Gruppe','blue','Gruppenplanung und Dienste öffnen'],
-      bali:['Bali','Gruppe','green','Gruppenplanung und Dienste öffnen'],
-      capri:['Capri','Gruppe','orange','Gruppenplanung und Dienste öffnen'],
-      delos:['Delos','Gruppe','violet','Gruppenplanung und Dienste öffnen'],
-      nachtwache:['Nachtwache','Dienst','slate','Nachtwachen planen und prüfen'],
-      pikett:['Haus-Pikett','Pikett','brown','Pikettplanung öffnen'],
-      hausdienstplan:['Haus-Dienstplan','Hausdienst','teal','Hausdienste und Zuständigkeiten öffnen'],
-      zeiterfassung:['Zeiterfassung','Zeit','amber','Einträge und Zeiten prüfen'],
-      monatsabschluss:['Monatsabschluss','Auswertung','red','Monatswerte und Abschluss öffnen']
+    const map={
+      azoren:['Azoren','Wohngruppe','green','Dienstplanung und Teamübersicht öffnen','🌿'],
+      bali:['Bali','Wohngruppe','teal','Dienstplanung und Teamübersicht öffnen','🌊'],
+      capri:['Capri','Wohngruppe','pink','Dienstplanung und Teamübersicht öffnen','🌸'],
+      delos:['Delos','Wohngruppe','amber','Dienstplanung und Teamübersicht öffnen','☀️'],
+      nachtwache:['Nachtwache','Dienst','slate','Nachtwachen planen und prüfen','🌙'],
+      pikett:['Haus-Pikett','Bereitschaft','brown','Pikett-Dienste und Bereitschaften öffnen','🛎️'],
+      hausdienstplan:['Haus-Dienstplan','Übersicht','blue','Hausweite Planung und Koordination öffnen','📅'],
+      zeiterfassung:['Zeiterfassung','Zeit','violet','Arbeitszeiten kontrollieren und erfassen','⏱️'],
+      monatsabschluss:['Monatsabschluss','Abschluss','orange','Monat prüfen, abschliessen und auswerten','✅']
     };
-    if(meta[id]) return meta[id];
-    const ctx = UNIT_CONTEXT_BY_PLANNER[id];
-    if(ctx || labels[id]){
-      const type = String((ctx && ctx.type) || 'bereich');
-      const label = type === 'tageszentrum' ? 'Tageszentrum' : type === 'team' ? 'Team' : type === 'wohngruppe' ? 'Gruppe' : 'Bereich';
-      return [String((ctx && ctx.name) || labels[id] || id), label, 'blue', 'Bereichsplanung öffnen'];
-    }
-    return null;
+    id=normalize(id);
+    if(map[id]) return map[id];
+    return [labels[id] || titleCase(id), 'Bereich', 'blue', 'Bereich öffnen', '🏠'];
   }
 
   function overviewOrder(site){
@@ -676,10 +672,10 @@
     const item = overviewCardMeta(id);
     if(!item) return '';
     return '<button type="button" class="overview-card overview-'+escapeOverviewText(item[2])+'" data-open-planner="'+escapeOverviewText(id)+'">'
-      + '<div class="overview-card-topline"><span class="overview-tag">'+escapeOverviewText(item[1])+'</span><span class="overview-dot" aria-hidden="true"></span></div>'
+      + '<div class="overview-card-topline"><span class="overview-icon" aria-hidden="true">'+escapeOverviewText(item[4] || '•')+'</span><span class="overview-tag">'+escapeOverviewText(item[1])+'</span></div>'
       + '<h3>'+escapeOverviewText(item[0])+'</h3>'
       + '<p>'+escapeOverviewText(item[3])+'</p>'
-      + '<div class="overview-open">Bereich öffnen →</div>'
+      + '<div class="overview-open">Öffnen →</div>'
       + '</button>';
   }
 
@@ -690,22 +686,23 @@
     return '<div class="overview-page">'
       + '<section class="overview-hero" aria-label="Startbereich">'
       + '<div class="overview-hero-inner"><div>'
-      + '<div class="overview-eyebrow">ULMIPOINT Startseite</div>'
+      + '<div class="overview-eyebrow">✨ ULMIPOINT Startseite · generiert</div>'
       + '<h2>'+escapeOverviewText(name)+'</h2>'
-      + '<p class="overview-lead">Schneller Einstieg in Gruppen, Nachtwache, Pikett und Auswertungen. Ohne Hausbild und ohne alte Haus-Kachel.</p>'
-      + '<div class="overview-meta"><span class="overview-pill blue">Startseite · '+escapeOverviewText(name)+'</span><span class="overview-pill green">Serverfähig</span><span class="overview-pill brown">generiert</span></div>'
+      + '<p class="overview-lead">Schneller Einstieg über farbige Bereichs-Buttons mit kleinen Symbolen. Keine Hausgrafik, keine alte Kachel-Startseite.</p>'
+      + '<div class="overview-meta"><span class="overview-pill blue">🏠 '+escapeOverviewText(name)+'</span><span class="overview-pill green">✓ Server verbunden</span><span class="overview-pill brown">☁ Daten vom Server</span></div>'
       + '</div><div class="overview-quick" aria-label="Schnellzugriff">'
-      + (labels.nachtwache ? '<button type="button" data-open-planner="nachtwache">Nachtwache öffnen</button>' : '')
-      + (labels.pikett ? '<button type="button" data-open-planner="pikett">Haus-Pikett öffnen</button>' : '')
-      + (labels.hausdienstplan ? '<button type="button" data-open-planner="hausdienstplan">Haus-Dienstplan öffnen</button>' : '')
+      + '<button type="button" data-open-planner="nachtwache">🌙 Nachtwache</button>'
+      + '<button type="button" data-open-planner="pikett">🛎️ Haus-Pikett</button>'
+      + '<button type="button" data-open-planner="hausdienstplan">📅 Haus-Dienstplan</button>'
       + '</div></div></section>'
-      + '<section><div class="overview-section-head"><div class="overview-section-title">Bereiche</div><div class="overview-section-sub">Antippen öffnet den Bereich oben im Planer</div></div>'
+      + '<section><div class="overview-section-head"><div class="overview-section-title">Bereiche und Funktionen</div><div class="overview-section-sub">Tippen oder klicken zum Öffnen</div></div>'
       + '<div class="overview-grid">'+cards+'</div></section>'
-      + '<section><div class="overview-section-head" style="margin-top:20px"><div class="overview-section-title">Verwaltung</div><div class="overview-section-sub">Schnellzugriff für Admin/Planung</div></div>'
+      + '<section><div class="overview-section-head" style="margin-top:20px"><div class="overview-section-title">Verwaltung</div><div class="overview-section-sub">Admin und Portal</div></div>'
       + '<div class="overview-admin-row">'
-      + '<button type="button" class="overview-admin-card" data-open-url="organisation-admin.html"><span><strong>Organisation verwalten</strong><span>Häuser, Bereiche und Struktur bearbeiten</span></span><b>Öffnen</b></button>'
-      + '<button type="button" class="overview-admin-card" data-open-url="wunschportal.html"><span><strong>Wunschportal</strong><span>Mitarbeiteransicht in neuem Fenster</span></span><b>Öffnen</b></button>'
-      + '</div></section></div>';
+      + '<button type="button" class="overview-admin-card" data-open-url="organisation-admin.html"><span><strong>🏢 Organisation verwalten</strong><span>Häuser, Bereiche und Struktur bearbeiten</span></span><b>Öffnen</b></button>'
+      + '<button type="button" class="overview-admin-card" data-open-url="wunschportal.html"><span><strong>👤 Wunschportal</strong><span>Mitarbeiteransicht in neuem Fenster</span></span><b>Öffnen</b></button>'
+      + '</div></section>'
+      + '</div>';
   }
 
   function bindGeneratedOverview(div){
