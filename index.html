@@ -123,7 +123,6 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
       <div class="mini">Für berechtigte Planerinnen und Planer.</div>
       <div class="actions">
         <button class="btn warn" id="plannerChooseBtn" type="button">Haus auswählen</button>
-        <button class="btn warn" id="plannerDirectBtn" type="button">Letztes Haus öffnen</button>
       </div>
       <div class="planner-picker" id="plannerPicker">
         <label>
@@ -132,7 +131,6 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
         </label>
         <div class="actions" style="margin-top:10px">
           <button class="btn warn" id="plannerOpenBtn" type="button">Startseite öffnen</button>
-          <span class="pill" id="plannerHint">wird lokal gemerkt</span>
         </div>
       </div>
     </article>
@@ -153,53 +151,27 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
 
 <script>
 (function(){
-  const SELECT_KEY = 'ulmipoint_start_planner_choice_v1';
-  const LAST_KEY = 'ulmipoint_planner_last_target_v1';
-  const ORG_DRAFT_KEY = 'ulmipoint_org_structure_draft_v1';
-  const SITE_KEY = 'ulmipoint_selected_site_v1';
+  let currentOrg = null;
   const SERVER_TOKEN_KEY = 'polypoint_server_session_v1';
 
   const $ = id => document.getElementById(id);
 
-  function safeJson(value, fallback){
-    try{return JSON.parse(value || '') || fallback;}catch(_){return fallback;}
-  }
-  function slug(value){
-    return String(value||'')
-      .toLowerCase()
-      .normalize('NFKD')
-      .replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-z0-9]+/g,'_')
-      .replace(/^_+|_+$/g,'') || 'bereich';
-  }
   function defaultOrg(){return {version:'1.0',organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',sites:[{id:'haus_1',name:'Haus 1',type:'wohnheim',canton:'BS',active:true,automaticFunctions:{nachtwache:true,pikett:true,hausdienstplan:true},units:[{id:'azoren',name:'Azoren',type:'wohngruppe',plannerKey:'azoren',active:true},{id:'bali',name:'Bali',type:'wohngruppe',plannerKey:'bali',active:true},{id:'capri',name:'Capri',type:'wohngruppe',plannerKey:'capri',active:false},{id:'delos',name:'Delos',type:'wohngruppe',plannerKey:'delos',active:true}]}]};}
   function ensureOrg(org){return org&&Array.isArray(org.sites)&&org.sites.length?org:defaultOrg();}
-  function realUnits(site){
-    return (site.units||[]).filter(u=>u && !['pikett','hausdienstplan','nachtwache'].includes(String(u.type||'')));
-  }
-  function option(label, href, site, target){
-    return {label, href, site, target};
-  }
+  function option(label, href, site, target){ return {label, href, site, target}; }
+
   function getOrg(){
-    const draft = safeJson(localStorage.getItem(ORG_DRAFT_KEY), null);
-    return ensureOrg(draft && draft.organisationStructure ? draft.organisationStructure : null);
+    return ensureOrg(currentOrg);
   }
+
   function serverSession(){
     try{
       const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}');
       if(s && s.access_token && (!s.expires_at || s.expires_at > Date.now()+30000)) return s;
-    }catch(_){}
+    }catch(_){ }
     return null;
   }
-  function saveOrgDraft(org, updatedAt){
-    if(!org || !Array.isArray(org.sites)) return false;
-    localStorage.setItem(ORG_DRAFT_KEY, JSON.stringify({
-      organisationStructure: org,
-      savedAt: new Date().toISOString(),
-      serverUpdatedAt: updatedAt || ''
-    }));
-    return true;
-  }
+
   async function loadOrgFromServerIfPossible(){
     const s = serverSession();
     try{
@@ -214,7 +186,7 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
       let data = {};
       try{ data = txt ? JSON.parse(txt) : {}; }catch(_){ data = {message:txt}; }
       if(!resp.ok || data.ok===false || !data.organisationStructure) return false;
-      saveOrgDraft(ensureOrg(data.organisationStructure), data.updatedAt);
+      currentOrg = ensureOrg(data.organisationStructure);
       fillSelect();
       return true;
     }catch(_){
@@ -249,35 +221,13 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
     const options = buildOptions();
     select.innerHTML = options.map((o,i)=>'<option value="'+i+'">'+o.label+'</option>').join('');
     select.__options = options;
-
-    const saved = safeJson(localStorage.getItem(SELECT_KEY), null);
-    if(saved && saved.href){
-      const idx = options.findIndex(o=>o.href === saved.href);
-      if(idx >= 0) select.value = String(idx);
-    }
   }
 
   function openSelected(){
     const select = $('plannerSelect');
     const options = select.__options || buildOptions();
     const choice = options[Number(select.value)] || options[0];
-    if(!choice) return;
-
-    try{
-      localStorage.setItem(SELECT_KEY, JSON.stringify({
-        label:choice.label,
-        href:choice.href,
-        savedAt:new Date().toISOString()
-      }));
-
-      if(choice.site){
-        localStorage.setItem(SITE_KEY, JSON.stringify(Object.assign({}, choice.site, {
-          selectedAt:new Date().toISOString()
-        })));
-      }
-    }catch(_){}
-
-    location.href = choice.href;
+    if(choice && choice.href) location.href = choice.href;
   }
 
   $('plannerChooseBtn').onclick = () => {
@@ -285,16 +235,8 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
     $('plannerPicker').classList.toggle('show');
   };
   $('plannerOpenBtn').onclick = openSelected;
-  $('plannerDirectBtn').onclick = () => {
-    fillSelect();
-    const saved = safeJson(localStorage.getItem(SELECT_KEY), null);
-    if(saved && saved.href){
-      location.href = saved.href;
-      return;
-    }
-    openSelected();
-  };
 
+  currentOrg = defaultOrg();
   fillSelect();
   loadOrgFromServerIfPossible();
 })();
