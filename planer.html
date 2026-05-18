@@ -541,10 +541,10 @@
     iframe.dataset.planner = id;
     iframe.title = labels[id];
 
-    // EINSPURIG: Auch Haus 1 benutzt die neue dynamische Hausseite.
-    // Die alte eingebettete overview.html wird nicht mehr als zweite Schiene verwendet.
+    // Startseite: wieder die schöne Hausbild-Übersicht mit Hotspots verwenden.
+    // Alle Detailseiten bleiben trotzdem einspurig über die dynamischen Planerseiten.
     if(id === "overview"){
-      iframe.src = dynamicHouseUrl();
+      iframe.src = "overview.html";
     } else {
       iframe.src = genericPageUrl(id);
     }
