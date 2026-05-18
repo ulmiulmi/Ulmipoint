@@ -690,12 +690,13 @@
   function renderOverviewCard(id){
     const item = overviewCardMeta(id);
     if(!item) return '';
-    return '<button type="button" class="overview-card overview-'+escapeOverviewText(item[2])+'" data-open-planner="'+escapeOverviewText(id)+'">'
+    const safeId = escapeOverviewText(id);
+    return '<a class="overview-card overview-'+escapeOverviewText(item[2])+'" href="#'+safeId+'" data-open-planner="'+safeId+'" role="button">'
       + '<div class="overview-card-topline"><span class="overview-icon" aria-hidden="true">'+escapeOverviewText(item[4] || '•')+'</span><span class="overview-tag">'+escapeOverviewText(item[1])+'</span></div>'
       + '<h3>'+escapeOverviewText(item[0])+'</h3>'
       + '<p>'+escapeOverviewText(item[3])+'</p>'
       + '<div class="overview-open">Öffnen →</div>'
-      + '</button>';
+      + '</a>';
   }
 
   function renderGeneratedOverview(){
@@ -716,8 +717,8 @@
       + '<div class="overview-grid">'+cards+empty+'</div></section>'
       + '<section><div class="overview-section-head" style="margin-top:20px"><div class="overview-section-title">Verwaltung</div><div class="overview-section-sub">Admin und Portal</div></div>'
       + '<div class="overview-admin-row">'
-      + '<button type="button" class="overview-admin-card" data-open-url="organisation-admin.html"><span><strong>🏢 Organisation verwalten</strong><span>Häuser, Bereiche und Struktur bearbeiten</span></span><b>Öffnen</b></button>'
-      + '<button type="button" class="overview-admin-card" data-open-url="wunschportal.html"><span><strong>👤 Wunschportal</strong><span>Mitarbeiteransicht in neuem Fenster</span></span><b>Öffnen</b></button>'
+      + '<a class="overview-admin-card" href="organisation-admin.html" data-open-url="organisation-admin.html"><span><strong>🏢 Organisation verwalten</strong><span>Häuser, Bereiche und Struktur bearbeiten</span></span><b>Öffnen</b></a>'
+      + '<a class="overview-admin-card" href="wunschportal.html" data-open-url="wunschportal.html"><span><strong>👤 Wunschportal</strong><span>Mitarbeiteransicht in neuem Fenster</span></span><b>Öffnen</b></a>'
       + '</div></section>'
       + '</div>';
   }
@@ -727,9 +728,16 @@
     div.dataset.boundOverview = '1';
     div.addEventListener('click', ev => {
       const target = ev.target.closest && ev.target.closest('[data-open-planner]');
-      if(target){ loadPlanner(target.dataset.openPlanner); return; }
+      if(target){
+        ev.preventDefault();
+        ev.stopPropagation();
+        loadPlanner(target.dataset.openPlanner, true);
+        return;
+      }
       const url = ev.target.closest && ev.target.closest('[data-open-url]');
       if(url){
+        ev.preventDefault();
+        ev.stopPropagation();
         if(url.dataset.openUrl === 'wunschportal.html') window.open(url.dataset.openUrl, '_blank');
         else location.href = url.dataset.openUrl;
       }
