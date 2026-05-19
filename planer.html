@@ -61,6 +61,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ULMIPOINT Adapter</title>
+<!-- v82: TKO-Gruppenrechte stabil: unit.id / plannerKey-Mapping korrigiert -->
 <style>
   :root { --bg:#f6f8fc; --card:#fff; --text:#172033; --muted:#667085; --line:#d9e2ef; --blue:#2563eb; --green:#0f8a5f; --brown:#7c2d12; --red:#c73636; --shadow:0 12px 30px rgba(16,24,40,.08); }
   *{box-sizing:border-box}
@@ -495,7 +496,9 @@
 
   const UNIT_CONTEXT_BY_PLANNER = {};
   function plannerIdForUnit(unit){
-    const raw = unit && (unit.plannerKey || unit.id || unit.name);
+    // Wichtig: sichtbare/organisatorische Gruppen-ID vor plannerKey verwenden.
+    // plannerKey kann intern z.B. gruppe_1 heissen, Rechte werden aber oft auf delos/bali gesetzt.
+    const raw = unit && (unit.id || unit.plannerKey || unit.name);
     return slugId(raw);
   }
 
@@ -604,7 +607,7 @@
     p.set("unitId", ctx.id || id);
     p.set("unitName", ctx.name || labels[id] || id);
     p.set("unitType", ctx.type || "bereich");
-    p.set("plannerKey", id);
+    p.set("plannerKey", ctx.plannerKey || id);
     if(isFunc) p.set("functionType", id);
 
     if(id==="nachtwache") return "nachtwache-dyn.html?" + p.toString();
@@ -1254,6 +1257,17 @@
     if(role === ROLE_EMPLOYEE) return 'Mitarbeiter';
     return role || 'keine Rolle';
   }
+  function accessGroupMatchesPlanner(entry, id){
+    const allowed = new Set(accessGroupKeys(entry));
+    if(!allowed.size) return false;
+    const nid = normalize(id || '');
+    const ctx = UNIT_CONTEXT_BY_PLANNER[nid] || {};
+    const candidates = [
+      nid, id, labels[nid],
+      ctx.id, ctx.name, ctx.plannerKey, ctx.unitId, ctx.groupKey
+    ].map(slugId).filter(Boolean);
+    return candidates.some(k => allowed.has(k));
+  }
   function accessAllowsPlanner(info, id){
     id = normalize(id || 'overview');
     if(!info || !info.configuredCount) return true;
@@ -1265,15 +1279,14 @@
       if(!accessSiteMatches(entry)) return false;
       if(id === 'overview') return true;
       if(!isGroupPlannerId(id)) return false;
-      return accessGroupKeys(entry).includes(slugId(id));
+      return accessGroupMatchesPlanner(entry, id);
     }
     return false;
   }
   function firstAllowedPlannerId(info){
     if(!info || !info.configuredCount || info.role === ROLE_ADMIN || info.role === ROLE_PLANNER || info.role === ROLE_HAUSLEITUNG) return 'overview';
     if(info.role === ROLE_TKO){
-      const allowed = new Set(accessGroupKeys(info.entry));
-      const order = overviewOrder(overviewSite()).filter(id => isGroupPlannerId(id) && allowed.has(slugId(id)));
+      const order = overviewOrder(overviewSite()).filter(id => isGroupPlannerId(id) && accessGroupMatchesPlanner(info.entry, id));
       return order[0] || 'overview';
     }
     return 'overview';
@@ -1349,7 +1362,11 @@
       }
       setAccessContext(info);
       setAdminGate(false);
-      if(!accessAllowsCurrentPlanner(activeId || 'overview')){
+      const currentPlanner = normalize(activeId || 'overview');
+      if(info.role === ROLE_TKO && currentPlanner === 'overview'){
+        const first = firstAllowedPlannerId(info) || 'overview';
+        if(first !== 'overview') loadPlanner(first, true);
+      }else if(!accessAllowsCurrentPlanner(currentPlanner)){
         loadPlanner(firstAllowedPlannerId(info) || 'overview', true);
       }
       if(showStatus){
