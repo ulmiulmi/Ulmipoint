@@ -41,6 +41,34 @@ function assertAdminAccess(data,user){
   throw new Error('Keine Admin-/Planer-Rolle für '+(email||'diese Sitzung')+'.');
 }
 
+
+function siteCount(org){return org&&Array.isArray(org.sites)?org.sites.length:0;}
+function addOrganisationBackup(data,org,reason,user){
+  if(!org || !Array.isArray(org.sites) || org.sites.length===0) return;
+  if(!Array.isArray(data.organisationBackups)) data.organisationBackups=[];
+  data.organisationBackups.unshift({
+    id:'org_backup_'+Date.now(),
+    at:new Date().toISOString(),
+    reason:safe(reason)||'before-save',
+    sitesCount:org.sites.length,
+    siteNames:org.sites.map(s=>safe(s.name||s.id)).filter(Boolean),
+    user:{id:user?.id||'',email:user?.email||''},
+    organisationStructure:JSON.parse(JSON.stringify(org))
+  });
+  data.organisationBackups=data.organisationBackups.slice(0,25);
+}
+function backupInfo(data){
+  const list=Array.isArray(data.organisationBackups)?data.organisationBackups:[];
+  return list.map(b=>({id:b.id,at:b.at,reason:b.reason,sitesCount:b.sitesCount||siteCount(b.organisationStructure),siteNames:Array.isArray(b.siteNames)?b.siteNames:[]})).slice(0,25);
+}
+function destructiveSaveWouldRemoveSites(currentOrg,nextSites){
+  const currentSites=(currentOrg&&Array.isArray(currentOrg.sites))?currentOrg.sites:[];
+  if(currentSites.length===0) return false;
+  const nextIds=new Set((nextSites||[]).map(s=>safe(s.id)).filter(Boolean));
+  const removed=currentSites.filter(s=>!nextIds.has(safe(s.id)));
+  return removed.length>0 ? removed : false;
+}
+
 function defaultOrganisation(){
   return {
     version:'1.0',
@@ -128,7 +156,7 @@ module.exports=async function handler(req,res){
         }
       }
       const updatedAt=row.updated_at;
-      return send(res,200,{ok:true,mode,organisationStructure:org,access,updatedAt,empty:normalized.empty,emptyReason:normalized.reason,seeded:false});
+      return send(res,200,{ok:true,mode,organisationStructure:org,access,updatedAt,empty:normalized.empty,emptyReason:normalized.reason,seeded:false,organisationBackups:backupInfo(data)});
     }
 
     if(mode==='save'){
@@ -144,6 +172,10 @@ module.exports=async function handler(req,res){
       if(!incoming || typeof incoming!=='object') throw new Error('Keine Organisationsstruktur übergeben.');
       let sites=Array.isArray(incoming.sites)?incoming.sites.map(sanitizeSite).filter(Boolean):[];
       if(sites.length===0) throw new Error('Keine Standorte zum Speichern. Es wurde nichts überschrieben.');
+      const removedSites=destructiveSaveWouldRemoveSites(org,sites);
+      if(removedSites && body.allowSiteReduction!==true){
+        return send(res,409,{ok:false,blocked:true,code:'SITE_DELETE_CONFIRM_REQUIRED',message:'Speichern blockiert: Der neue Stand würde vorhandene Standorte löschen: '+removedSites.map(s=>safe(s.name||s.id)).join(', ')+'. Bitte nur bestätigen, wenn das wirklich gewollt ist.',removedSites:removedSites.map(s=>({id:safe(s.id),name:safe(s.name)})),organisationStructure:org,organisationBackups:backupInfo(data)});
+      }
       const next={
         version:'1.0',
         organisation:{
@@ -156,6 +188,7 @@ module.exports=async function handler(req,res){
         updatedAt:new Date().toISOString(),
         updatedBy:{email:user.email||'',id:user.id||''}
       };
+      addOrganisationBackup(data, org, removedSites?'before-destructive-save':'before-save', user);
       data.organisationStructure=next;
       data.activity=[{
         id:'act_org_'+Date.now(),
