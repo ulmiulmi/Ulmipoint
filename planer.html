@@ -215,7 +215,7 @@
 
 <div id="adminRoleGate" class="role-gate" aria-hidden="false">
   <div class="role-card" role="dialog" aria-modal="true" aria-labelledby="adminRoleGateTitle">
-    <h2 id="adminRoleGateTitle">Admin-Planer geschützt</h2>
+    <h2 id="adminRoleGateTitle">Planerbereich geschützt</h2>
     <div class="mini">Der normale Dienstplaner ist nur für Admin/Planer gedacht. Mitarbeiter benutzen das Wunschportal.</div>
     <div id="adminRoleGateStatus" class="notice">Rolle wird geprüft…</div>
     <div class="role-form">
@@ -291,7 +291,7 @@
 
       <div class="emp-box server-role-box">
         <h3>🔐 Rollen-Sperre</h3>
-        <div class="mini">Vorsichtig: Admin/Planer dürfen den normalen Planer öffnen. Mitarbeiter werden zum Wunschportal geschickt. Wenn noch keine Rollen eingerichtet sind, bleibt der Admin-Planer nach Login im Übergangsmodus offen.</div>
+        <div class="mini">Admin/Planer dürfen alles öffnen. Hausleitung sieht ihren Standort. TKO sieht nur zugewiesene Gruppen. Mitarbeitende nutzen das Wunschportal.</div>
         <div class="central-export-actions">
           <button type="button" id="serverRoleCheckBtn">Rolle prüfen</button>
           <button type="button" class="primary" id="serverRoleMarkAdminBtn">Mich als Admin speichern</button>
@@ -677,7 +677,7 @@
       if(autoFunctionEnabled('hausdienstplan')) add('hausdienstplan');
       ['zeiterfassung','monatsabschluss'].forEach(add);
     }
-    return order;
+    return order.filter(id => accessAllowsCurrentPlanner(id));
   }
 
   function renderOverviewCard(id){
@@ -820,6 +820,11 @@
 
   function loadPlanner(id, pushHash=true){
     id = normalize(id);
+    if(!accessAllowsCurrentPlanner(id)){
+      const fallback = firstAllowedPlannerId(ACCESS_CONTEXT) || 'overview';
+      id = normalize(fallback);
+      try{ setServerRoleInfo('Dieser Bereich ist für deine Rolle nicht freigegeben. Geöffnet wird der erste erlaubte Bereich.', 'bad'); }catch(_){ }
+    }
     activeId = id;
     document.body.classList.toggle('overview-active', id === 'overview');
     loader.style.display = 'flex';
@@ -1189,7 +1194,10 @@
 
   const ROLE_ADMIN = 'admin';
   const ROLE_PLANNER = 'planner';
+  const ROLE_HAUSLEITUNG = 'hausleitung';
+  const ROLE_TKO = 'tko';
   const ROLE_EMPLOYEE = 'employee';
+  let ACCESS_CONTEXT = null;
   function normEmail(v){ return String(v || '').trim().toLowerCase(); }
   function roleStore(data){
     if(!data || typeof data !== 'object') return {};
@@ -1198,18 +1206,99 @@
   }
   function normalizeRoleValue(v){
     v = String(v || '').trim().toLowerCase();
-    if(['admin','administrator','leitung'].includes(v)) return ROLE_ADMIN;
+    if(['admin','administrator','leitung','verwaltung'].includes(v)) return ROLE_ADMIN;
     if(['planner','planer','planung'].includes(v)) return ROLE_PLANNER;
+    if(['hausleitung','haus-leitung','hl'].includes(v)) return ROLE_HAUSLEITUNG;
+    if(['tko','teamkoordination','team-koordinator','teamkoordination'].includes(v)) return ROLE_TKO;
     if(['employee','mitarbeiter','ma'].includes(v)) return ROLE_EMPLOYEE;
     return v || '';
+  }
+  function accessArray(v){
+    if(Array.isArray(v)) return v.map(x => slugId(x)).filter(Boolean);
+    const one = slugId(v || '');
+    return one ? [one] : [];
+  }
+  function accessEntryObject(entry, email){
+    if(entry && typeof entry === 'object') return entry;
+    if(typeof entry === 'string') return {email, role:entry};
+    return {};
+  }
+  function accessSiteIds(entry){
+    entry = accessEntryObject(entry);
+    return accessArray(entry.siteIds || (entry.siteId ? [entry.siteId] : []));
+  }
+  function accessGroupKeys(entry){
+    entry = accessEntryObject(entry);
+    return accessArray(entry.groupKeys || (entry.groupKey ? [entry.groupKey] : []));
+  }
+  function currentSiteAccessId(){
+    return slugId(HOUSE_ID || querySiteId() || HOUSE_CONTEXT?.id || '');
+  }
+  function accessSiteMatches(entry){
+    const sites = accessSiteIds(entry);
+    if(!sites.length) return false;
+    return sites.includes(currentSiteAccessId());
+  }
+  function isFunctionPlannerId(id){
+    return ['nachtwache','pikett','hausdienstplan','zeiterfassung','monatsabschluss'].includes(normalize(id));
+  }
+  function isGroupPlannerId(id){
+    id = normalize(id);
+    return id !== 'overview' && !isFunctionPlannerId(id);
+  }
+  function roleLabelText(role){
+    if(role === ROLE_ADMIN) return 'Admin';
+    if(role === ROLE_PLANNER) return 'Planer';
+    if(role === ROLE_HAUSLEITUNG) return 'Hausleitung';
+    if(role === ROLE_TKO) return 'TKO';
+    if(role === ROLE_EMPLOYEE) return 'Mitarbeiter';
+    return role || 'keine Rolle';
+  }
+  function accessAllowsPlanner(info, id){
+    id = normalize(id || 'overview');
+    if(!info || !info.configuredCount) return true;
+    const role = info.role;
+    const entry = info.entry || {};
+    if(role === ROLE_ADMIN || role === ROLE_PLANNER) return true;
+    if(role === ROLE_HAUSLEITUNG) return accessSiteMatches(entry);
+    if(role === ROLE_TKO){
+      if(!accessSiteMatches(entry)) return false;
+      if(id === 'overview') return true;
+      if(!isGroupPlannerId(id)) return false;
+      return accessGroupKeys(entry).includes(slugId(id));
+    }
+    return false;
+  }
+  function firstAllowedPlannerId(info){
+    if(!info || !info.configuredCount || info.role === ROLE_ADMIN || info.role === ROLE_PLANNER || info.role === ROLE_HAUSLEITUNG) return 'overview';
+    if(info.role === ROLE_TKO){
+      const allowed = new Set(accessGroupKeys(info.entry));
+      const order = overviewOrder(overviewSite()).filter(id => isGroupPlannerId(id) && allowed.has(slugId(id)));
+      return order[0] || 'overview';
+    }
+    return 'overview';
+  }
+  function setAccessContext(info){
+    ACCESS_CONTEXT = info || null;
+    try{
+      const ov = frames && frames.get && frames.get('overview');
+      if(ov) refreshGeneratedOverviewFrame(ov);
+    }catch(_){ }
+  }
+  function accessAllowsCurrentPlanner(id){
+    if(!ACCESS_CONTEXT) return true;
+    return accessAllowsPlanner(ACCESS_CONTEXT, id);
   }
   function userRoleFromData(data, session){
     const email = normEmail(session?.user?.email || storedServerEmail());
     const roles = roleStore(data);
-    const entry = roles[email] || null;
-    const role = normalizeRoleValue(typeof entry === 'string' ? entry : entry?.role);
+    const rawEntry = roles[email] || null;
+    const entry = accessEntryObject(rawEntry, email);
+    const role = normalizeRoleValue(entry.role);
     const configuredCount = Object.keys(roles).length;
-    return {email, entry, role, configuredCount, allowed: !configuredCount || role === ROLE_ADMIN || role === ROLE_PLANNER, employee: role === ROLE_EMPLOYEE};
+    const info = {email, entry, role, configuredCount, employee: role === ROLE_EMPLOYEE};
+    info.allowed = accessAllowsPlanner(info, activeId || 'overview');
+    return info;
   }
   function setAdminGate(show, msg='', kind=''){
     const gate = document.getElementById('adminRoleGate');
@@ -1233,8 +1322,9 @@
     if(!session){
       const email = storedServerEmail();
       const ge = document.getElementById('adminGateEmail'); if(ge && email) ge.value = email;
-      setAdminGate(true, 'Bitte als Admin/Planer einloggen. Mitarbeiter benutzen das Wunschportal.', 'warn');
-      if(showStatus) setServerRoleInfo('Nicht eingeloggt. Admin-Planer gesperrt.', 'bad');
+      setAccessContext(null);
+      setAdminGate(true, 'Bitte einloggen. Erlaubt sind Admin, Planer, Hausleitung oder TKO für freigegebene Gruppen. Mitarbeitende benutzen das Wunschportal.', 'warn');
+      if(showStatus) setServerRoleInfo('Nicht eingeloggt. Planerbereich gesperrt.', 'bad');
       return false;
     }
     try{
@@ -1242,18 +1332,28 @@
       const info = userRoleFromData(row?.data || {}, session);
       const label = info.email || serverUserLabel(serverUserFromSession(session));
       if(info.employee){
-        setAdminGate(true, 'Diese Anmeldung ist als Mitarbeiter hinterlegt: ' + label + '\nDer Admin-Planer bleibt gesperrt. Bitte Wunschportal verwenden.', 'bad');
-        if(showStatus) setServerRoleInfo('Rolle: Mitarbeiter · Admin-Planer gesperrt · ' + label, 'bad');
+        setAccessContext(null);
+        setAdminGate(true, 'Diese Anmeldung ist als Mitarbeiter hinterlegt: ' + label + '\nBitte das Wunschportal verwenden.', 'bad');
+        if(showStatus) setServerRoleInfo('Rolle: Mitarbeiter · Planerbereich gesperrt · ' + label, 'bad');
         return false;
       }
       if(info.configuredCount && !info.allowed){
-        setAdminGate(true, 'Für diese E-Mail ist keine Admin/Planer-Rolle hinterlegt: ' + label + '\nBitte mit einem Admin-Konto einloggen oder im Wunschportal arbeiten.', 'bad');
-        if(showStatus) setServerRoleInfo('Keine Admin/Planer-Rolle für ' + label, 'bad');
+        setAccessContext(null);
+        let detail = 'Für diese E-Mail ist kein Zugriff auf diesen Standort oder Bereich freigegeben: ' + label;
+        if(info.role === ROLE_TKO) detail = 'TKO-Zugriff gefunden, aber nicht für diese Gruppe oder diesen Standort: ' + label;
+        if(info.role === ROLE_HAUSLEITUNG) detail = 'Hausleitungs-Zugriff gefunden, aber nicht für diesen Standort: ' + label;
+        if(!info.role) detail = 'Für diese E-Mail ist noch keine Rolle hinterlegt: ' + label;
+        setAdminGate(true, detail + '\nBitte in Organisation → Benutzer und Rechte Haus/Gruppe zuweisen.', 'bad');
+        if(showStatus) setServerRoleInfo('Kein Zugriff · ' + label, 'bad');
         return false;
       }
+      setAccessContext(info);
       setAdminGate(false);
+      if(!accessAllowsCurrentPlanner(activeId || 'overview')){
+        loadPlanner(firstAllowedPlannerId(info) || 'overview', true);
+      }
       if(showStatus){
-        const roleText = info.role || 'Übergangsmodus: noch keine Rollenliste vorhanden';
+        const roleText = info.role ? roleLabelText(info.role) : 'Übergangsmodus: noch keine Rollenliste vorhanden';
         setServerRoleInfo('Zugriff erlaubt · Benutzer: ' + label + ' · Rolle: ' + roleText + ' · Rollen im Server: ' + info.configuredCount, 'ok');
       }
       return true;
