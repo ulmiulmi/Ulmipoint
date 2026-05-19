@@ -187,6 +187,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   const ORG_ADMIN_TOKEN_KEY='ulmipoint_org_admin_token_v1';
   const ORG_DRAFT_KEY='ulmipoint_org_structure_draft_v1';
   let org=defaultOrg();
+  let orgBaseRevision='';
   let users=[];
   let orgAdminTokenMemory='';
   let orgAdminPasswordMemory='';
@@ -519,16 +520,18 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   window.__orgAddDayUnit=si=>{syncFromInputs(); const s=org.sites[si]; if(!s)return; s.units=s.units||[]; if(realUnits(s).length>=4){status('Pro Haus sind maximal 4 Gruppen/Räume vorgesehen.','bad'); return;} s.units.push(defaultUnit(s,'tageszentrum')); render(); $('edit-'+si)?.classList.add('show')};
   window.__orgRemoveUnit=(si,ui)=>{syncFromInputs(); if(org.sites[si])org.sites[si].units.splice(ui,1); render();};
   window.__orgRemoveSite=si=>{syncFromInputs(); if(confirm('Standort wirklich löschen?')){org.sites.splice(si,1); render();}};
-  async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); if(data.empty || !data.organisationStructure){org=emptyOrganisation(); render(); status('Server enthält aktuell keine gespeicherten Häuser. Bitte Haus hinzufügen und danach Speichern klicken. Es wurde nichts automatisch mit Haus 1 repariert oder überschrieben.','warn'); return;} org=mergeWithDefaultOrganisation(data.organisationStructure); render(); status('Organisation geladen.','ok');}catch(e){org=emptyOrganisation(); render(); status('Server konnte nicht laden: '+e.message+' — keine automatische Reparatur ausgeführt.','bad');}}
+  async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); orgBaseRevision=String(data.orgRevision||data.updatedAt||''); if(data.empty || !data.organisationStructure){org=emptyOrganisation(); render(); status('Server enthält aktuell keine gespeicherten Häuser. Bitte Haus hinzufügen und danach Speichern klicken. Es wurde nichts automatisch mit Haus 1 repariert oder überschrieben.','warn'); return;} org=mergeWithDefaultOrganisation(data.organisationStructure); orgBaseRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||org.updatedAt||''); render(); status('Organisation geladen. Serverstand: '+(orgBaseRevision||'ohne Revision')+'.','ok');}catch(e){org=emptyOrganisation(); render(); status('Server konnte nicht laden: '+e.message+' — keine automatische Reparatur ausgeführt.','bad');}}
   async function save(){
     syncFromInputs(); cleanupAutoUnits(); org=mergeWithDefaultOrganisation(org);
     const expectedIds=(org.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
     status('Organisation wird gespeichert …');
     try{
-      const data=await api({mode:'save',organisationStructure:org});
+      const data=await api({mode:'save',organisationStructure:org,baseOrgRevision:orgBaseRevision});
       org=mergeWithDefaultOrganisation(data.organisationStructure||org);
+      orgBaseRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||org.updatedAt||orgBaseRevision||'');
       saveOrgDraft(data.updatedAt);
       const verify=await api({mode:'load',verifyAfterSave:Date.now()});
+      orgBaseRevision=String(verify.orgRevision||verify.organisationStructure?.revisionId||verify.updatedAt||orgBaseRevision||'');
       const serverOrg=mergeWithDefaultOrganisation(verify.organisationStructure||{});
       const savedIds=(serverOrg.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
       const missing=expectedIds.filter(id=>!savedIds.includes(id));
