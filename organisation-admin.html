@@ -188,7 +188,8 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   const ORG_DRAFT_KEY='ulmipoint_org_structure_draft_v1';
   let org=defaultOrg();
   let users=[];
-  let lastServerSiteIds=[];
+  let orgAdminTokenMemory='';
+  let orgAdminPasswordMemory='';
   const $=id=>document.getElementById(id);
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const slug=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'default';
@@ -237,13 +238,9 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     const s=session();
     const headers={'Content-Type':'application/json'};
     if(s&&s.access_token)headers.Authorization='Bearer '+s.access_token;
-    const resp=await fetch('/api/org-structure',{method:'POST',headers,body:JSON.stringify(Object.assign({},body,{orgAdminToken:localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||''}))});
+    const resp=await fetch('/api/org-structure',{method:'POST',headers,body:JSON.stringify(Object.assign({},body,{orgAdminToken:orgAdminTokenMemory || localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'', orgAdminPassword:orgAdminPasswordMemory||''}))});
     const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
-    if(!resp.ok||data.ok===false){
-      const err=new Error(data.message||('HTTP '+resp.status));
-      err.data=data; err.status=resp.status;
-      throw err;
-    }
+    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
     return data;
   }
   function lockStatus(t,k=''){const el=$('orgAdminLoginStatus'); if(el){el.textContent=t; el.className='notice'+(k?' '+k:'');}}
@@ -254,19 +251,21 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     const resp=await fetch('/api/org-admin-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'login',password:pw})});
     const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
     if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
-    localStorage.setItem(ORG_ADMIN_TOKEN_KEY,data.token);
+    orgAdminTokenMemory=data.token||'';
+    orgAdminPasswordMemory=pw||'';
+    try{localStorage.setItem(ORG_ADMIN_TOKEN_KEY,data.token||'');}catch(_){}
     unlockOrgAdmin();
     status('Admin-Zugriff aktiv. Organisation kann gespeichert werden.','ok');
     await load();
     await loadUsers(false);
   }
   async function checkOrgAdmin(){
-    const tok=localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'';
+    const tok=orgAdminTokenMemory || localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'';
     if(!tok) return false;
     try{
       const resp=await fetch('/api/org-admin-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'check',token:tok})});
       const data=await resp.json();
-      if(data.ok&&data.authenticated){unlockOrgAdmin();return true;}
+      if(data.ok&&data.authenticated){orgAdminTokenMemory=tok; unlockOrgAdmin();return true;}
     }catch(_){}
     return false;
   }
@@ -366,13 +365,9 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     }).join('');
   }
   async function usersApi(body){
-    const resp=await fetch('/api/org-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},body,{orgAdminToken:localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||''}))});
+    const resp=await fetch('/api/org-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},body,{orgAdminToken:orgAdminTokenMemory || localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'', orgAdminPassword:orgAdminPasswordMemory||''}))});
     const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
-    if(!resp.ok||data.ok===false){
-      const err=new Error(data.message||('HTTP '+resp.status));
-      err.data=data; err.status=resp.status;
-      throw err;
-    }
+    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
     return data;
   }
   async function loadUsers(show=true){
@@ -524,20 +519,13 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   window.__orgAddDayUnit=si=>{syncFromInputs(); const s=org.sites[si]; if(!s)return; s.units=s.units||[]; if(realUnits(s).length>=4){status('Pro Haus sind maximal 4 Gruppen/Räume vorgesehen.','bad'); return;} s.units.push(defaultUnit(s,'tageszentrum')); render(); $('edit-'+si)?.classList.add('show')};
   window.__orgRemoveUnit=(si,ui)=>{syncFromInputs(); if(org.sites[si])org.sites[si].units.splice(ui,1); render();};
   window.__orgRemoveSite=si=>{syncFromInputs(); if(confirm('Standort wirklich löschen?')){org.sites.splice(si,1); render();}};
-  async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); if(data.empty || !data.organisationStructure){lastServerSiteIds=[]; org=emptyOrganisation(); render(); status('Server enthält aktuell keine gespeicherten Häuser. Bitte Haus hinzufügen und danach Speichern klicken. Es wurde nichts automatisch mit Haus 1 repariert oder überschrieben.','warn'); return;} org=mergeWithDefaultOrganisation(data.organisationStructure); lastServerSiteIds=(org.sites||[]).map(s=>String(s.id||'')).filter(Boolean); render(); status('Organisation geladen.','ok');}catch(e){org=emptyOrganisation(); render(); status('Server konnte nicht laden: '+e.message+' — keine automatische Reparatur ausgeführt.','bad');}}
+  async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); if(data.empty || !data.organisationStructure){org=emptyOrganisation(); render(); status('Server enthält aktuell keine gespeicherten Häuser. Bitte Haus hinzufügen und danach Speichern klicken. Es wurde nichts automatisch mit Haus 1 repariert oder überschrieben.','warn'); return;} org=mergeWithDefaultOrganisation(data.organisationStructure); render(); status('Organisation geladen.','ok');}catch(e){org=emptyOrganisation(); render(); status('Server konnte nicht laden: '+e.message+' — keine automatische Reparatur ausgeführt.','bad');}}
   async function save(){
     syncFromInputs(); cleanupAutoUnits(); org=mergeWithDefaultOrganisation(org);
     const expectedIds=(org.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
     status('Organisation wird gespeichert …');
     try{
-      const currentIds=(org.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
-      const removedKnown=lastServerSiteIds.filter(id=>!currentIds.includes(id));
-      let allowSiteReduction=false;
-      if(removedKnown.length){
-        allowSiteReduction=confirm('Achtung: Der neue Stand löscht '+removedKnown.length+' gespeicherte(n) Standort(e). Wirklich so speichern?');
-        if(!allowSiteReduction) throw new Error('Speichern abgebrochen. Der Serverstand wurde nicht verändert.');
-      }
-      const data=await api({mode:'save',organisationStructure:org,allowSiteReduction});
+      const data=await api({mode:'save',organisationStructure:org});
       org=mergeWithDefaultOrganisation(data.organisationStructure||org);
       saveOrgDraft(data.updatedAt);
       const verify=await api({mode:'load',verifyAfterSave:Date.now()});
@@ -548,11 +536,11 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
         org=serverOrg; render();
         throw new Error('Server-Bestätigung fehlt für: '+missing.join(', '));
       }
-      org=serverOrg; lastServerSiteIds=savedIds.slice(); render();
+      org=serverOrg; render();
       status('Organisation gespeichert und vom Server bestätigt. Standorte: '+savedIds.length+'.','ok');
     }catch(e){
       render();
-      status('Server-Speichern fehlgeschlagen: '+e.message+' — es wurde nichts lokal oder auf dem Server überschrieben.','bad');
+      status('Server-Speichern fehlgeschlagen: '+e.message+' — der Stand wurde NICHT auf Supabase gespeichert. Bitte diese Meldung nicht ignorieren.','bad');
     }
   }
   function addSite(type){syncFromInputs(); org.sites=org.sites||[]; const site=defaultSite(type); org.sites.push(site); render(); status(typeLabel(site.type)+' erstellt: '+site.name+'. Jetzt Name/Bereiche prüfen und Speichern klicken, damit es dauerhaft auf dem Server bleibt.','warn');}
