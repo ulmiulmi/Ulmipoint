@@ -61,7 +61,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ULMIPOINT Adapter</title>
-<!-- v82: TKO-Gruppenrechte stabil: unit.id / plannerKey-Mapping korrigiert -->
+<!-- v84: Rollen-Ansichten klar getrennt auf Basis v83 -->
 <style>
   :root { --bg:#f6f8fc; --card:#fff; --text:#172033; --muted:#667085; --line:#d9e2ef; --blue:#2563eb; --green:#0f8a5f; --brown:#7c2d12; --red:#c73636; --shadow:0 12px 30px rgba(16,24,40,.08); }
   *{box-sizing:border-box}
@@ -104,6 +104,11 @@
   .overview-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
   .overview-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:950;color:#475467}
   .overview-pill.green{background:#e7f7ef;color:#0f8a5f;border-color:#b7e4ca}.overview-pill.blue{background:#eaf2ff;color:#175cd3;border-color:#c9dcff}.overview-pill.brown{background:#fff4ed;color:#7c2d12;border-color:#fed7aa}
+  .overview-role-banner{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid #d9e2ef;background:#fff;border-radius:22px;padding:13px 14px;margin:12px 0 4px;box-shadow:0 10px 22px rgba(16,24,40,.06)}
+  .overview-role-title{font-size:15px;font-weight:950;letter-spacing:-.03em;color:#111827;margin-bottom:2px}
+  .overview-role-text{font-size:12px;font-weight:850;color:#667085;line-height:1.35;max-width:820px}
+  .overview-role-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;padding:7px 10px;font-size:12px;font-weight:950;white-space:nowrap}
+  .overview-role-badge.green{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}.overview-role-badge.orange{border-color:#fed7aa;background:#fff4ed;color:#9a3412}.overview-role-badge.violet{border-color:#ddd6fe;background:#f5f3ff;color:#6d28d9}
   .overview-section-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:18px 0 10px;padding:0 2px}
   .overview-section-title{font-size:18px;font-weight:950;letter-spacing:-.04em}.overview-section-sub{font-size:12px;color:var(--muted);font-weight:850}
   .overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
@@ -217,14 +222,14 @@
 <div id="adminRoleGate" class="role-gate" aria-hidden="false">
   <div class="role-card" role="dialog" aria-modal="true" aria-labelledby="adminRoleGateTitle">
     <h2 id="adminRoleGateTitle">Planerbereich geschützt</h2>
-    <div class="mini">Der normale Dienstplaner ist nur für Admin/Planer gedacht. Mitarbeiter benutzen das Wunschportal.</div>
+    <div class="mini">Admin/Planer sehen alles. Hausleitung sieht ihr Haus. TKO sieht nur freigegebene Gruppen. Mitarbeiter benutzen das Wunschportal.</div>
     <div id="adminRoleGateStatus" class="notice">Rolle wird geprüft…</div>
     <div class="role-form">
       <label><span class="mini">E-Mail</span><input id="adminGateEmail" type="email" autocomplete="username" placeholder="name@example.ch"></label>
       <label><span class="mini">Passwort</span><input id="adminGatePassword" type="password" autocomplete="current-password" placeholder="Passwort"></label>
     </div>
     <div class="role-actions">
-      <button type="button" class="primary" id="adminGateLoginBtn">Als Admin/Planer einloggen</button>
+      <button type="button" class="primary" id="adminGateLoginBtn">Einloggen</button>
       <button type="button" id="adminGatePortalBtn">Zum Wunschportal</button>
       <button type="button" id="adminGateRetryBtn">Rolle erneut prüfen</button>
     </div>
@@ -243,8 +248,8 @@
         <span class="pill blue" id="activeLabel">geladen: Startseite</span>
         <span class="pill green">GitHub Pages</span>
         <span class="pill brown">aufgeteilt</span>
-        <button type="button" class="overview-duplicate-action" onclick="window.open('wunschportal.html','_blank')">👤 Wunschportal</button>
-        <button type="button" class="overview-duplicate-action" onclick="location.href='organisation-admin.html'">🏢 Organisation verwalten</button>
+        <button type="button" id="topPortalBtn" class="overview-duplicate-action" onclick="window.open('wunschportal.html','_blank')">👤 Wunschportal</button>
+        <button type="button" id="topOrgBtn" class="overview-duplicate-action" onclick="location.href='organisation-admin.html'">🏢 Organisation verwalten</button>
         <button id="serverSyncBtn" class="server-btn" type="button">☁️ Server</button>
       </div>
     </div>
@@ -695,27 +700,50 @@
       + '</a>';
   }
 
+  function roleViewMeta(site, order){
+    const role = ACCESS_CONTEXT && ACCESS_CONTEXT.configuredCount ? ACCESS_CONTEXT.role : '';
+    const roleText = role ? roleLabelText(role) : 'Übergangsmodus';
+    const siteName = (site && site.name) ? titleCase(site.name) : 'Standort';
+    if(role === ROLE_TKO){
+      return {badge:'🧭 TKO', badgeClass:'violet', title:'Meine freigegebenen Gruppen', section:'Meine Gruppen', text:'Du siehst hier nur die Gruppen, die in Organisation → Benutzer und Rechte für dich freigegeben sind.', showAdmin:false};
+    }
+    if(role === ROLE_HAUSLEITUNG){
+      return {badge:'🏠 Hausleitung', badgeClass:'green', title:'Hausübersicht · ' + siteName, section:'Gruppen und Hausfunktionen', text:'Du siehst alle Gruppen und Funktionen dieses Hauses. Andere Standorte bleiben gesperrt.', showAdmin:false};
+    }
+    if(role === ROLE_ADMIN || role === ROLE_PLANNER){
+      return {badge:'🔐 ' + roleText, badgeClass:'blue', title:'Planungsübersicht · ' + siteName, section:'Bereiche und Funktionen', text:'Du hast Zugriff auf die freigegebenen Häuser, Gruppen und Verwaltungsfunktionen.', showAdmin:true};
+    }
+    return {badge:'✨ Startseite', badgeClass:'blue', title:'Planungsübersicht · ' + siteName, section:'Bereiche und Funktionen', text:'Nach dem Login wird diese Startseite passend zur Rolle eingeschränkt.', showAdmin:true};
+  }
+
+  function renderOverviewAdminSection(meta){
+    if(!meta || meta.showAdmin === false) return '';
+    return '<section><div class="overview-section-head" style="margin-top:20px"><div class="overview-section-title">Verwaltung</div><div class="overview-section-sub">Admin und Portal</div></div>'
+      + '<div class="overview-admin-row">'
+      + '<a class="overview-admin-card" href="organisation-admin.html" data-open-url="organisation-admin.html"><span><strong>🏢 Organisation verwalten</strong><span>Häuser, Bereiche, Benutzer und Rechte bearbeiten</span></span><b>Öffnen</b></a>'
+      + '<a class="overview-admin-card" href="wunschportal.html" data-open-url="wunschportal.html"><span><strong>👤 Wunschportal</strong><span>Mitarbeiteransicht in neuem Fenster</span></span><b>Öffnen</b></a>'
+      + '</div></section>';
+  }
+
   function renderGeneratedOverview(){
     const site = overviewSite();
-    const name = (site && site.name) ? String(site.name) : 'Haus 1';
+    const name = (site && site.name) ? String(site.name) : 'Standort';
     const order = overviewOrder(site);
+    const meta = roleViewMeta(site, order);
     const cards = order.map(renderOverviewCard).join('');
     const empty = !order.length
-      ? '<div class="overview-admin-card" style="grid-column:1/-1;cursor:default"><span><strong>Noch keine Bereiche vorhanden</strong><span>Bitte zuerst in der Organisation ein Haus und die Gruppen/Bereiche anlegen. Es wird nichts automatisch mit Azoren, Bali, Capri oder Delos erzeugt.</span></span><b></b></div>'
+      ? '<div class="overview-admin-card" style="grid-column:1/-1;cursor:default"><span><strong>Noch keine freigegebenen Bereiche vorhanden</strong><span>Bitte in der Organisation ein Haus, Gruppen/Bereiche und passende Rechte anlegen. Es wird nichts automatisch mit Azoren, Bali, Capri oder Delos erzeugt.</span></span><b></b></div>'
       : '';
     return '<div class="overview-page">'
       + '<section class="overview-hero" aria-label="Startbereich">'
       + '<div class="overview-hero-inner"><div>'
       + '<div class="overview-eyebrow">✨ ULMIPOINT Startseite</div>'
       + '<h2>'+escapeOverviewText(titleCase(name))+'</h2>'
+      + '<div class="overview-role-banner"><div><div class="overview-role-title">'+escapeOverviewText(meta.title)+'</div><div class="overview-role-text">'+escapeOverviewText(meta.text)+'</div></div><span class="overview-role-badge '+escapeOverviewText(meta.badgeClass || '')+'">'+escapeOverviewText(meta.badge)+'</span></div>'
       + '</div></div></section>'
-      + '<section><div class="overview-section-head"><div class="overview-section-title">Bereiche und Funktionen</div></div>'
+      + '<section><div class="overview-section-head"><div class="overview-section-title">'+escapeOverviewText(meta.section || 'Bereiche und Funktionen')+'</div></div>'
       + '<div class="overview-grid">'+cards+empty+'</div></section>'
-      + '<section><div class="overview-section-head" style="margin-top:20px"><div class="overview-section-title">Verwaltung</div><div class="overview-section-sub">Admin und Portal</div></div>'
-      + '<div class="overview-admin-row">'
-      + '<a class="overview-admin-card" href="organisation-admin.html" data-open-url="organisation-admin.html"><span><strong>🏢 Organisation verwalten</strong><span>Häuser, Bereiche und Struktur bearbeiten</span></span><b>Öffnen</b></a>'
-      + '<a class="overview-admin-card" href="wunschportal.html" data-open-url="wunschportal.html"><span><strong>👤 Wunschportal</strong><span>Mitarbeiteransicht in neuem Fenster</span></span><b>Öffnen</b></a>'
-      + '</div></section>'
+      + renderOverviewAdminSection(meta)
       + '</div>';
   }
 
@@ -1293,6 +1321,7 @@
   }
   function setAccessContext(info){
     ACCESS_CONTEXT = info || null;
+    updateRoleChrome(ACCESS_CONTEXT);
     try{
       const ov = frames && frames.get && frames.get('overview');
       if(ov) refreshGeneratedOverviewFrame(ov);
@@ -1327,6 +1356,17 @@
     el.textContent = msg || '';
     el.classList.toggle('ok', kind === 'ok');
     el.classList.toggle('bad', kind === 'bad');
+  }
+  function updateRoleChrome(info){
+    const role = info && info.configuredCount ? info.role : '';
+    const canAdmin = !info || !info.configuredCount || role === ROLE_ADMIN || role === ROLE_PLANNER;
+    const orgBtn = document.getElementById('topOrgBtn');
+    const portalBtn = document.getElementById('topPortalBtn');
+    if(orgBtn) orgBtn.style.display = canAdmin ? '' : 'none';
+    if(portalBtn) portalBtn.style.display = canAdmin ? '' : 'none';
+    try{
+      document.body.dataset.roleView = role || 'open';
+    }catch(_){ }
   }
   async function evaluateAdminAccess(showStatus=false){
     loadServerConfig();
