@@ -17,6 +17,28 @@ function validOrgAdminSession(data,tok){
   return true;
 }
 
+function configuredOrgAdminPassword(data){
+  return safe(
+    process.env.ULMIPOINT_ORG_ADMIN_PASSWORD ||
+    process.env.ULMIPOINT_ADMIN_PASSWORD ||
+    process.env.ADMIN_PASSWORD ||
+    data?.organisationAdmin?.password ||
+    data?.adminPassword ||
+    ''
+  );
+}
+function constantTimeEqual(a,b){
+  a=String(a||''); b=String(b||'');
+  if(!a || !b || a.length!==b.length) return false;
+  let r=0;
+  for(let i=0;i<a.length;i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r===0;
+}
+function validOrgAdminPassword(data,pw){
+  const configured=configuredOrgAdminPassword(data);
+  return !!configured && constantTimeEqual(safe(pw), configured);
+}
+
 async function verifySupabaseUser(req){
   const auth=safe(req.headers.authorization || req.headers.Authorization);
   const token=auth.replace(/^Bearer\s+/i,'');
@@ -141,11 +163,12 @@ module.exports=async function handler(req,res){
     const normalized=normalizeOrgForLoad(data);
     const org=normalized.org;
     const hasOrgAdmin=validOrgAdminSession(data, body.orgAdminToken);
+    const hasOrgAdminPassword=validOrgAdminPassword(data, body.orgAdminPassword);
     let user=null;
     let access=null;
 
     if(mode==='load'){
-      if(hasOrgAdmin){
+      if(hasOrgAdmin || hasOrgAdminPassword){
         access=accessForOrgAdmin();
       }else{
         user=await verifySupabaseUserOptional(req);
@@ -160,7 +183,7 @@ module.exports=async function handler(req,res){
     }
 
     if(mode==='save'){
-      if(hasOrgAdmin){
+      if(hasOrgAdmin || hasOrgAdminPassword){
         access=accessForOrgAdmin();
         user={id:'org-admin-password',email:'org-admin-password'};
       }else{

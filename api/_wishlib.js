@@ -9,7 +9,7 @@ function send(res, status, data){
   res.end(JSON.stringify(data));
 }
 function allow(req,res){
-  res.setHeader('Access-Control-Allow-Methods','POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers','Content-Type');
   if(req.method==='OPTIONS'){send(res,200,{ok:true}); return true;}
   return false;
@@ -35,13 +35,19 @@ async function supabase(path,opt={}){
 async function fetchStore(){
   const data=await supabase('/rest/v1/planer_store?id=eq.'+encodeURIComponent(STORE_ID)+'&select=id,data,updated_at',{method:'GET'});
   const row=Array.isArray(data)?data[0]:null;
-  if(!row || !row.data) throw new Error('Kein Serverstand gefunden.');
+  if(!row || !row.data) return {id:STORE_ID,data:{},updated_at:null,missing:true};
   return row;
 }
 async function saveStore(data){
   const now=new Date().toISOString();
-  await supabase('/rest/v1/planer_store',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:STORE_ID,data,updated_at:now})});
-  return {id:STORE_ID,data,updated_at:now};
+  const payload={id:STORE_ID,data:data||{},updated_at:now};
+  try{
+    await supabase('/rest/v1/planer_store',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)});
+  }catch(e){
+    // Fallback für Supabase-Projekte, bei denen Upsert/merge nicht greift.
+    await supabase('/rest/v1/planer_store?id=eq.'+encodeURIComponent(STORE_ID),{method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({data:payload.data,updated_at:now})});
+  }
+  return payload;
 }
 function parseJsonMaybe(v){ if(!v||typeof v!=='string')return null; try{return JSON.parse(v)}catch(_){return null} }
 function normEmail(v){ return String(v||'').trim().toLowerCase(); }
