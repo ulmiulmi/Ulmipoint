@@ -74,6 +74,8 @@ body{background:linear-gradient(180deg,#eaf2ff 0,#f6f8fc 180px,#fbfcff 100%)}
 button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{background:var(--softGreen);border-color:#b7e4ca;color:var(--navGreen)}
 .card,.personal-plan,.day,.plan-cell{box-shadow:0 10px 26px rgba(16,24,40,.06)}
 #loginCard{border-color:#c9dcff;background:linear-gradient(180deg,#fff,#fbfdff)}
+.password-change-box{margin-top:10px;border:1px solid #f3d28f;background:#fffdf5;border-radius:18px;padding:12px}
+.password-change-box.hidden{display:none!important}
 .today-card{border:1px solid #b7e4ca;background:linear-gradient(135deg,#e7f7ef,#f7fffb);border-radius:18px;padding:12px;margin-top:8px;box-shadow:0 12px 26px rgba(15,138,95,.10)}.today-card.empty{border-color:#d9e2ef;background:#fff}.today-card.warn{border-color:#f3d28f;background:#fffdf5}.today-label{font-size:12px;font-weight:950;color:var(--navGreen);text-transform:uppercase;letter-spacing:.05em}.today-date{font-size:16px;font-weight:950;margin-top:2px}.today-duty{font-size:24px;font-weight:1000;letter-spacing:-.04em;margin-top:6px;color:var(--text)}.today-detail{font-size:12px;color:var(--muted);font-weight:850;margin-top:4px}.today-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.status-chip{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950}.status-chip.fixed{background:var(--softGreen);color:var(--navGreen)}.status-chip.open{background:var(--softYellow);color:var(--navYellow)}.status-chip.free{background:#eef2f7;color:#475467}.status-chip.wish{background:#e0f2fe;color:#0e7490}
 .quick-tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;margin:8px 0}.quick-tabs a{flex:0 0 auto;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:8px 11px;font-size:12px;font-weight:950;background:#fff;color:var(--text)}.quick-tabs a.primary{background:var(--navBlue);border-color:var(--navBlue);color:#fff}
 .plan-cell.today,.day.today{outline:3px solid var(--navBlue);background:#eef5ff!important}.plan-cell.fixed{border-color:#b7e4ca;background:#f7fffb}.plan-fixed{margin-top:4px;font-size:10px;font-weight:950;color:var(--navGreen)}
@@ -249,11 +251,22 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
     <article class="card" id="loginCard">
       <h2>Mitarbeiter-Login</h2>
       <div class="notice">Für Mitarbeitende: Name oder E-Mail und persönlicher Wunsch-Code. Kein Supabase-Benutzer nötig. Definitive Dienste werden nicht verändert.</div>
-      <div style="display:none" aria-hidden="true">
-        <input id="email" type="email" autocomplete="username" tabindex="-1">
-        <input id="password" type="password" autocomplete="current-password" tabindex="-1">
-        <button type="button" id="loginBtn" tabindex="-1">Admin einloggen</button>
+      <div class="formgrid" style="margin-top:10px">
+        <label><span class="mini">E-Mail</span><input id="email" type="email" autocomplete="username" placeholder="name@example.ch"></label>
+        <label><span class="mini">Passwort</span><input id="password" type="password" autocomplete="current-password" placeholder="Start- oder eigenes Passwort"></label>
       </div>
+      <div class="toolbar" style="margin-top:10px"><button type="button" class="ok" id="loginBtn">Mit Passwort öffnen</button></div>
+      <div id="portalPasswordChangeBox" class="password-change-box hidden">
+        <b>Start-Passwort ändern</b>
+        <div class="mini">Dieses Konto wurde mit einem voreingestellten Passwort erstellt. Bitte jetzt ein eigenes Passwort setzen.</div>
+        <div id="portalPasswordChangeStatus" class="notice warn" style="margin-top:8px">Neues Passwort eingeben.</div>
+        <div class="formgrid" style="margin-top:10px">
+          <label><span class="mini">Neues Passwort</span><input id="portalNewPassword1" type="password" autocomplete="new-password" placeholder="mindestens 8 Zeichen"></label>
+          <label><span class="mini">Wiederholen</span><input id="portalNewPassword2" type="password" autocomplete="new-password" placeholder="nochmals eingeben"></label>
+        </div>
+        <div class="toolbar" style="margin-top:10px"><button type="button" class="ok" id="portalPasswordChangeBtn">Passwort setzen</button></div>
+      </div>
+      <div class="notice" style="margin-top:10px">Alternativ: Name/E-Mail und persönlicher Wunsch-Code.</div>
       <div class="formgrid" style="margin-top:10px">
         <label><span class="mini">Name oder E-Mail</span><input id="codeIdentity" type="text" autocomplete="username" placeholder="Name oder E-Mail"></label>
         <label><span class="mini">Wunsch-Code</span><input id="codePin" type="password" autocomplete="current-password" placeholder="Code"></label>
@@ -430,6 +443,25 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
     portalRoleMessage='Mit Wunsch-Code angemeldet: '+emp.name+' · '+emp.group+'. Du siehst nur dein eigenes Profil.';
   }
   async function refreshSession(){ if(isFresh())return session; if(session?.mode==='code')return session; if(!session?.refresh_token)return null; try{ const data=await supa('/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})}); saveSession(data); return session; }catch(e){ localStorage.removeItem(SESSION_KEY); session=null; setLoginPill(); return null; } }
+  function portalPasswordStatus(msg,kind=''){ const el=q('portalPasswordChangeStatus'); if(el){el.textContent=msg||''; el.className='notice '+kind;} }
+  function setPortalPasswordChangeBox(show,msg=''){
+    const box=q('portalPasswordChangeBox'); if(box)box.classList.toggle('hidden',!show);
+    if(show){ portalPasswordStatus(msg||'Bitte eigenes Passwort setzen.','warn'); if(q('portalNewPassword1'))q('portalNewPassword1').value=''; if(q('portalNewPassword2'))q('portalNewPassword2').value=''; }
+  }
+  function portalMustChangePassword(data){ const info=portalRoleInfo(data||{}); return !!(info.entry && typeof info.entry==='object' && info.entry.mustChangePassword===true); }
+  async function changePortalPassword(){
+    const p1=String(q('portalNewPassword1')?.value||''); const p2=String(q('portalNewPassword2')?.value||'');
+    if(p1.length<8){portalPasswordStatus('Das neue Passwort muss mindestens 8 Zeichen haben.','bad');return;}
+    if(p1!==p2){portalPasswordStatus('Die zwei Passwörter stimmen nicht überein.','bad');return;}
+    const s=await refreshSession(); if(!s || !s.access_token){portalPasswordStatus('Login-Sitzung fehlt. Bitte neu einloggen.','bad');return;}
+    portalPasswordStatus('Passwort wird geändert …','warn');
+    try{
+      const res=await fetch('/api/org-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'changeOwnPassword',accessToken:s.access_token,newPassword:p1})});
+      const txt=await res.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+      if(!res.ok || data.ok===false) throw new Error(data.message||('HTTP '+res.status));
+      portalPasswordStatus(data.message||'Passwort geändert.','ok'); setPortalPasswordChangeBox(false); await loadServer();
+    }catch(e){portalPasswordStatus('Passwort konnte nicht geändert werden: '+e.message,'bad');}
+  }
   function employeeCodeMatches(e,identity,code){
     const idn=normText(identity); const em=normEmail(identity); const c=normCode(code);
     if(!c || normCode(e.wishCode)!==c)return false;
@@ -454,7 +486,7 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
       status('loginStatus','Wunschportal geöffnet für '+emp.name+' · '+emp.group+'. Auf diesem Gerät gemerkt.','ok');
     }catch(e){status('loginStatus','Code-Login nicht möglich: '+e.message,'bad');}
   }
-  async function login(){ const email=q('email').value.trim(); const password=q('password').value; if(!email||!password){status('loginStatus','Bitte E-Mail und Passwort eintragen.','bad');return} try{ const data=await supa('/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})}); saveSession(data); status('loginStatus','Eingeloggt als '+(session.user.email||email),'ok'); await loadServer(); }catch(e){status('loginStatus','Login nicht möglich: '+e.message,'bad')} }
+  async function login(){ const email=q('email').value.trim(); const password=q('password').value; if(!email||!password){status('loginStatus','Bitte E-Mail und Passwort eintragen.','bad');return} try{ setPortalPasswordChangeBox(false); const data=await supa('/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})}); saveSession(data); status('loginStatus','Eingeloggt als '+(session.user.email||email),'ok'); await loadServer(); }catch(e){status('loginStatus','Login nicht möglich: '+e.message,'bad')} }
   function logout(){ localStorage.removeItem(SESSION_KEY); session=null; serverRow=null; setLoginPill(); employees=[]; currentWishes={}; renderEmployeeSelect(); status('loginStatus','Abgemeldet. Sitzung beendet.','ok'); }
   async function fetchRow(){ const s=await refreshSession(); if(!s)throw new Error('Bitte zuerst einloggen oder mit Wunsch-Code öffnen.'); const headers={}; if(s.access_token)headers.Authorization='Bearer '+s.access_token; const data=await supa('/rest/v1/planer_store?id=eq.'+encodeURIComponent(STORE_ID)+'&select=id,data,updated_at',{method:'GET',headers}); return Array.isArray(data)?data[0]:null; }
   function parseJsonMaybe(v){ if(!v||typeof v!=='string')return null; try{return JSON.parse(v)}catch(_){return null} }
@@ -822,6 +854,12 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
         return;
       }
       serverRow=await fetchRow(); if(!serverRow?.data)throw new Error('Kein Serverstand gefunden.');
+      if(portalMustChangePassword(serverRow.data)){
+        setPortalPasswordChangeBox(true,'Dieses Konto muss beim ersten Login ein eigenes Passwort setzen.');
+        status('loginStatus','Bitte zuerst Start-Passwort ändern. Danach öffnet sich das Wunschportal.','warn');
+        return;
+      }
+      setPortalPasswordChangeBox(false);
       applyWishSettings(serverRow.data);
       dutyOptionGroups=buildDutyOptionGroups(serverRow.data); wishOptions=dutyOptionGroups.__all || baseWishOptions.concat([otherWishOption]);
       employees=extractEmployees(serverRow.data); applyPortalRoleFilter(); renderEmployeeSelect();
@@ -853,6 +891,12 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
       }
       const s=await refreshSession(); if(!s)throw new Error('Bitte zuerst einloggen oder mit Wunsch-Code öffnen.');
       serverRow=await fetchRow(); if(!serverRow?.data)throw new Error('Kein Serverstand gefunden.');
+      if(portalMustChangePassword(serverRow.data)){
+        setPortalPasswordChangeBox(true,'Dieses Konto muss beim ersten Login ein eigenes Passwort setzen.');
+        status('loginStatus','Bitte zuerst Start-Passwort ändern. Danach öffnet sich das Wunschportal.','warn');
+        return;
+      }
+      setPortalPasswordChangeBox(false);
       applyWishSettings(serverRow.data);
       const roleInfoNow=portalRoleInfo(serverRow?.data||{});
       if(currentAssignment?.mode==='blocked' && !roleInfoNow.isAdmin)throw new Error('Dieser Login ist noch nicht freigeschaltet. Bitte Admin/Planer kontaktieren.');
@@ -891,7 +935,7 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
     if(oldEmp && JSON.stringify(days)!==lastLoadedDaysJson){ await saveWishes({auto:true,empOverride:oldEmp,monthKeyOverride:oldMonth,daysOverride:days,action:reason||'Auto-Speicherung vor Wechsel'}); }
   }
   function clearMonth(){ if(!confirm('Wünsche für diesen Monat in der Ansicht leeren?'))return; currentWishes={}; renderDays(); scheduleWishAutosave('Monat geleert'); }
-  q('loginBtn').addEventListener('click',login); q('codeLoginBtn').addEventListener('click',codeLogin); q('logoutBtn').addEventListener('click',logout); q('loadServerBtn').addEventListener('click',loadServer); q('refreshPersonalPlanBtn').addEventListener('click',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Dienstplan-Aktualisierung'); await loadServer(); renderPersonalPlan(); }); q('saveWishBtn').addEventListener('click',()=>saveWishes()); q('clearMonthBtn').addEventListener('click',clearMonth); q('month').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Monatswechsel'); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('year').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Jahreswechsel'); updateMonthOptions(true); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('employeeSelect').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Mitarbeiterwechsel'); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('days').addEventListener('change',e=>{ if(e.target&&e.target.matches('[data-wish]'))scheduleWishAutosave('Wunsch geändert'); }); q('days').addEventListener('input',e=>{ if(e.target&&e.target.matches('[data-comment]'))scheduleWishAutosave('Kommentar geändert'); });
+  q('loginBtn').addEventListener('click',login); q('portalPasswordChangeBtn')?.addEventListener('click',changePortalPassword); q('codeLoginBtn').addEventListener('click',codeLogin); q('logoutBtn').addEventListener('click',logout); q('loadServerBtn').addEventListener('click',loadServer); q('refreshPersonalPlanBtn').addEventListener('click',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Dienstplan-Aktualisierung'); await loadServer(); renderPersonalPlan(); }); q('saveWishBtn').addEventListener('click',()=>saveWishes()); q('clearMonthBtn').addEventListener('click',clearMonth); q('month').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Monatswechsel'); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('year').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Jahreswechsel'); updateMonthOptions(true); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('employeeSelect').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Mitarbeiterwechsel'); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('days').addEventListener('change',e=>{ if(e.target&&e.target.matches('[data-wish]'))scheduleWishAutosave('Wunsch geändert'); }); q('days').addEventListener('input',e=>{ if(e.target&&e.target.matches('[data-comment]'))scheduleWishAutosave('Kommentar geändert'); });
   loadSession(); initControls(); applyInviteParams(); if(isFresh())loadServer();
 })();
 </script>

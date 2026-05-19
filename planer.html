@@ -207,6 +207,9 @@
   .role-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
   .role-actions .primary{background:var(--blue);border-color:var(--blue);color:#fff}
   .server-role-box{grid-column:1/-1}
+  .password-change-box{margin-top:12px;border:1px solid #f3d28f;background:#fffdf5;border-radius:18px;padding:12px}
+  .password-change-box.hidden{display:none!important}
+  .password-change-box .role-form{margin-top:8px}
   @media(max-width:740px){.role-form{grid-template-columns:1fr}.role-card{padding:14px;border-radius:20px}.role-card h2{font-size:20px}}
 
 </style>
@@ -224,9 +227,21 @@
       <label><span class="mini">Passwort</span><input id="adminGatePassword" type="password" autocomplete="current-password" placeholder="Passwort"></label>
     </div>
     <div class="role-actions">
-      <button type="button" class="primary" id="adminGateLoginBtn">Als Admin/Planer einloggen</button>
+      <button type="button" class="primary" id="adminGateLoginBtn">Einloggen</button>
       <button type="button" id="adminGatePortalBtn">Zum Wunschportal</button>
       <button type="button" id="adminGateRetryBtn">Rolle erneut prüfen</button>
+    </div>
+    <div id="firstPasswordBox" class="password-change-box hidden">
+      <b>Start-Passwort ändern</b>
+      <div class="mini">Dieses Konto wurde mit einem voreingestellten Passwort erstellt. Bitte jetzt ein eigenes Passwort setzen.</div>
+      <div id="firstPasswordStatus" class="notice warn">Neues Passwort eingeben.</div>
+      <div class="role-form">
+        <label><span class="mini">Neues Passwort</span><input id="firstPasswordNew1" type="password" autocomplete="new-password" placeholder="mindestens 8 Zeichen"></label>
+        <label><span class="mini">Wiederholen</span><input id="firstPasswordNew2" type="password" autocomplete="new-password" placeholder="nochmals eingeben"></label>
+      </div>
+      <div class="role-actions">
+        <button type="button" class="primary" id="firstPasswordSaveBtn">Passwort setzen</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1118,6 +1133,7 @@
     const cfg = getServerInputs(); const old = loadServerSession();
     if(!old?.refresh_token || !cfg.url || !cfg.anon) return null;
     try{
+      setPasswordChangeBox(false);
       const data = await supabaseRequest('/auth/v1/token?grant_type=refresh_token', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({refresh_token:old.refresh_token})});
       return storeServerSession(data, cfg);
     } catch(e){ console.warn('Server-Session konnte nicht erneuert werden', e); setServerButtonState('ready','Server bereit, bitte neu einloggen'); return null; }
@@ -1131,6 +1147,7 @@
     const cfg = saveServerConfig(); if(!cfg) return;
     if(!cfg.email || !cfg.password){ serverStatus('Bitte E-Mail und Passwort eintragen.', 'bad'); return; }
     try{
+      setPasswordChangeBox(false);
       const data = await supabaseRequest('/auth/v1/token?grant_type=password', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:cfg.email, password:cfg.password})});
       storeServerSession(data, cfg);
       serverStatus('Eingeloggt als ' + (data.user?.email || cfg.email) + '. Die Sitzung wird automatisch weiterverwendet.', 'ok');
@@ -1142,6 +1159,7 @@
     const cfg = saveServerConfig(); if(!cfg) return;
     if(!cfg.email || !cfg.password){ serverStatus('Bitte E-Mail und Passwort eintragen.', 'bad'); return; }
     try{
+      setPasswordChangeBox(false);
       const data = await supabaseRequest('/auth/v1/signup', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:cfg.email, password:cfg.password})});
       serverStatus(data?.user ? 'Registriert. Falls E-Mail-Bestätigung aktiv ist, bitte Mail bestätigen. Danach einloggen.' : 'Registrierung gesendet.', 'ok');
     } catch(e){ serverStatus('Registrierung nicht möglich: ' + e.message, 'bad'); }
@@ -1201,6 +1219,7 @@
   const ROLE_TKO = 'tko';
   const ROLE_EMPLOYEE = 'employee';
   let ACCESS_CONTEXT = null;
+  let PASSWORD_CHANGE_ACTIVE = false;
   function normEmail(v){ return String(v || '').trim().toLowerCase(); }
   function roleStore(data){
     if(!data || typeof data !== 'object') return {};
@@ -1320,7 +1339,43 @@
     gate.classList.toggle('hidden', !show);
     gate.setAttribute('aria-hidden', show ? 'false' : 'true');
     if(status){ status.textContent = msg || ''; status.className = 'notice ' + kind; }
+    if(!show) setPasswordChangeBox(false);
   }
+  function entryMustChangePassword(info){
+    return !!(info && info.entry && info.entry.mustChangePassword === true);
+  }
+  function setFirstPasswordStatus(msg, kind=''){
+    const el=document.getElementById('firstPasswordStatus');
+    if(el){ el.textContent=msg||''; el.className='notice '+(kind||''); }
+  }
+  function setPasswordChangeBox(show, msg=''){
+    PASSWORD_CHANGE_ACTIVE=!!show;
+    const box=document.getElementById('firstPasswordBox');
+    if(box) box.classList.toggle('hidden', !show);
+    if(show){
+      setFirstPasswordStatus(msg || 'Bitte ein eigenes Passwort setzen.', 'warn');
+      const p1=document.getElementById('firstPasswordNew1'); if(p1) p1.value='';
+      const p2=document.getElementById('firstPasswordNew2'); if(p2) p2.value='';
+    }
+  }
+  async function submitFirstPasswordChange(){
+    const p1=String(document.getElementById('firstPasswordNew1')?.value||'');
+    const p2=String(document.getElementById('firstPasswordNew2')?.value||'');
+    if(p1.length<8){ setFirstPasswordStatus('Das neue Passwort muss mindestens 8 Zeichen haben.', 'bad'); return; }
+    if(p1!==p2){ setFirstPasswordStatus('Die zwei Passwörter stimmen nicht überein.', 'bad'); return; }
+    const session=await getActiveServerSession();
+    if(!session || !session.access_token){ setFirstPasswordStatus('Login-Sitzung fehlt. Bitte neu einloggen.', 'bad'); return; }
+    setFirstPasswordStatus('Passwort wird geändert …', 'warn');
+    try{
+      const resp=await fetch('/api/org-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'changeOwnPassword',accessToken:session.access_token,newPassword:p1})});
+      const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+      if(!resp.ok || data.ok===false) throw new Error(data.message||('HTTP '+resp.status));
+      setFirstPasswordStatus(data.message||'Passwort geändert.', 'ok');
+      setPasswordChangeBox(false);
+      await evaluateAdminAccess(true);
+    }catch(e){ setFirstPasswordStatus('Passwort konnte nicht geändert werden: '+(e.message||e), 'bad'); }
+  }
+
   function setServerRoleInfo(msg, kind=''){
     const el = document.getElementById('serverRoleInfo');
     if(!el) return;
@@ -1336,6 +1391,7 @@
       const email = storedServerEmail();
       const ge = document.getElementById('adminGateEmail'); if(ge && email) ge.value = email;
       setAccessContext(null);
+      setPasswordChangeBox(false);
       setAdminGate(true, 'Bitte einloggen. Erlaubt sind Admin, Planer, Hausleitung oder TKO für freigegebene Gruppen. Mitarbeitende benutzen das Wunschportal.', 'warn');
       if(showStatus) setServerRoleInfo('Nicht eingeloggt. Planerbereich gesperrt.', 'bad');
       return false;
@@ -1344,6 +1400,14 @@
       const row = await fetchServerRow(cfg, session);
       const info = userRoleFromData(row?.data || {}, session);
       const label = info.email || serverUserLabel(serverUserFromSession(session));
+      if(entryMustChangePassword(info)){
+        setAccessContext(null);
+        setAdminGate(true, 'Bitte zuerst das voreingestellte Start-Passwort ändern: ' + label, 'warn');
+        setPasswordChangeBox(true, 'Dieses Konto muss beim ersten Login ein eigenes Passwort setzen.');
+        if(showStatus) setServerRoleInfo('Passwortwechsel nötig · ' + label, 'bad');
+        return false;
+      }
+      setPasswordChangeBox(false);
       if(info.employee){
         setAccessContext(null);
         setAdminGate(true, 'Diese Anmeldung ist als Mitarbeiter hinterlegt: ' + label + '\nBitte das Wunschportal verwenden.', 'bad');
@@ -1388,6 +1452,7 @@
     const cfg = saveServerConfig();
     if(!email || !password){ setAdminGate(true, 'Bitte E-Mail und Passwort eintragen.', 'bad'); return; }
     try{
+      setPasswordChangeBox(false);
       const data = await supabaseRequest('/auth/v1/token?grant_type=password', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password})});
       storeServerSession(data, cfg);
       setAdminGate(true, 'Login OK. Rolle wird geprüft…', 'ok');
@@ -2484,6 +2549,7 @@
   document.getElementById('serverRestoreBackupBtn')?.addEventListener('click', restoreLatestLocalEmergencyBackup);
   document.getElementById('serverAutosaveToggle')?.addEventListener('change', ev => { setAutosaveEnabled(!!ev.target.checked); serverStatus(ev.target.checked ? 'Auto-Speichern aktiv.' : 'Auto-Speichern ausgeschaltet.', 'ok'); });
   document.getElementById('adminGateLoginBtn')?.addEventListener('click', adminGateLogin);
+  document.getElementById('firstPasswordSaveBtn')?.addEventListener('click', submitFirstPasswordChange);
   document.getElementById('adminGatePortalBtn')?.addEventListener('click', () => { location.href = 'wunschportal.html'; });
   document.getElementById('adminGateRetryBtn')?.addEventListener('click', () => evaluateAdminAccess(true));
   document.getElementById('serverRoleCheckBtn')?.addEventListener('click', () => evaluateAdminAccess(true));

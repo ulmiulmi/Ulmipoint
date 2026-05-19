@@ -70,7 +70,9 @@ function publicUsers(data){
       employeeName:safe(entry.employeeName||''),
       updatedAt:safe(entry.updatedAt||''),
       createdAt:safe(entry.createdAt||''),
-      source:safe(entry.source||'organisation-admin')
+      source:safe(entry.source||'organisation-admin'),
+      mustChangePassword: entry.mustChangePassword === true,
+      passwordChangedAt:safe(entry.passwordChangedAt||'')
     };
   }).sort((a,b)=>(a.name||a.email).localeCompare(b.name||b.email,'de'));
 }
@@ -90,7 +92,8 @@ function sanitizeUser(input){
     groupKeys:(role==='tko'||role==='employee')?groupKeys:[],
     createdAt:safe(input.createdAt)||now,
     updatedAt:now,
-    source:'organisation-admin'
+    source:'organisation-admin',
+    mustChangePassword: input.mustChangePassword === true
   };
 }
 async function authFetch(path,opt={}){
@@ -107,10 +110,23 @@ async function findAuthUserByEmail(email){
     return list.find(u=>normEmail(u.email)===normEmail(email))||null;
   }catch(_){return null;}
 }
+
+async function authUserFromAccessToken(token){
+  token=safe(token);
+  if(!token) throw new Error('Login-Sitzung fehlt. Bitte neu einloggen.');
+  if(!SUPABASE_URL || !SERVICE_KEY) throw new Error('Server-Umgebung fehlt: SUPABASE_URL oder SUPABASE_SERVICE_ROLE_KEY.');
+  const resp=await fetch(SUPABASE_URL.replace(/\/+$/,'') + '/auth/v1/user', {headers:{'apikey':SERVICE_KEY,'Authorization':'Bearer '+token}});
+  const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+  if(!resp.ok || !data || !data.id) throw new Error('Login-Sitzung konnte nicht geprüft werden. Bitte neu einloggen.');
+  data.email=normEmail(data.email||data.user?.email||'');
+  if(!data.email) throw new Error('Login enthält keine E-Mail-Adresse.');
+  return data;
+}
+
 async function updateSupabaseUser(user,password){
   const existing=await findAuthUserByEmail(user.email);
   if(!existing || !existing.id) return {updated:false, message:'Supabase-Benutzer existiert bereits; Rolle wurde aktualisiert.'};
-  const payload={user_metadata:{name:user.name||'',ulmipointRole:user.role,ulmipointScope:user.scope}};
+  const payload={user_metadata:{name:user.name||'',ulmipointRole:user.role,ulmipointScope:user.scope,ulmipointMustChangePassword:user.mustChangePassword===true}};
   if(password) payload.password=password;
   const {resp,data,txt}=await authFetch('/auth/v1/admin/users/'+encodeURIComponent(existing.id),{
     method:'PUT',
@@ -126,7 +142,7 @@ async function createSupabaseUser(user,password){
   const {resp,data,txt}=await authFetch('/auth/v1/admin/users', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({email:user.email,password,email_confirm:true,user_metadata:{name:user.name||'',ulmipointRole:user.role,ulmipointScope:user.scope}})
+    body:JSON.stringify({email:user.email,password,email_confirm:true,user_metadata:{name:user.name||'',ulmipointRole:user.role,ulmipointScope:user.scope,ulmipointMustChangePassword:user.mustChangePassword===true}})
   });
   if(resp.ok) return {created:true,userId:data.id||data.user?.id||'', message:'Supabase-Benutzer erstellt.'};
   const msg=safe(data.message||data.error_description||data.error||txt);
@@ -150,6 +166,40 @@ module.exports=async function handler(req,res){
     const mode=safe(body.mode||'load');
     const row=await fetchStore();
     const data=row.data||{};
+
+    if(mode==='changeOwnPassword'){
+      const token=safe(body.accessToken||body.token||'');
+      const newPassword=safe(body.newPassword||body.password||'');
+      if(newPassword.length<8) throw new Error('Das neue Passwort muss mindestens 8 Zeichen haben.');
+      const authUser=await authUserFromAccessToken(token);
+      const email=normEmail(authUser.email);
+      const roles=roleStore(data);
+      const prev=roles[email] && typeof roles[email]==='object' ? roles[email] : null;
+      if(!prev) throw new Error('Für diesen Benutzer ist noch kein ULMIPOINT-Zugriff hinterlegt.');
+      const {resp,data:authData,txt}=await authFetch('/auth/v1/admin/users/'+encodeURIComponent(authUser.id),{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({password:newPassword,user_metadata:Object.assign({},authUser.user_metadata||{},{name:prev.name||authUser.user_metadata?.name||'',ulmipointRole:prev.role||'',ulmipointScope:prev.scope||'',ulmipointMustChangePassword:false})})
+      });
+      if(!resp.ok){
+        const msg=safe(authData.message||authData.error_description||authData.error||txt);
+        throw new Error('Passwort konnte nicht geändert werden: '+(msg||('HTTP '+resp.status)));
+      }
+      roles[email]=Object.assign({},prev,{mustChangePassword:false,passwordChangedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+      data.accessRoles=roles;
+      data.roleVersion='ulmipoint-v91';
+      data.activity=[{
+        id:'act_pw_'+Date.now(),
+        at:new Date().toISOString(),
+        action:'Erstpasswort geändert',
+        user:{id:authUser.id||'',email},
+        area:'Benutzer',
+        note:email
+      }].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
+      const saved=await saveStore(data);
+      return send(res,200,{ok:true,message:'Passwort geändert. Du kannst jetzt weiterarbeiten.',users:publicUsers(data),updatedAt:saved.updated_at||new Date().toISOString()});
+    }
+
     assertOrgAdmin(data, body);
 
     if(mode==='load'){
@@ -160,12 +210,19 @@ module.exports=async function handler(req,res){
       const user=sanitizeUser(body.user||{});
       validateUser(user);
       const password=safe(body.user?.password||'');
-      const authResult=await createSupabaseUser(user,password);
       const roles=roleStore(data);
       const prev=roles[user.email] && typeof roles[user.email]==='object' ? roles[user.email] : {};
+      if(password){
+        user.mustChangePassword = body.user?.mustChangePassword !== false;
+      }else{
+        user.mustChangePassword = prev.mustChangePassword === true;
+      }
+      const authResult=await createSupabaseUser(user,password);
       roles[user.email]=Object.assign({},prev,user,{auth:safe(authResult.userId)||safe(prev.auth||''),updatedAt:new Date().toISOString()});
+      if(password && user.mustChangePassword) roles[user.email].passwordChangedAt='';
+      if(password && user.mustChangePassword === false) roles[user.email].passwordChangedAt=safe(prev.passwordChangedAt||'');
       data.accessRoles=roles;
-      data.roleVersion='ulmipoint-v83';
+      data.roleVersion='ulmipoint-v91';
       data.activity=[{
         id:'act_user_'+Date.now(),
         at:new Date().toISOString(),
@@ -178,13 +235,15 @@ module.exports=async function handler(req,res){
       return send(res,200,{ok:true,message:(authResult.message||'Benutzer gespeichert.')+' Zugriff gespeichert.',users:publicUsers(data),updatedAt:saved.updated_at||new Date().toISOString()});
     }
 
+
+
     if(mode==='deleteUser'){
       const email=normEmail(body.email||body.user?.email||'');
       if(!email) throw new Error('E-Mail fehlt.');
       const roles=roleStore(data);
       delete roles[email];
       data.accessRoles=roles;
-      data.roleVersion='ulmipoint-v83';
+      data.roleVersion='ulmipoint-v91';
       data.activity=[{
         id:'act_user_delete_'+Date.now(),
         at:new Date().toISOString(),
