@@ -177,10 +177,10 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
     try{
       const headers = {'Content-Type':'application/json'};
       if(s && s.access_token) headers.Authorization = 'Bearer '+s.access_token;
-      const resp = await fetch('/api/org-structure', {
-        method:'POST',
+      const resp = await fetch('/api/org-structure?ts=' + Date.now(), {
+        method:'GET',
         headers,
-        body:JSON.stringify({mode:'load'})
+        cache:'no-store'
       });
       const txt = await resp.text();
       let data = {};
@@ -216,7 +216,7 @@ select{width:100%;border:1px solid var(--line);border-radius:13px;background:#ff
     const select = $('plannerSelect');
     const options = buildOptions();
     if(!options.length){
-      select.innerHTML = '<option value="">Noch kein Haus gespeichert</option>';
+      select.innerHTML = '<option value="">Noch kein Haus auf dem Server gespeichert</option>';
       select.__options = [];
       const open = $('plannerOpenBtn');
       if(open) open.textContent = 'Organisation öffnen';
