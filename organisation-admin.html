@@ -241,7 +241,12 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     if(s&&s.access_token)headers.Authorization='Bearer '+s.access_token;
     const resp=await fetch('/api/org-structure',{method:'POST',headers,body:JSON.stringify(Object.assign({},body,{orgAdminToken:orgAdminTokenMemory || localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'', orgAdminPassword:orgAdminPasswordMemory||''}))});
     const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
-    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
+    if(!resp.ok||data.ok===false){
+      const err=new Error(data.message||('HTTP '+resp.status));
+      err.data=data;
+      err.status=resp.status;
+      throw err;
+    }
     return data;
   }
   function lockStatus(t,k=''){const el=$('orgAdminLoginStatus'); if(el){el.textContent=t; el.className='notice'+(k?' '+k:'');}}
@@ -368,7 +373,12 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   async function usersApi(body){
     const resp=await fetch('/api/org-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},body,{orgAdminToken:orgAdminTokenMemory || localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'', orgAdminPassword:orgAdminPasswordMemory||''}))});
     const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
-    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
+    if(!resp.ok||data.ok===false){
+      const err=new Error(data.message||('HTTP '+resp.status));
+      err.data=data;
+      err.status=resp.status;
+      throw err;
+    }
     return data;
   }
   async function loadUsers(show=true){
@@ -486,7 +496,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     syncBasics();
     document.querySelectorAll('[data-site]:not([data-unit])').forEach(el=>{
       const si=Number(el.dataset.site), f=el.dataset.field;
-      if(org.sites[si]){org.sites[si][f]=el.value; if(f==='name')org.sites[si].id=slug(el.value);}
+      if(org.sites[si]){org.sites[si][f]=el.value; /* ID bleibt stabil; Name ändern darf keinen Standort löschen. */}
     });
     document.querySelectorAll('[data-auto]').forEach(el=>{
       const si=Number(el.dataset.site), f=el.dataset.auto;
@@ -497,7 +507,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     });
     document.querySelectorAll('[data-unit]').forEach(el=>{
       const si=Number(el.dataset.site), ui=Number(el.dataset.unit), f=el.dataset.field;
-      if(org.sites[si]&&org.sites[si].units[ui]){org.sites[si].units[ui][f]=el.value; if(f==='name')org.sites[si].units[ui].id=slug(el.value);}
+      if(org.sites[si]&&org.sites[si].units[ui]){org.sites[si].units[ui][f]=el.value; /* Bereich-ID bleibt stabil; Name ändern darf keine Gruppe löschen. */}
     });
   }
   window.__orgOpenSite=si=>{
@@ -521,27 +531,48 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   window.__orgRemoveUnit=(si,ui)=>{syncFromInputs(); if(org.sites[si])org.sites[si].units.splice(ui,1); render();};
   window.__orgRemoveSite=si=>{syncFromInputs(); if(confirm('Standort wirklich löschen?')){org.sites.splice(si,1); render();}};
   async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); orgBaseRevision=String(data.orgRevision||data.updatedAt||''); if(data.empty || !data.organisationStructure){org=emptyOrganisation(); render(); status('Server enthält aktuell keine gespeicherten Häuser. Bitte Haus hinzufügen und danach Speichern klicken. Es wurde nichts automatisch mit Haus 1 repariert oder überschrieben.','warn'); return;} org=mergeWithDefaultOrganisation(data.organisationStructure); orgBaseRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||org.updatedAt||''); render(); status('Organisation geladen. Serverstand: '+(orgBaseRevision||'ohne Revision')+'.','ok');}catch(e){org=emptyOrganisation(); render(); status('Server konnte nicht laden: '+e.message+' — keine automatische Reparatur ausgeführt.','bad');}}
+  async function performSave(saveOptions){
+    saveOptions=saveOptions||{};
+    const expectedIds=(org.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
+    const data=await api(Object.assign({mode:'save',organisationStructure:org,baseOrgRevision:orgBaseRevision}, saveOptions));
+    org=mergeWithDefaultOrganisation(data.organisationStructure||org);
+    orgBaseRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||org.updatedAt||orgBaseRevision||'');
+    saveOrgDraft(data.updatedAt);
+    const verify=await api({mode:'load',verifyAfterSave:Date.now()});
+    orgBaseRevision=String(verify.orgRevision||verify.organisationStructure?.revisionId||verify.updatedAt||orgBaseRevision||'');
+    const serverOrg=mergeWithDefaultOrganisation(verify.organisationStructure||{});
+    const savedIds=(serverOrg.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
+    const missing=expectedIds.filter(id=>!savedIds.includes(id));
+    if(missing.length){
+      org=serverOrg; render();
+      throw new Error('Server-Bestätigung fehlt für: '+missing.join(', '));
+    }
+    org=serverOrg; render();
+    status('Organisation gespeichert und vom Server bestätigt. Standorte: '+savedIds.length+'.','ok');
+  }
   async function save(){
     syncFromInputs(); cleanupAutoUnits(); org=mergeWithDefaultOrganisation(org);
-    const expectedIds=(org.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
     status('Organisation wird gespeichert …');
     try{
-      const data=await api({mode:'save',organisationStructure:org,baseOrgRevision:orgBaseRevision});
-      org=mergeWithDefaultOrganisation(data.organisationStructure||org);
-      orgBaseRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||org.updatedAt||orgBaseRevision||'');
-      saveOrgDraft(data.updatedAt);
-      const verify=await api({mode:'load',verifyAfterSave:Date.now()});
-      orgBaseRevision=String(verify.orgRevision||verify.organisationStructure?.revisionId||verify.updatedAt||orgBaseRevision||'');
-      const serverOrg=mergeWithDefaultOrganisation(verify.organisationStructure||{});
-      const savedIds=(serverOrg.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
-      const missing=expectedIds.filter(id=>!savedIds.includes(id));
-      if(missing.length){
-        org=serverOrg; render();
-        throw new Error('Server-Bestätigung fehlt für: '+missing.join(', '));
-      }
-      org=serverOrg; render();
-      status('Organisation gespeichert und vom Server bestätigt. Standorte: '+savedIds.length+'.','ok');
+      await performSave({});
     }catch(e){
+      const d=e && e.data ? e.data : null;
+      const code=String(d?.code||'');
+      if(code==='SITE_DELETE_CONFIRM_REQUIRED' || code==='UNIT_DELETE_CONFIRM_REQUIRED'){
+        const text=(d.message||e.message||'Speichern wurde blockiert.')+'\n\nDeine aktuellen Änderungen bleiben auf dem Bildschirm.\n\nNur wenn du wirklich Standorte/Gruppen entfernen willst: bestätigen und bewusst speichern.';
+        if(confirm(text)){
+          try{
+            status('Bewusst bestätigtes Speichern wird ausgeführt …','warn');
+            await performSave({allowSiteReduction:true, allowUnitReduction:true});
+            return;
+          }catch(e2){
+            status('Server-Speichern fehlgeschlagen: '+(e2.message||e2)+' — der Stand wurde NICHT auf Supabase gespeichert.','bad');
+            return;
+          }
+        }
+        status('Speichern abgebrochen. Deine Änderungen sind noch im Formular sichtbar. Nicht auf „Laden“ drücken, wenn du sie behalten willst.','warn');
+        return;
+      }
       render();
       status('Server-Speichern fehlgeschlagen: '+e.message+' — der Stand wurde NICHT auf Supabase gespeichert. Bitte diese Meldung nicht ignorieren.','bad');
     }
