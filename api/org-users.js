@@ -152,6 +152,7 @@ async function createSupabaseUser(user,password){
   throw new Error('Supabase-Benutzer konnte nicht erstellt werden: '+(msg||('HTTP '+resp.status)));
 }
 
+
 function yesBool(v, fallback=false){
   if(v===undefined || v===null || String(v).trim()==='') return !!fallback;
   const s=safe(v).toLowerCase();
@@ -329,6 +330,7 @@ module.exports=async function handler(req,res){
 
 
 
+
     if(mode==='importEmployees'){
       const fallback={
         siteId:safe(body.siteId||''),
@@ -349,7 +351,7 @@ module.exports=async function handler(req,res){
         const k=emp.siteId+'|'+emp.groupKey+'|'+(emp.groupName||emp.groupKey);
         if(!byGroup.has(k))byGroup.set(k,[]);
         byGroup.get(k).push(emp);
-        // Standard: CSV importiert Mitarbeitende in die Gruppe und speichert Wunsch-Codes in der Gruppenliste.
+        // CSV importiert Mitarbeitende in die Gruppe und speichert Wunsch-Codes in der Gruppenliste.
         // Benutzer-/Login-Rechte werden nur angelegt, wenn createLogins ausdrücklich aktiviert ist.
         if(emp.email && emp.createLogin){
           const prev=roles[emp.email] && typeof roles[emp.email]==='object' ? roles[emp.email] : {};
@@ -373,7 +375,7 @@ module.exports=async function handler(req,res){
         data.items[box.key]=JSON.stringify(box.state);
       });
       data.accessRoles=roles;
-      data.roleVersion='ulmipoint-v92';
+      data.roleVersion='ulmipoint-v96';
       data.activity=[{
         id:'act_employee_csv_'+Date.now(),
         at:new Date().toISOString(),
