@@ -76,10 +76,11 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
 .site-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.site-title{display:flex;gap:9px;align-items:flex-start}.icon{width:42px;height:42px;border-radius:16px;background:#eaf2ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto}
 .pill{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:950;background:#eef2f7;color:#475467}.pill.green{background:#e7f7ef;color:#0f8a5f}.pill.yellow{background:#fff7e6;color:#9a6700}
 .units{display:flex;gap:7px;flex-wrap:wrap}.unit-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fbfcfe;border-radius:999px;padding:7px 9px;font-size:12px;font-weight:900}.unit-chip button{padding:2px 6px;font-size:10px;background:#fffafa;color:#c73636;border-color:#f2a3a3}
-.edit-panel{display:none;border:1px solid #c9dcff;background:#f7fbff;border-radius:18px;padding:10px}.edit-panel.show{display:block}.edit-grid{display:grid;grid-template-columns:1fr 150px 110px;gap:8px;margin-bottom:8px}.unit-row{display:grid;grid-template-columns:1fr 150px 150px auto;gap:8px;align-items:center;margin-top:6px}
+.edit-panel{display:none;border:1px solid #c9dcff;background:#f7fbff;border-radius:18px;padding:10px}.edit-panel.show{display:block}.edit-grid{display:grid;grid-template-columns:1fr 150px 110px;gap:8px;margin-bottom:8px}.unit-row{display:grid;grid-template-columns:1fr 150px 150px auto auto;gap:8px;align-items:center;margin-top:6px}
 .empty{border:1px dashed #c9dcff;background:#f7fbff;border-radius:24px;padding:24px;text-align:center;color:#175cd3;font-weight:900}
 @media(max-width:760px){.app{padding:10px}.hero{border-radius:0 0 24px 24px;margin:-10px -10px 10px}.edit-grid,.unit-row{grid-template-columns:1fr}.site-head{display:block}.actions{margin-top:8px}}
 .user-panel{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:start}.user-form{background:#f7fbff;border:1px solid #c9dcff;border-radius:22px;padding:12px}.user-list{display:grid;gap:10px}.user-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:12px;box-shadow:0 8px 20px rgba(16,24,40,.06)}.user-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.user-role{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#eaf2ff;color:#175cd3}.user-role.admin{background:#fff4ed;color:#9a6700}.user-role.hausleitung{background:#e7f7ef;color:#0f8a5f}.user-role.tko{background:#f5f3ff;color:#6941c6}.user-scope{font-size:12px;color:var(--muted);font-weight:850;margin-top:4px}.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-top:6px}.check-pill{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px;font-size:12px;font-weight:900}.check-pill input{width:auto}.site-access{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:7px}.site-access-row{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--line);border-radius:14px;background:#fbfcfe;padding:8px}.site-access-empty{font-size:12px;color:var(--muted);font-weight:850}.pw-flag{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#fff4ed;color:#9a6700;margin-top:6px}.pw-flag.ok{background:#e7f7ef;color:#0f8a5f}.pw-option{margin:0 0 8px}.pw-option label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;background:#fff;padding:9px;font-size:12px;font-weight:900}.pw-option input{width:auto}
+.csv-import{background:#f7fbff;border:1px solid #c9dcff;border-radius:22px;padding:12px;margin-bottom:12px}.csv-preview{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;margin-top:10px}.csv-preview table{width:100%;border-collapse:collapse;font-size:12px}.csv-preview th,.csv-preview td{padding:7px;border-bottom:1px solid var(--line);text-align:left}.csv-preview th{position:sticky;top:0;background:#f7fbff}.csv-badge{display:inline-flex;border-radius:999px;padding:3px 7px;font-weight:950;font-size:11px}.csv-badge.good{background:#e7f7ef;color:#0f8a5f}.csv-badge.warn{background:#fff7ed;color:#9a6700}.csv-badge.bad{background:#ffe7e7;color:#c73636}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.form-row.one{grid-template-columns:1fr}@media(max-width:900px){.user-panel{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
 
 
@@ -139,6 +140,35 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     </div>
     <div id="sites" class="grid"></div>
   </section>
+  <section class="card" id="employeeImportCard">
+    <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
+      <div>
+        <h2 style="margin:0">Mitarbeitende der Gruppe importieren</h2>
+        <div class="mini">CSV wird in die ausgewählte Gruppe übernommen. Wunsch-Code/E-Mail bleiben bei den Mitarbeitenden der Gruppe. Login-Konten werden nur erstellt, wenn du die Option ausdrücklich aktivierst.</div>
+      </div>
+    </div>
+    <div class="csv-import" id="employeeCsvImportBox">
+      <h3>CSV-Import</h3>
+      <div class="form-row" style="margin-top:10px">
+        <label><span class="mini">Haus / Standort</span><select id="csvImportSite"></select></label>
+        <label><span class="mini">Gruppe / Bereich</span><select id="csvImportGroup"></select></label>
+      </div>
+      <div class="form-row">
+        <label><span class="mini">Start-Passwort nur für optionale Login-Konten</span><input id="csvImportPassword" type="password" autocomplete="new-password" placeholder="leer lassen = kein Login erstellen"></label>
+        <label><span class="mini">Import-Art</span><select id="csvImportLoginMode"><option value="codes">Nur Mitarbeitende/Wunsch-Codes in die Gruppe importieren</option><option value="logins">Zusätzlich Mitarbeiter-Logins für Zeilen mit E-Mail erstellen/aktualisieren</option></select></label>
+      </div>
+      <div class="pw-option"><label><input id="csvImportMustChangePassword" type="checkbox" checked> Bei optionalen Logins Passwort beim ersten Login ändern lassen</label></div>
+      <input id="employeeCsvFile" type="file" accept=".csv,.txt,text/csv,text/plain" style="display:none">
+      <div class="actions">
+        <button type="button" class="primary" id="chooseEmployeeCsvBtn">CSV wählen</button>
+        <button type="button" class="ok" id="applyEmployeeCsvBtn">Vorschau übernehmen</button>
+        <button type="button" id="downloadEmployeeCsvTemplateBtn">Mitarbeiter-Vorlage</button>
+      </div>
+      <div id="employeeCsvStatus" class="notice" style="margin-top:10px">Noch keine CSV geladen.</div>
+      <div id="employeeCsvPreview" class="csv-preview" style="display:none"></div>
+    </div>
+  </section>
+
   <section class="card" id="usersCard">
     <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
       <div>
@@ -193,6 +223,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   let org=defaultOrg();
   let orgBaseRevision='';
   let users=[];
+  let employeeCsvPreviewRows=[];
   let orgAdminTokenMemory='';
   let orgAdminPasswordMemory='';
   const $=id=>document.getElementById(id);
@@ -392,6 +423,106 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     if(!units.length){box.innerHTML='<div class="site-access-empty">Dieser Standort hat noch keine Gruppen.</div>';return;}
     box.innerHTML=units.map(u=>`<label class="check-pill"><input type="checkbox" value="${esc(u.id||u.plannerKey||u.name)}"> ${esc(u.name)}</label>`).join('');
   }
+
+  function renderCsvImportOptions(){
+    const siteSel=$('csvImportSite'); const groupSel=$('csvImportGroup');
+    if(!siteSel||!groupSel)return;
+    const oldSite=siteSel.value, oldGroup=groupSel.value;
+    const sites=org.sites||[];
+    siteSel.innerHTML=sites.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('') || '<option value="">kein Standort</option>';
+    if(oldSite && [...siteSel.options].some(o=>o.value===oldSite))siteSel.value=oldSite;
+    else if(!siteSel.value && sites[0])siteSel.value=sites[0].id;
+    const site=findSiteById(siteSel.value)||sites[0];
+    const units=site?realUnits(site):[];
+    groupSel.innerHTML=units.map(u=>`<option value="${esc(u.id||u.plannerKey||u.name)}" data-name="${esc(u.name)}">${esc(u.name)}</option>`).join('') || '<option value="">keine Gruppe</option>';
+    if(oldGroup && [...groupSel.options].some(o=>o.value===oldGroup))groupSel.value=oldGroup;
+  }
+  function selectCsvImportTarget(siteId, groupKey, message){
+    const siteSel=$('csvImportSite'); const groupSel=$('csvImportGroup');
+    renderCsvImportOptions();
+    if(siteSel && siteId){ siteSel.value=siteId; renderCsvImportOptions(); }
+    if(groupSel && groupKey){
+      const wanted=String(groupKey);
+      const opt=[...groupSel.options].find(o=>String(o.value)===wanted || slug(o.value)===slug(wanted) || slug(o.dataset.name||o.textContent)===slug(wanted));
+      if(opt) groupSel.value=opt.value;
+    }
+    employeeCsvPreviewRows=[];
+    renderEmployeeCsvPreview();
+    document.getElementById('employeeImportCard')?.scrollIntoView({behavior:'smooth',block:'start'});
+    csvStatus(message || 'Import-Ziel gewählt. Jetzt CSV wählen.', 'warn');
+  }
+
+  function csvStatus(t,k=''){const el=$('employeeCsvStatus'); if(el){el.textContent=t; el.className='notice'+(k?' '+k:'');}}
+  function detectCsvDelimiter(text){
+    const first=(String(text||'').split(/\r?\n/).find(l=>l.trim())||'');
+    const semi=(first.match(/;/g)||[]).length, comma=(first.match(/,/g)||[]).length, tab=(first.match(/\t/g)||[]).length;
+    if(tab>=semi&&tab>=comma&&tab>0)return '\t';
+    return semi>=comma?';':',';
+  }
+  function parseCsvText(text){
+    const delim=detectCsvDelimiter(text); const rows=[]; let row=[],cur='',q=false;
+    text=String(text||'').replace(/^\ufeff/,'');
+    for(let i=0;i<text.length;i++){
+      const ch=text[i], next=text[i+1];
+      if(ch==='"'&&q&&next==='"'){cur+='"';i++;continue;}
+      if(ch==='"'){q=!q;continue;}
+      if(ch===delim&&!q){row.push(cur);cur='';continue;}
+      if((ch==='\n'||ch==='\r')&&!q){if(ch==='\r'&&next==='\n')i++;row.push(cur);cur=''; if(row.some(x=>String(x).trim()!==''))rows.push(row); row=[]; continue;}
+      cur+=ch;
+    }
+    row.push(cur); if(row.some(x=>String(x).trim()!==''))rows.push(row); return rows;
+  }
+  function normHead(h){return String(h||'').trim().toLowerCase().replace(/[ä]/g,'ae').replace(/[ö]/g,'oe').replace(/[ü]/g,'ue').replace(/[^a-z0-9%]+/g,'');}
+  function findCol(headers,words){const hs=headers.map(normHead); for(const w of words){const i=hs.findIndex(h=>h.includes(normHead(w))); if(i>=0)return i;} return -1;}
+  function csvBool(v, fallback=false){const s=String(v??'').trim().toLowerCase(); if(!s)return fallback; if(['1','ja','j','yes','true','x','✓'].includes(s))return true; if(['0','nein','n','no','false','-'].includes(s))return false; return fallback;}
+  function csvValue(row, idx){return idx>=0?String(row[idx]??'').trim():'';}
+  function mapEmployeeCsv(text){
+    const rows=parseCsvText(text); const headers=rows[0]||[]; const data=rows.slice(1);
+    const idx={
+      name:findCol(headers,['name','mitarbeiter','vollname']), id:findCol(headers,['kuerzel','kürzel','id','personalnummer']), role:findCol(headers,['rolle','funktion','beruf']), pct:findCol(headers,['pensum','prozent','pct','%']), email:findCol(headers,['email','e-mail','mail']), phone:findCol(headers,['telefon','phone','mobile','handy']), nr:findCol(headers,['personalnummer','nummer','nr']), short:findCol(headers,['kurz','kuerzel','kürzel']), fp:findCol(headers,['fachperson','fp']), tv:findCol(headers,['tv']), split:findCol(headers,['geteilt','gd','split']), office:findCol(headers,['buero','büro','office']), vacation:findCol(headers,['ferienanspruch','ferien','urlaub']), wishCode:findCol(headers,['wunschcode','wunsch-code','portalcode','portal-code','code']), groupName:findCol(headers,['gruppe','wohngruppe','bereich','team']), password:findCol(headers,['startpasswort','passwort','password'])
+    };
+    const defaultSite=$('csvImportSite')?.value||''; const defaultGroup=$('csvImportGroup')?.value||'';
+    const defaultGroupName=$('csvImportGroup')?.selectedOptions?.[0]?.dataset?.name || $('csvImportGroup')?.selectedOptions?.[0]?.textContent || '';
+    return data.map((r,line)=>{
+      const rawName=csvValue(r,idx.name); const rawId=csvValue(r,idx.id); const role=csvValue(r,idx.role)||'FABE';
+      let groupName=csvValue(r,idx.groupName);
+      if(/^(ja|nein|j|n|yes|no|true|false|1|0|x)$/i.test(groupName))groupName='';
+      const row={line:line+2,name:rawName||rawId,id:rawId||rawName,role,pct:csvValue(r,idx.pct)||'100',email:csvValue(r,idx.email),phone:csvValue(r,idx.phone),nr:csvValue(r,idx.nr),short:csvValue(r,idx.short)||rawId,wishCode:csvValue(r,idx.wishCode),password:csvValue(r,idx.password),siteId:defaultSite,groupKey:defaultGroup,groupName:groupName||defaultGroupName,fp:csvBool(csvValue(r,idx.fp),/fach|fabe|sozial|leitung/i.test(role)),tv:csvBool(csvValue(r,idx.tv),true),split:csvBool(csvValue(r,idx.split),true),officePct:csvValue(r,idx.office)||'0',vacationEntitlement:csvValue(r,idx.vacation),severity:'good',message:'wird importiert'};
+      if(!row.name||!row.id){row.severity='bad';row.message='Name/Kürzel fehlt';}
+      if(!row.siteId||!row.groupKey){row.severity='bad';row.message='Haus oder Gruppe fehlt';}
+      return row;
+    });
+  }
+  function renderEmployeeCsvPreview(){
+    const box=$('employeeCsvPreview'); if(!box)return;
+    const rows=employeeCsvPreviewRows||[];
+    if(!rows.length){box.style.display='none';return;}
+    box.style.display='block';
+    box.innerHTML=`<table><thead><tr><th>Status</th><th>Zeile</th><th>Name</th><th>Kürzel</th><th>E-Mail</th><th>Gruppe</th><th>Code</th><th>Meldung</th></tr></thead><tbody>${rows.slice(0,200).map(r=>`<tr><td><span class="csv-badge ${r.severity}">${r.severity}</span></td><td>${r.line}</td><td>${esc(r.name)}</td><td>${esc(r.id)}</td><td>${esc(r.email)}</td><td>${esc(r.groupName)}</td><td>${r.wishCode?'✓':'-'}</td><td>${esc(r.message)}</td></tr>`).join('')}</tbody></table>`;
+  }
+  function loadEmployeeCsvFile(ev){
+    const file=ev.target.files&&ev.target.files[0]; if(!file)return;
+    const reader=new FileReader();
+    reader.onload=()=>{try{employeeCsvPreviewRows=mapEmployeeCsv(String(reader.result||'')); const ok=employeeCsvPreviewRows.filter(r=>r.severity!=='bad').length; const bad=employeeCsvPreviewRows.length-ok; renderEmployeeCsvPreview(); csvStatus(`CSV geladen: ${ok} gültig, ${bad} fehlerhaft. Erst mit „Vorschau übernehmen“ wird gespeichert.`, bad?'warn':'ok');}catch(e){employeeCsvPreviewRows=[];renderEmployeeCsvPreview();csvStatus('CSV konnte nicht gelesen werden: '+e.message,'bad');}};
+    reader.readAsText(file,'utf-8'); ev.target.value='';
+  }
+  function csvEscape(v){return '"'+String(v??'').replace(/"/g,'""')+'"';}
+  function downloadEmployeeCsvTemplate(){
+    const rows=[['Name','Kürzel','Rolle','Pensum','E-Mail','Telefon','Personalnummer','Kurz','Fachperson','TV','Geteilt','Büro %','Ferienanspruch','Wunsch-Code','Startpasswort'],['Muster Anna','MA013','Fachperson','80','anna.muster@example.ch','','013','MA13','ja','ja','ja','0','20','A7K9','Start1234'],['Beispiel Ben','MA014','Assistenz','60','ben.beispiel@example.ch','','014','MA14','nein','ja','ja','0','15','B4T2','Start1234']];
+    const blob=new Blob(['\ufeff'+rows.map(r=>r.map(csvEscape).join(';')).join('\n')],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='ulmipoint_mitarbeiter_import_vorlage.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+  }
+  async function applyEmployeeCsvImport(){
+    const valid=(employeeCsvPreviewRows||[]).filter(r=>r.severity!=='bad');
+    if(!valid.length){csvStatus('Keine gültigen CSV-Zeilen vorhanden.','bad');return;}
+    const mode=$('csvImportLoginMode')?.value||'codes';
+    const defaultPassword=$('csvImportPassword')?.value||'';
+    const createLogins=mode==='logins';
+    csvStatus('CSV wird in die ausgewählte Gruppe übernommen …');
+    try{
+      const data=await usersApi({mode:'importEmployees',rows:valid,siteId:$('csvImportSite')?.value||'',groupKey:$('csvImportGroup')?.value||'',groupName:$('csvImportGroup')?.selectedOptions?.[0]?.dataset?.name||'',defaultPassword,createLogins,mustChangePassword:!!$('csvImportMustChangePassword')?.checked});
+      users=Array.isArray(data.users)?data.users:users; renderUsers(); csvStatus(data.message||'CSV übernommen.','ok'); employeeCsvPreviewRows=[]; renderEmployeeCsvPreview(); if($('csvImportPassword'))$('csvImportPassword').value='';
+    }catch(e){csvStatus('CSV konnte nicht übernommen werden: '+e.message,'bad');}
+  }
   function clearUserForm(){
     ['userName','userEmail','userPassword'].forEach(id=>{const el=$(id); if(el)el.value='';});
     if($('userRole'))$('userRole').value='hausleitung';
@@ -465,6 +596,13 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     $('userRole').value=role||'hausleitung'; $('userSite').value=site.id; if($('userMustChangePassword'))$('userMustChangePassword').checked=true; renderUserGroupChecks(); document.getElementById('usersCard')?.scrollIntoView({behavior:'smooth',block:'start'}); userStatus('Benutzer für '+site.name+' vorbereiten. E-Mail, Name und Passwort eintragen.','warn');
   };
 
+  window.__orgPrepareCsvForGroup=(si,ui)=>{
+    syncFromInputs();
+    const site=org.sites[si]; const unit=site && realUnits(site)[ui];
+    if(!site||!unit){status('Gruppe für CSV-Import nicht gefunden.','bad');return;}
+    selectCsvImportTarget(site.id, unit.id||unit.plannerKey||unit.name, 'CSV-Import vorbereitet für '+site.name+' · '+unit.name+'.');
+  };
+
   function render(){
     cleanupAutoUnits();
     $('orgName').value=org.organisation?.name||'LIV – Leben in Vielfalt';
@@ -521,6 +659,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
                 ${['wohngruppe','tageszentrum','team','sonstiges'].map(t=>`<option value="${t}" ${u.type===t?'selected':''}>${t}</option>`).join('')}
               </select></label>
               <label><span class="mini">Planer-Key</span><input data-site="${si}" data-unit="${ui}" data-field="plannerKey" value="${esc(u.plannerKey||u.id)}"></label>
+              <button type="button" onclick="window.__orgPrepareCsvForGroup(${si},${ui})">CSV</button>
               <button type="button" class="bad" onclick="window.__orgRemoveUnit(${si},${ui})">löschen</button>
             </div>
           `).join('')}
@@ -529,6 +668,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     `).join('') || '<div class="empty">Noch keine Häuser oder Tageszentren erstellt.<br><br><button type="button" class="primary" onclick="window.__orgAddSiteQuick && window.__orgAddSiteQuick(\'wohnheim\')">+ Haus hinzufügen</button> <button type="button" onclick="window.__orgAddSiteQuick && window.__orgAddSiteQuick(\'tageszentrum\')">+ Tageszentrum</button></div>';
     document.querySelectorAll('[data-site]').forEach(el=>{el.oninput=syncFromInputs;el.onchange=syncFromInputs;});
     renderUserSiteOptions();
+    renderCsvImportOptions();
   }
   function syncFromInputs(){
     cleanupAutoUnits();
@@ -609,6 +749,11 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   window.__orgAddSiteQuick=addSite;
   ['newHouseBtn','newHouseBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('wohnheim');}); ['newDayBtn','newDayBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('tageszentrum');}); ['newOtherBtn','newOtherBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('sonstiges');});
   $('reloadUsersBtn').onclick=()=>loadUsers(true); $('saveUserBtn').onclick=()=>saveUserFromForm(); $('clearUserFormBtn').onclick=()=>clearUserForm(); $('userSite').onchange=renderUserGroupChecks; $('userRole').onchange=renderUserGroupChecks;
+  if($('chooseEmployeeCsvBtn'))$('chooseEmployeeCsvBtn').onclick=()=>$('employeeCsvFile').click();
+  if($('employeeCsvFile'))$('employeeCsvFile').onchange=loadEmployeeCsvFile;
+  if($('applyEmployeeCsvBtn'))$('applyEmployeeCsvBtn').onclick=applyEmployeeCsvImport;
+  if($('downloadEmployeeCsvTemplateBtn'))$('downloadEmployeeCsvTemplateBtn').onclick=downloadEmployeeCsvTemplate;
+  if($('csvImportSite'))$('csvImportSite').onchange=()=>{renderCsvImportOptions(); employeeCsvPreviewRows=[]; renderEmployeeCsvPreview(); csvStatus('Haus geändert. CSV bitte neu wählen oder erneut prüfen.','warn');};
   $('loadBtn').onclick=()=>load().catch(e=>status('Fehler: '+e.message,'bad')); $('saveBtn').onclick=()=>save().catch(e=>status('Fehler: '+e.message,'bad'));
   $('orgName').oninput=syncBasics; $('payrollProfile').oninput=syncBasics;
   render();
