@@ -762,7 +762,12 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   if(loginBtn) loginBtn.onclick=()=>orgAdminLogin().catch(e=>lockStatus('Fehler: '+e.message,'bad'));
   const pwInput=$('orgAdminPassword');
   if(pwInput) pwInput.addEventListener('keydown',e=>{if(e.key==='Enter')orgAdminLogin().catch(err=>lockStatus('Fehler: '+err.message,'bad'));});
-  checkOrgAdmin().then(ok=>{ if(ok){ load().catch(e=>status('Fehler: '+e.message,'bad')); loadUsers(false); } });
+  // v97: Organisationsdaten immer direkt lesen, auch wenn der Admin-Zugriff noch gesperrt ist.
+  // So bleiben Häuser/Gruppen sichtbar; Speichern/Benutzerverwaltung bleibt trotzdem durch Admin-Login geschützt.
+  checkOrgAdmin().then(ok=>{
+    load().catch(e=>status('Fehler: '+e.message,'bad'));
+    if(ok){ loadUsers(false); }
+  });
 })();
 </script>
 </body>
