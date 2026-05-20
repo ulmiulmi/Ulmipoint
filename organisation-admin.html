@@ -80,6 +80,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
 .empty{border:1px dashed #c9dcff;background:#f7fbff;border-radius:24px;padding:24px;text-align:center;color:#175cd3;font-weight:900}
 @media(max-width:760px){.app{padding:10px}.hero{border-radius:0 0 24px 24px;margin:-10px -10px 10px}.edit-grid,.unit-row{grid-template-columns:1fr}.site-head{display:block}.actions{margin-top:8px}}
 .user-panel{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:start}.user-form{background:#f7fbff;border:1px solid #c9dcff;border-radius:22px;padding:12px}.user-list{display:grid;gap:10px}.user-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:12px;box-shadow:0 8px 20px rgba(16,24,40,.06)}.user-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.user-role{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#eaf2ff;color:#175cd3}.user-role.admin{background:#fff4ed;color:#9a6700}.user-role.hausleitung{background:#e7f7ef;color:#0f8a5f}.user-role.tko{background:#f5f3ff;color:#6941c6}.user-scope{font-size:12px;color:var(--muted);font-weight:850;margin-top:4px}.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-top:6px}.check-pill{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px;font-size:12px;font-weight:900}.check-pill input{width:auto}.site-access{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:7px}.site-access-row{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--line);border-radius:14px;background:#fbfcfe;padding:8px}.site-access-empty{font-size:12px;color:var(--muted);font-weight:850}.pw-flag{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#fff4ed;color:#9a6700;margin-top:6px}.pw-flag.ok{background:#e7f7ef;color:#0f8a5f}.pw-option{margin:0 0 8px}.pw-option label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;background:#fff;padding:9px;font-size:12px;font-weight:900}.pw-option input{width:auto}
+
 .csv-import{background:#f7fbff;border:1px solid #c9dcff;border-radius:22px;padding:12px;margin-bottom:12px}.csv-preview{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;margin-top:10px}.csv-preview table{width:100%;border-collapse:collapse;font-size:12px}.csv-preview th,.csv-preview td{padding:7px;border-bottom:1px solid var(--line);text-align:left}.csv-preview th{position:sticky;top:0;background:#f7fbff}.csv-badge{display:inline-flex;border-radius:999px;padding:3px 7px;font-weight:950;font-size:11px}.csv-badge.good{background:#e7f7ef;color:#0f8a5f}.csv-badge.warn{background:#fff7ed;color:#9a6700}.csv-badge.bad{background:#ffe7e7;color:#c73636}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.form-row.one{grid-template-columns:1fr}@media(max-width:900px){.user-panel{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
 
@@ -140,6 +141,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     </div>
     <div id="sites" class="grid"></div>
   </section>
+
   <section class="card" id="employeeImportCard">
     <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
       <div>
@@ -451,13 +453,11 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     document.getElementById('employeeImportCard')?.scrollIntoView({behavior:'smooth',block:'start'});
     csvStatus(message || 'Import-Ziel gewählt. Jetzt CSV wählen.', 'warn');
   }
-
   function csvStatus(t,k=''){const el=$('employeeCsvStatus'); if(el){el.textContent=t; el.className='notice'+(k?' '+k:'');}}
   function detectCsvDelimiter(text){
     const first=(String(text||'').split(/\r?\n/).find(l=>l.trim())||'');
     const semi=(first.match(/;/g)||[]).length, comma=(first.match(/,/g)||[]).length, tab=(first.match(/\t/g)||[]).length;
-    if(tab>=semi&&tab>=comma&&tab>0)return '\t';
-    return semi>=comma?';':',';
+    return tab>semi&&tab>comma?'\t':(semi>=comma?';':',');
   }
   function parseCsvText(text){
     const delim=detectCsvDelimiter(text); const rows=[]; let row=[],cur='',q=false;
@@ -523,6 +523,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
       users=Array.isArray(data.users)?data.users:users; renderUsers(); csvStatus(data.message||'CSV übernommen.','ok'); employeeCsvPreviewRows=[]; renderEmployeeCsvPreview(); if($('csvImportPassword'))$('csvImportPassword').value='';
     }catch(e){csvStatus('CSV konnte nicht übernommen werden: '+e.message,'bad');}
   }
+
   function clearUserForm(){
     ['userName','userEmail','userPassword'].forEach(id=>{const el=$(id); if(el)el.value='';});
     if($('userRole'))$('userRole').value='hausleitung';
@@ -595,7 +596,6 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     const site=org.sites[si]; if(!site)return;
     $('userRole').value=role||'hausleitung'; $('userSite').value=site.id; if($('userMustChangePassword'))$('userMustChangePassword').checked=true; renderUserGroupChecks(); document.getElementById('usersCard')?.scrollIntoView({behavior:'smooth',block:'start'}); userStatus('Benutzer für '+site.name+' vorbereiten. E-Mail, Name und Passwort eintragen.','warn');
   };
-
   window.__orgPrepareCsvForGroup=(si,ui)=>{
     syncFromInputs();
     const site=org.sites[si]; const unit=site && realUnits(site)[ui];
@@ -754,6 +754,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   if($('applyEmployeeCsvBtn'))$('applyEmployeeCsvBtn').onclick=applyEmployeeCsvImport;
   if($('downloadEmployeeCsvTemplateBtn'))$('downloadEmployeeCsvTemplateBtn').onclick=downloadEmployeeCsvTemplate;
   if($('csvImportSite'))$('csvImportSite').onchange=()=>{renderCsvImportOptions(); employeeCsvPreviewRows=[]; renderEmployeeCsvPreview(); csvStatus('Haus geändert. CSV bitte neu wählen oder erneut prüfen.','warn');};
+  if($('csvImportGroup'))$('csvImportGroup').onchange=()=>{employeeCsvPreviewRows=[]; renderEmployeeCsvPreview(); csvStatus('Gruppe geändert. CSV bitte neu wählen oder erneut prüfen.','warn');};
   $('loadBtn').onclick=()=>load().catch(e=>status('Fehler: '+e.message,'bad')); $('saveBtn').onclick=()=>save().catch(e=>status('Fehler: '+e.message,'bad'));
   $('orgName').oninput=syncBasics; $('payrollProfile').oninput=syncBasics;
   render();
