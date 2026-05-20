@@ -261,9 +261,9 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
 
   <section id="employees" class="view"><article class="card"><div class="section"><h2>Mitarbeiter</h2><span class="pill blue">Stammdaten</span></div>
     <div class="toolbar"><div><label>Name</label><input id="newEmpName" placeholder="MA001"></div><div><label>Rolle</label><select id="newEmpRole"><option>Fachperson</option><option>FABE</option><option>Assistenz</option><option>Ausbildung</option><option>TKO</option><option>Leitung</option></select></div><div><label>Pensum %</label><input id="newEmpPct" type="number" min="0" max="100" value="80"></div><button class="primary" onclick="addEmployee()">Hinzufügen</button><button onclick="readEmployeesFromTable(); saveState(true)">Mitarbeiter übernehmen & speichern</button></div>
-    <div class="mini" style="margin:8px 0">TV gilt automatisch für alle ausser Schüler/Ausbildung und Leitung. FP-Haken werden je nach Rolle gesperrt. GD bedeutet geteilter Dienst und ist auch bei Schüler/Ausbildung auswählbar; Schüler zählen trotzdem nie als tragende Deckung. TKO zählt nur als TV, wenn die Person an diesem Tag nicht im Büro gebunden ist. Schule gilt nicht an Sonntagen, Feiertagen und Schulferien Basel-Stadt. Schule Freizeit = SCHF, zählt 0h, aber in D1–D5. Lehrjahr ist nur für Ausbildung/Schüler aktiv. Mit „aktiv bis“ kannst du jemanden ab dem Folgetag aus der Planung nehmen.</div>
-    <div class="table-wrap" style="max-height:none"><table id="empTable"><thead><tr><th>Name</th><th>Rolle</th><th>Pensum</th><th>Planstil</th><th>Gruppe</th><th>FP</th><th>TV</th><th>Geteilt</th><th>Büro %</th><th>Lehrjahr</th><th>Alter</th><th>Schule</th><th>Schule Freizeit</th><th>Büro fix</th><th>aktiv ab</th><th>aktiv bis</th><th>aktiv</th></tr></thead><tbody></tbody></table></div>
-    <div class="target-note"><b>Rollenlogik:</b> Gruppe = darf im Gruppendienst / auf der Wohngruppe mitlaufen. Geteilt = darf geteilte Dienste/GD übernehmen. Schüler/Ausbildung dürfen Gruppe und Geteilt haben, zählen aber nicht tragend, nicht als FP und nicht als TV.<br>Planstil pro Mitarbeiter: <b>grosse Blöcke</b> ist die Standard-Auswahl und plant möglichst am Stück, <b>normal</b> wie bisher, <b>klein & verteilt</b> vermeidet lange Blöcke und verteilt Dienste eher über den Monat. Harte Regeln bleiben immer stärker.</div><div class="toolbar"><button onclick="setAllBlockModes('block')">Alle auf grosse Blöcke</button><button onclick="setAllBlockModes('normal')">Alle auf normal</button><button onclick="setAllBlockModes('spread')">Alle auf klein & verteilt</button></div>
+    <div class="mini" style="margin:8px 0">TV gilt automatisch für alle ausser Schüler/Ausbildung und Leitung. FP-Haken werden je nach Rolle gesperrt. GD bedeutet geteilter Dienst und ist auch bei Schüler/Ausbildung auswählbar. 1./2. Lehrjahr zählen nicht als tragende Deckung. Im 3. Lehrjahr kann „alleine“ aktiviert werden; dann zählt die Person als gültige Abdeckung und braucht keine zusätzliche Fachperson. TKO zählt nur als TV, wenn die Person an diesem Tag nicht im Büro gebunden ist. Schule gilt nicht an Sonntagen, Feiertagen und Schulferien Basel-Stadt. Schule Freizeit = SCHF, zählt 0h, aber in D1–D5. Lehrjahr ist nur für Ausbildung/Schüler aktiv. Mit „aktiv bis“ kannst du jemanden ab dem Folgetag aus der Planung nehmen.</div>
+    <div class="table-wrap" style="max-height:none"><table id="empTable"><thead><tr><th>Name</th><th>Rolle</th><th>Pensum</th><th>Planstil</th><th>Gruppe</th><th>FP</th><th>TV</th><th>Geteilt</th><th>Büro %</th><th>Lehrjahr</th><th>Alleine</th><th>Alter</th><th>Schule</th><th>Schule Freizeit</th><th>Büro fix</th><th>aktiv ab</th><th>aktiv bis</th><th>aktiv</th></tr></thead><tbody></tbody></table></div>
+    <div class="target-note"><b>Rollenlogik:</b> Gruppe = darf im Gruppendienst / auf der Wohngruppe mitlaufen. Geteilt = darf geteilte Dienste/GD übernehmen. Schüler/Ausbildung dürfen Gruppe und Geteilt haben. 1./2. Lehrjahr zählen nicht tragend, nicht als FP und nicht als TV. 3. Lehrjahr zählt nur dann tragend, wenn „alleine“ aktiviert ist.<br>Planstil pro Mitarbeiter: <b>grosse Blöcke</b> ist die Standard-Auswahl und plant möglichst am Stück, <b>normal</b> wie bisher, <b>klein & verteilt</b> vermeidet lange Blöcke und verteilt Dienste eher über den Monat. Harte Regeln bleiben immer stärker.</div><div class="toolbar"><button onclick="setAllBlockModes('block')">Alle auf grosse Blöcke</button><button onclick="setAllBlockModes('normal')">Alle auf normal</button><button onclick="setAllBlockModes('spread')">Alle auf klein & verteilt</button></div>
     <details open style="margin-top:12px"><summary><b>Monats-Sollstunden aktueller Monat</b></summary><div class="target-note">Hier kannst du pro Mitarbeiter und Monat ein abweichendes Soll eintragen. Im Plan links werden diese Werte nur noch kompakt angezeigt, damit nichts mehr überlappt. Eingabe im normalen Zeitformat ist möglich, z. B. 85:45 statt 85.75. Leeres Feld = automatisch nach Pensum und Arbeitstagen. Zusätzlich kannst du den POLYPOINT-Saldo zum Start des Monats eintragen. POLYPOINT kann das je nach Ansicht auch Zeitsaldo, GLAZ-Saldo, Saldo Vorperiode, Überstunden/Minusstunden oder Saldo Ende Vormonat nennen. Wichtig: Es muss der Stand vor diesem Planmonat sein, damit der Monats-Diff nicht doppelt gezählt wird. Feiertage sind im Auto-Soll bereits abgezogen; zusätzlich wird separat angezeigt, wie viele KF-/Feiertags-Freitage vom Jahresanspruch geplant sind. Beim Neu-Berechnen weist der Planer die fälligen KF-Tage automatisch auf freie normale Werktage zu. Du kannst KF aber auch im Planfeld-Dropdown manuell als Block setzen, zum Beispiel alle offenen KF-Tage in einem Monat.</div><div class="toolbar"><button onclick="renderMonthTargets()">Sollstunden aktualisieren</button><button onclick="clearMonthTargets()" class="danger">Sollstunden dieses Monats zurücksetzen</button></div><div class="table-wrap" style="max-height:48vh"><table id="targetTable" class="target-table"><thead><tr><th>Mitarbeiter</th><th>Auto-Soll</th><th>Monats-Soll</th><th>Ist</th><th>Diff Monat</th><th>Waage</th><th>POLYPOINT-Saldo Start</th><th>Saldo nach Planmonat</th><th>FT-Frei Jahr</th><th>Belastung M/J</th><th>Status</th></tr></thead><tbody></tbody></table></div></details>
   </article></section>
 
@@ -713,7 +713,7 @@ function normalizeMonthTargets(){if(!state.monthTargets||typeof state.monthTarge
   if(!state.teamMeetings.duty)state.teamMeetings.duty='TS';
   if(!Number.isFinite(parseInt(state.teamMeetings.rhythm)))state.teamMeetings.rhythm=2;
   if(state.teamMeetings.overwriteAuto==null)state.teamMeetings.overwriteAuto=false;Object.keys(state.monthTargets).forEach(k=>{const v=parseFloat(state.monthTargets[k]);if(!Number.isFinite(v)||v<0)delete state.monthTargets[k];else state.monthTargets[k]=v;});}
-function normalizeLearners(){(state.employees||[]).forEach(emp=>{if(!Array.isArray(emp.schoolFreeDays))emp.schoolFreeDays=[];if(emp.activeFrom==null)emp.activeFrom='';if(emp.activeUntil==null)emp.activeUntil='';if(!['block','normal','spread'].includes(String(emp.blockMode||''))){emp.blockMode=String(emp.blockMode||emp.planStyle||'').match(/gross|groß|block/i)?'block':String(emp.blockMode||emp.planStyle||'').match(/klein|verteil|spread/i)?'spread':'block';}if(isStudent(emp)){if(emp.apprenticeYear===''||emp.apprenticeYear==null)emp.apprenticeYear=1;if(emp.age==null)emp.age='';}else{emp.apprenticeYear='';emp.age='';}});}
+function normalizeLearners(){(state.employees||[]).forEach(emp=>{if(!Array.isArray(emp.schoolFreeDays))emp.schoolFreeDays=[];if(emp.activeFrom==null)emp.activeFrom='';if(emp.activeUntil==null)emp.activeUntil='';if(!['block','normal','spread'].includes(String(emp.blockMode||''))){emp.blockMode=String(emp.blockMode||emp.planStyle||'').match(/gross|groß|block/i)?'block':String(emp.blockMode||emp.planStyle||'').match(/klein|verteil|spread/i)?'spread':'block';}if(isStudent(emp)){if(emp.apprenticeYear===''||emp.apprenticeYear==null)emp.apprenticeYear=1;if(emp.age==null)emp.age='';if(apprenticeYear(emp)<3)emp.canWorkAlone=false;}else{emp.apprenticeYear='';emp.age='';emp.canWorkAlone=false;}});}
 
 function normalizeEmployeeLimits(){
   if(!state.employeeLimits||typeof state.employeeLimits!=='object'||Array.isArray(state.employeeLimits))state.employeeLimits={};
@@ -1144,6 +1144,7 @@ function focusIssueFromStrip(idx){
 }
 function isStudent(emp){return /ausbildung|schüler|schueler|lernend|lehrling|fabe.*ausbildung/i.test(emp.role||'');}
 function apprenticeYear(emp){return parseInt(emp.apprenticeYear||0)||0;}
+function studentCanWorkAlone(emp){return isStudent(emp)&&apprenticeYear(emp)>=3&&emp.canWorkAlone===true;}
 function studentAge(emp){const a=parseFloat(emp.age);return Number.isFinite(a)?a:null;}
 function isYouthStudent(emp){const a=studentAge(emp);return isStudent(emp)&&(a===null||a<18);}
 function minutesRuleTime(v){if(typeof v==='number')return v;const m=String(v||'').match(/^(\d{1,2}):(\d{2})$/);return m?parseInt(m[1])*60+parseInt(m[2]):0;}
@@ -2756,13 +2757,13 @@ function loadState(show=true,opts={}){
 }
 function renderAll(){if(q('monthSelect')){q('monthSelect').value=state.selectedMonth;q('yearSelect').value=state.selectedYear;}syncAPIUIFromState();renderPlan();renderEmployees();renderRules();renderBT();renderSystem();renderMonthTargets();}
 function resetDemoData(save=true){state.employees=[
-{id:'e1',name:'MA001',role:'Fachperson',pct:80,group:true,fp:true,tv:true,split:true,officePct:10,blockMode:'block',apprenticeYear:'',schoolDays:[],schoolFreeDays:[],officeDays:[],activeFrom:'',activeUntil:'',active:true},
-{id:'e2',name:'MA002',role:'FABE',pct:80,group:true,fp:true,tv:true,split:true,officePct:0,blockMode:'block',apprenticeYear:'',schoolDays:[],schoolFreeDays:[],officeDays:[],activeFrom:'',activeUntil:'',active:true},
-{id:'e3',name:'MA003',role:'Assistenz',pct:60,group:true,fp:false,tv:true,split:false,officePct:0,blockMode:'block',apprenticeYear:'',schoolDays:[],schoolFreeDays:[],officeDays:[],activeFrom:'',activeUntil:'',active:true},
-{id:'e4',name:'MA004',role:'Ausbildung',pct:100,group:true,fp:false,tv:false,split:false,officePct:0,blockMode:'block',apprenticeYear:1,age:17,schoolDays:['Mittwoch','Donnerstag'],officeDays:[],activeFrom:'',activeUntil:'',active:true}
+{id:'e1',name:'MA001',role:'Fachperson',pct:80,group:true,fp:true,tv:true,split:true,officePct:10,blockMode:'block',apprenticeYear:'',schoolDays:[],schoolFreeDays:[],officeDays:[],activeFrom:'',activeUntil:'',active:true,canWorkAlone:false},
+{id:'e2',name:'MA002',role:'FABE',pct:80,group:true,fp:true,tv:true,split:true,officePct:0,blockMode:'block',apprenticeYear:'',schoolDays:[],schoolFreeDays:[],officeDays:[],activeFrom:'',activeUntil:'',active:true,canWorkAlone:false},
+{id:'e3',name:'MA003',role:'Assistenz',pct:60,group:true,fp:false,tv:true,split:false,officePct:0,blockMode:'block',apprenticeYear:'',schoolDays:[],schoolFreeDays:[],officeDays:[],activeFrom:'',activeUntil:'',active:true,canWorkAlone:false},
+{id:'e4',name:'MA004',role:'Ausbildung',pct:100,group:true,fp:false,tv:false,split:false,officePct:0,blockMode:'block',apprenticeYear:1,age:17,schoolDays:['Mittwoch','Donnerstag'],officeDays:[],activeFrom:'',activeUntil:'',active:true,canWorkAlone:false}
 ];if(save)saveState(true);renderAll();}
-function addEmployee(){readEmployeesFromTable(false);const name=q('newEmpName').value.trim()||('MA'+String(state.employees.length+1).padStart(3,'0'));const role=q('newEmpRole').value;const id='e'+Date.now();state.employees.push({id,name,role,pct:parseFloat(q('newEmpPct').value)||80,group:true,fp:/Fachperson|FABE|Fa\s*Be|Sozialpäd|Sozialpaed|Sozialp|Leitung/i.test(role),tv:canTakeTV({role}),split:false,officePct:0,blockMode:'block',apprenticeYear:/Ausbildung|Schüler/.test(role)?1:'',age:'',schoolDays:[],schoolFreeDays:[],officeDays:[],activeFrom:'',activeUntil:'',active:true});q('newEmpName').value='';renderEmployees();saveState(true);}
-function renderEmployees(){const tb=q('empTable')?.querySelector('tbody');if(!tb)return;tb.innerHTML='';state.employees.forEach(emp=>{const stud=isStudent(emp),fpLocked=roleAutoFP(emp),fpCan=canSelectFP(emp),splitCan=canTakeSplit(emp);const row=document.createElement('tr');row.dataset.id=emp.id;row.innerHTML=`<td><input data-f="name" value="${esc(emp.name)}"></td><td><select data-f="role" onchange="roleChanged(this)">${['Fachperson','FABE','Assistenz','Ausbildung','TKO','Leitung'].map(r=>`<option ${emp.role===r?'selected':''}>${r}</option>`).join('')}</select></td><td><input class="smallinput" data-f="pct" type="number" value="${emp.pct||0}"></td><td><select data-f="blockMode">${blockModeOptions(emp.blockMode)}</select></td><td><input data-f="group" type="checkbox" ${emp.group?'checked':''} title="Gruppe: darf im Gruppendienst / auf der Wohngruppe mitlaufen"></td><td><input data-f="fp" type="checkbox" ${isFP(emp)?'checked':''} ${fpLocked||!fpCan?'disabled':''} title="${fpLocked?'automatisch Fachperson':(!fpCan?'für diese Rolle nicht möglich':'manuell möglich')}"></td><td><input data-f="tv" type="checkbox" ${canTakeTV(emp)?'checked':''} ${!canTakeTV(emp)?'disabled':''}></td><td><input data-f="split" type="checkbox" ${emp.split&&splitCan?'checked':''} ${!splitCan?'disabled':''} title="${splitCan?'Geteilt/GD: geteilter Dienst möglich':'Geteilt/GD für diese Rolle nicht möglich'}"></td><td><input class="smallinput" data-f="officePct" type="number" value="${emp.officePct||0}"></td><td><input class="smallinput" data-f="apprenticeYear" type="number" min="1" max="4" value="${stud?(emp.apprenticeYear||1):''}" ${stud?'':'disabled'}></td><td><input class="smallinput" data-f="age" type="number" min="14" max="65" value="${stud?(emp.age||''):''}" ${stud?'':'disabled'}></td><td>${dayChecks('schoolDays',emp.schoolDays||[])}</td><td>${dayChecks('schoolFreeDays',emp.schoolFreeDays||[])}</td><td>${dayChecks('officeDays',emp.officeDays||[])}</td><td><input data-f="activeFrom" type="date" value="${emp.activeFrom||''}"></td><td><input data-f="activeUntil" type="date" value="${emp.activeUntil||''}"></td><td><input data-f="active" type="checkbox" ${emp.active!==false?'checked':''}></td>`;tb.appendChild(row);});}
+function addEmployee(){readEmployeesFromTable(false);const name=q('newEmpName').value.trim()||('MA'+String(state.employees.length+1).padStart(3,'0'));const role=q('newEmpRole').value;const id='e'+Date.now();state.employees.push({id,name,role,pct:parseFloat(q('newEmpPct').value)||80,group:true,fp:/Fachperson|FABE|Fa\s*Be|Sozialpäd|Sozialpaed|Sozialp|Leitung/i.test(role),tv:canTakeTV({role}),split:false,officePct:0,blockMode:'block',apprenticeYear:/Ausbildung|Schüler/.test(role)?1:'',age:'',schoolDays:[],schoolFreeDays:[],officeDays:[],activeFrom:'',activeUntil:'',active:true,canWorkAlone:false});q('newEmpName').value='';renderEmployees();saveState(true);}
+function renderEmployees(){const tb=q('empTable')?.querySelector('tbody');if(!tb)return;tb.innerHTML='';state.employees.forEach(emp=>{const stud=isStudent(emp),fpLocked=roleAutoFP(emp),fpCan=canSelectFP(emp),splitCan=canTakeSplit(emp),aloneCan=stud&&apprenticeYear(emp)>=3;const row=document.createElement('tr');row.dataset.id=emp.id;row.innerHTML=`<td><input data-f="name" value="${esc(emp.name)}"></td><td><select data-f="role" onchange="roleChanged(this)">${['Fachperson','FABE','Assistenz','Ausbildung','TKO','Leitung'].map(r=>`<option ${emp.role===r?'selected':''}>${r}</option>`).join('')}</select></td><td><input class="smallinput" data-f="pct" type="number" value="${emp.pct||0}"></td><td><select data-f="blockMode">${blockModeOptions(emp.blockMode)}</select></td><td><input data-f="group" type="checkbox" ${emp.group?'checked':''} title="Gruppe: darf im Gruppendienst / auf der Wohngruppe mitlaufen"></td><td><input data-f="fp" type="checkbox" ${isFP(emp)?'checked':''} ${fpLocked||!fpCan?'disabled':''} title="${fpLocked?'automatisch Fachperson':(!fpCan?'für diese Rolle nicht möglich':'manuell möglich')}"></td><td><input data-f="tv" type="checkbox" ${canTakeTV(emp)?'checked':''} ${!canTakeTV(emp)?'disabled':''}></td><td><input data-f="split" type="checkbox" ${emp.split&&splitCan?'checked':''} ${!splitCan?'disabled':''} title="${splitCan?'Geteilt/GD: geteilter Dienst möglich':'Geteilt/GD für diese Rolle nicht möglich'}"></td><td><input class="smallinput" data-f="officePct" type="number" value="${emp.officePct||0}"></td><td><input class="smallinput" data-f="apprenticeYear" type="number" min="1" max="4" value="${stud?(emp.apprenticeYear||1):''}" ${stud?'':'disabled'} onchange="apprenticeYearChanged(this)" oninput="apprenticeYearChanged(this)"></td><td><input data-f="canWorkAlone" type="checkbox" ${emp.canWorkAlone&&aloneCan?'checked':''} ${aloneCan?'':'disabled'} title="${aloneCan?'3. Lehrjahr: darf als Alleinabdeckung zählen':'erst ab 3. Lehrjahr auswählbar'}"></td><td><input class="smallinput" data-f="age" type="number" min="14" max="65" value="${stud?(emp.age||''):''}" ${stud?'':'disabled'}></td><td>${dayChecks('schoolDays',emp.schoolDays||[])}</td><td>${dayChecks('schoolFreeDays',emp.schoolFreeDays||[])}</td><td>${dayChecks('officeDays',emp.officeDays||[])}</td><td><input data-f="activeFrom" type="date" value="${emp.activeFrom||''}"></td><td><input data-f="activeUntil" type="date" value="${emp.activeUntil||''}"></td><td><input data-f="active" type="checkbox" ${emp.active!==false?'checked':''}></td>`;tb.appendChild(row);});}
 function dayChecks(field,arr){return ['Mo','Di','Mi','Do','Fr'].map((short,i)=>{const day=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'][i];return `<label style="display:inline-flex;gap:2px;margin:0 2px"><input type="checkbox" data-days="${field}" value="${day}" ${arr.includes(day)?'checked':''}>${short}</label>`}).join('');}
 function blockModeOptions(value){const v=['block','normal','spread'].includes(String(value||''))?String(value):'block';const opts=[['block','grosse Blöcke'],['normal','normal'],['spread','klein & verteilt']];return opts.map(([val,label])=>`<option value="${val}" ${v===val?'selected':''}>${label}</option>`).join('');}
 function employeeBlockMode(emp){const v=String(emp?.blockMode||'block');return ['block','normal','spread'].includes(v)?v:'block';}
@@ -2778,8 +2779,9 @@ function setAllBlockModes(mode){
   renderEmployees();
   toast(m==='block'?'Alle auf grosse Blöcke':m==='spread'?'Alle auf klein & verteilt':'Alle auf normal','ok');
 }
-function roleChanged(sel){const tr=sel.closest('tr');const inp=tr.querySelector('[data-f="apprenticeYear"]');const age=tr.querySelector('[data-f="age"]');const fp=tr.querySelector('[data-f="fp"]');const tv=tr.querySelector('[data-f="tv"]');const split=tr.querySelector('[data-f="split"]');const role=sel.value;const emp={role};const stud=/Ausbildung|Schüler|Schueler|Lernend|Lehrling|FaBe.*Ausbildung/i.test(role);if(stud){inp.disabled=false;if(age)age.disabled=false;if(!inp.value)inp.value=1;}else{inp.value='';inp.disabled=true;if(age){age.value='';age.disabled=true;}}if(fp){const locked=roleAutoFP(emp),can=canSelectFP(emp);fp.checked=locked||(can&&fp.checked);fp.disabled=locked||!can;fp.title=locked?'automatisch Fachperson':(!can?'für diese Rolle nicht möglich':'manuell möglich');}if(tv){const ok=canTakeTV(emp);tv.checked=ok;tv.disabled=!ok;}if(split){const ok=canTakeSplit(emp);split.checked=ok&&split.checked;split.disabled=!ok;split.title=ok?'geteilter Dienst möglich':'für diese Rolle nicht möglich';}}
-function readEmployeesFromTable(render=true){const tb=q('empTable')?.querySelector('tbody');if(!tb)return;const rows=[...tb.querySelectorAll('tr')];rows.forEach(row=>{const emp=empById(row.dataset.id);if(!emp)return;row.querySelectorAll('[data-f]').forEach(el=>{const f=el.dataset.f;emp[f]=el.type==='checkbox'?el.checked:(el.type==='number'?(el.value===''?'':parseFloat(el.value)):el.value);});['schoolDays','schoolFreeDays','officeDays'].forEach(f=>{emp[f]=[...row.querySelectorAll(`[data-days="${f}"]:checked`)].map(x=>x.value);});if(!isStudent(emp)){emp.apprenticeYear='';emp.age='';}if(roleAutoFP(emp))emp.fp=true;else if(!canManualFP(emp))emp.fp=false;emp.tv=canTakeTV(emp);if(!canTakeSplit(emp))emp.split=false;});if(render)renderEmployees();}
+function roleChanged(sel){const tr=sel.closest('tr');const inp=tr.querySelector('[data-f="apprenticeYear"]');const age=tr.querySelector('[data-f="age"]');const alone=tr.querySelector('[data-f="canWorkAlone"]');const fp=tr.querySelector('[data-f="fp"]');const tv=tr.querySelector('[data-f="tv"]');const split=tr.querySelector('[data-f="split"]');const role=sel.value;const emp={role};const stud=/Ausbildung|Schüler|Schueler|Lernend|Lehrling|FaBe.*Ausbildung/i.test(role);if(stud){inp.disabled=false;if(age)age.disabled=false;if(!inp.value)inp.value=1;}else{inp.value='';inp.disabled=true;if(age){age.value='';age.disabled=true;}if(alone){alone.checked=false;alone.disabled=true;alone.title='erst ab 3. Lehrjahr auswählbar';}}if(stud&&alone){const ok=(parseInt(inp.value||0)||0)>=3;alone.disabled=!ok;if(!ok)alone.checked=false;alone.title=ok?'3. Lehrjahr: darf als Alleinabdeckung zählen':'erst ab 3. Lehrjahr auswählbar';}if(fp){const locked=roleAutoFP(emp),can=canSelectFP(emp);fp.checked=locked||(can&&fp.checked);fp.disabled=locked||!can;fp.title=locked?'automatisch Fachperson':(!can?'für diese Rolle nicht möglich':'manuell möglich');}if(tv){const ok=canTakeTV(emp);tv.checked=ok;tv.disabled=!ok;}if(split){const ok=canTakeSplit(emp);split.checked=ok&&split.checked;split.disabled=!ok;split.title=ok?'geteilter Dienst möglich':'für diese Rolle nicht möglich';}}
+function apprenticeYearChanged(inp){const tr=inp.closest('tr');const alone=tr?.querySelector('[data-f="canWorkAlone"]');if(!alone)return;const ok=(parseInt(inp.value||0)||0)>=3;alone.disabled=!ok;if(!ok)alone.checked=false;alone.title=ok?'3. Lehrjahr: darf als Alleinabdeckung zählen':'erst ab 3. Lehrjahr auswählbar';}
+function readEmployeesFromTable(render=true){const tb=q('empTable')?.querySelector('tbody');if(!tb)return;const rows=[...tb.querySelectorAll('tr')];rows.forEach(row=>{const emp=empById(row.dataset.id);if(!emp)return;row.querySelectorAll('[data-f]').forEach(el=>{const f=el.dataset.f;emp[f]=el.type==='checkbox'?el.checked:(el.type==='number'?(el.value===''?'':parseFloat(el.value)):el.value);});['schoolDays','schoolFreeDays','officeDays'].forEach(f=>{emp[f]=[...row.querySelectorAll(`[data-days="${f}"]:checked`)].map(x=>x.value);});if(!isStudent(emp)){emp.apprenticeYear='';emp.age='';emp.canWorkAlone=false;}else if(apprenticeYear(emp)<3){emp.canWorkAlone=false;}if(roleAutoFP(emp))emp.fp=true;else if(!canManualFP(emp))emp.fp=false;emp.tv=canTakeTV(emp);if(!canTakeSplit(emp))emp.split=false;});if(render)renderEmployees();}
 
 function parseHoursInput(value,{allowNegative=true}={}){
   const raw=String(value??'').trim();
@@ -4244,7 +4246,7 @@ function regularCoveragePeople(date){
   coverageEntries(date).forEach(x=>{if(!x.studentExtra&&x.emp&&!byId[x.emp.id])byId[x.emp.id]=x.emp;});
   return Object.values(byId);
 }
-function skillMixCountsAsFP(emp){return !!emp && !isStudent(emp) && isFP(emp);}
+function skillMixCountsAsFP(emp){return !!emp && ((!isStudent(emp) && isFP(emp)) || studentCanWorkAlone(emp));}
 function skillMixCorePeople(date){
   const byId={};
   coverageEntries(date).forEach(x=>{if(x.studentExtra||!x.emp)return;if(!byId[x.emp.id])byId[x.emp.id]=x.emp;});
@@ -4256,9 +4258,9 @@ function skillMixIssuesForDate(date){
   if(!isRuleOn('skillMix')&&!isRuleOn('coverage'))return issues;
   const people=skillMixCorePeople(date);
   if(!people.length)return issues;
-  if((state.rules.skillMix?.requiresFP)!==false&&!people.some(emp=>skillMixCountsAsFP(emp))){issues.push({level:'red',type:'skillMixFP',date,text:`${date}: Skill-Mix fehlt – mindestens eine Fachperson/FABE mit abgeschlossener Ausbildung muss auf Gruppe sein`});}
+  if((state.rules.skillMix?.requiresFP)!==false&&!people.some(emp=>skillMixCountsAsFP(emp))){issues.push({level:'red',type:'skillMixFP',date,text:`${date}: Skill-Mix fehlt – mindestens eine tragende Abdeckung muss auf Gruppe sein`});}
   if((state.rules.skillMix?.noAssistOnly)!==false&&people.length&&people.every(emp=>isAssist(emp))){issues.push({level:'red',type:'skillMixAssist',date,text:`${date}: Skill-Mix nicht konform – Gruppe ist nur mit Assistenz gedeckt`});}
-  if((state.rules.skillMix?.noStudentOnly)!==false&&people.length&&people.every(emp=>isStudent(emp))){issues.push({level:'red',type:'skillMixStudent',date,text:`${date}: Skill-Mix nicht konform – Schüler/Ausbildung dürfen keine tragende Alleindeckung sein`});}
+  if((state.rules.skillMix?.noStudentOnly)!==false&&people.length&&people.every(emp=>isStudent(emp)&&!studentCanWorkAlone(emp))){issues.push({level:'red',type:'skillMixStudent',date,text:`${date}: Skill-Mix nicht konform – 1./2. Lehrjahr oder Lernende ohne Alleinfreigabe dürfen keine tragende Alleindeckung sein`});}
   return issues;
 }
 function fixSkillMixForDate(date){
@@ -4845,7 +4847,7 @@ function canAssign(emp,code,date,opt={}){
   if(isRuleOn('splitDuty')&&isSplitDuty(code)&&!emp.split)return {ok:false,why:'kein geteilter Dienst'};
   if(violatesSplitWeekForAssignment(emp,code,date))return {ok:false,why:'max. 1 geteilter Dienst pro Woche'};
   if(isRuleOn('students')&&isStudent(emp)&&apprenticeYear(emp)<state.rules.students.noLateBeforeYear&&isLateDuty(code))return {ok:false,why:'Schüler kein Spät'};
-  if(studentSupportRulesOn()&&isStudent(emp)&&opt.asCoverage)return {ok:false,why:'Schüler/Ausbildung zählt nicht als tragende Deckung'};
+  if(studentSupportRulesOn()&&studentCountsAsAdditional(emp)&&opt.asCoverage)return {ok:false,why:'1./2. Lehrjahr oder Lernende ohne Alleinfreigabe zählt nicht als tragende Deckung'};
   if(wouldExceedCoverage(emp,code,date))return {ok:false,why:'Überbelegung'};
   return {ok:true};
 }
@@ -4882,7 +4884,7 @@ function coverageEntries(date){const arr=[];state.employees.forEach(emp=>{if(!is
 function overlapViolation(entries,date=''){if(!isRuleOn('coverage'))return {bad:false,minutes:0,allowed:allowedOverlapMinutesForDate(date)};const over=overlapMinutesOverLimit(entries,parseInt(state.rules?.coverage?.maxPeople)||2);const allowed=allowedOverlapMinutesForDate(date);return {bad:over>allowed,minutes:over,allowed,source:allowedOverlapSourceForDate(date),required:requiredOverlapMinutesFromBT(date)};}
 function assignStudentAdditional(date){
   if(!isRuleOn('students'))return;
-  state.employees.filter(e=>isStudent(e)&&isActiveOn(e,date)).forEach(emp=>{
+  state.employees.filter(e=>studentCountsAsAdditional(e)&&isActiveOn(e,date)).forEach(emp=>{
     if(state.plan[entryKey(emp.id,date)])return;
     if(shouldHaveSchool(emp,date))return;
     const target=monthTarget(emp,state.selectedYear,state.selectedMonth);
@@ -4898,7 +4900,7 @@ function assignStudentAdditional(date){
 }
 
 function studentSupportRulesOn(){return isRuleOn('studentSupport')||isRuleOn('students');}
-function studentCountsAsAdditional(emp){return isStudent(emp);}
+function studentCountsAsAdditional(emp){return isStudent(emp)&&!studentCanWorkAlone(emp);}
 function studentSupportIntervalsForCode(code){const d=duty(code);return d?dutyIntervals(d):[];}
 function studentHasQualifiedCompanion(date,code,studentEmp){
   if(!studentEmp||!date)return false;
@@ -4934,7 +4936,8 @@ function studentSupportAssignmentReason(emp,code,date,opt={}){
   if(!studentSupportRulesOn())return '';
   if(!isStudent(emp))return '';
   const d=duty(code);if(!d||!d.countsForCoverage)return '';
-  if(opt.asCoverage)return 'Schüler/Ausbildung zählt nicht als tragende Deckung';
+  if(opt.asCoverage&&studentCountsAsAdditional(emp))return '1./2. Lehrjahr oder Lernende ohne Alleinfreigabe zählt nicht als tragende Deckung';
+  if(studentCanWorkAlone(emp))return '';
   if(!studentHasQualifiedCompanion(date,code,emp))return 'Ausbildungsbegleitung fehlt: gleichzeitig braucht es eine Fachperson/FABE';
   if(!studentCriticalCoverageOk(date,emp))return 'kritischer Wochenend-/Feiertagsdienst nur mit starker Begleitung';
   return '';
@@ -4943,13 +4946,13 @@ function studentSupportIssuesForDate(date){
   const issues=[];
   if(!studentSupportRulesOn())return issues;
   state.employees.forEach(emp=>{
-    if(!isStudent(emp)||!isActiveOn(emp,date))return;
+    if(!isStudent(emp)||studentCanWorkAlone(emp)||!isActiveOn(emp,date))return;
     const e=state.plan[entryKey(emp.id,date)];
     if(!e||e.removed)return;
     const d=duty(e.code);if(!d||!d.countsForCoverage)return;
     const manual=!!(e.manual||e.fixed);
     if(!studentHasQualifiedCompanion(date,e.code,emp)){
-      issues.push({level:manual?'yellow':'red',type:'studentSupport',date,emp:emp.name,text:`${date}: ${emp.name} ${e.code} – Ausbildungsbegleitung fehlt. Schüler/Lernende dürfen nicht alleine oder tragend auf Gruppe sein; gleichzeitig braucht es eine Fachperson/FABE.`});
+      issues.push({level:manual?'yellow':'red',type:'studentSupport',date,emp:emp.name,text:`${date}: ${emp.name} ${e.code} – Ausbildungsbegleitung fehlt. 1./2. Lehrjahr oder Lernende ohne Alleinfreigabe dürfen nicht alleine oder tragend auf Gruppe sein.`});
       return;
     }
     if(!studentCriticalCoverageOk(date,emp)){
@@ -4961,7 +4964,7 @@ function studentSupportIssuesForDate(date){
 function fixStudentSupportForDate(date){
   let changed=false;
   state.employees.forEach(emp=>{
-    if(!isStudent(emp)||!isActiveOn(emp,date))return;
+    if(!isStudent(emp)||studentCanWorkAlone(emp)||!isActiveOn(emp,date))return;
     const k=entryKey(emp.id,date);
     const e=state.plan[k];
     if(!e||e.fixed||e.manual)return;
@@ -4979,13 +4982,13 @@ function studentSupportScore(emp,date,code){
   if(!studentSupportRulesOn())return 0;
   const d=duty(code);if(!d||!d.countsForCoverage)return 0;
   let s=0;
-  if(isStudent(emp)){
+  if(studentCountsAsAdditional(emp)){
     s-=120;
     if(studentHasQualifiedCompanion(date,code,emp))s+=80;
     if(studentCriticalDay(date)&&!studentCriticalCoverageOk(date,emp))s-=160;
   }else if(skillMixCountsAsFP(emp)){
     const lacking=state.employees.some(stu=>{
-      if(!isStudent(stu)||!isActiveOn(stu,date))return false;
+      if(!studentCountsAsAdditional(stu)||!isActiveOn(stu,date))return false;
       const e=state.plan[entryKey(stu.id,date)];
       const sd=duty(e?.code);if(!sd?.countsForCoverage)return false;
       return !studentHasQualifiedCompanion(date,e.code,stu);
@@ -4995,7 +4998,7 @@ function studentSupportScore(emp,date,code){
   return s;
 }
 
-function studentHasFP(date,code){const d=duty(code);if(!d)return false;const target=dutyIntervals(d);if(!target.length)return false;return state.employees.some(emp=>{if(!isActiveOn(emp,date))return false;if(!isFP(emp))return false;const e=state.plan[entryKey(emp.id,date)];const dd=duty(e?.code);if(!dd?.countsForCoverage)return false;const ints=dutyIntervals(dd);return ints.some(fi=>target.some(t=>fi.start<t.end&&fi.end>t.start));});}
+function studentHasFP(date,code){const d=duty(code);if(!d)return false;const target=dutyIntervals(d);if(!target.length)return false;return state.employees.some(emp=>{if(!isActiveOn(emp,date))return false;if(!skillMixCountsAsFP(emp))return false;const e=state.plan[entryKey(emp.id,date)];const dd=duty(e?.code);if(!dd?.countsForCoverage)return false;const ints=dutyIntervals(dd);return ints.some(fi=>target.some(t=>fi.start<t.end&&fi.end>t.start));});}
 function cleanupMonth(){dates.forEach(date=>{let gdSeen=false;state.employees.forEach(emp=>{const k=entryKey(emp.id,date),e=state.plan[k];if(!e)return;if(isSplitDuty(e.code)){if(gdSeen&&!e.fixed)delete state.plan[k];else gdSeen=true;}if(teamMeetingS6OfficeConflict(e)&&!e.fixed){delete e.officeAddon;}if(e.teamMeetingAddon&&teamMeetingSplitPauseReason(e,e.teamMeetingAddon)&&!e.fixed){delete e.teamMeetingAddon;delete e.teamMeetingAddonAuto;}});});cleanupLateEarlyConflicts();}
 function isCompensationCandidateDate(date){const wd=parseDate(date).getDay();return wd>=1&&wd<=5&&!isHoliday(date)&&!isHalfHoliday(date);}
 function findReplacementFor(emp,date,code){
