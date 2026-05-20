@@ -79,8 +79,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
 .edit-panel{display:none;border:1px solid #c9dcff;background:#f7fbff;border-radius:18px;padding:10px}.edit-panel.show{display:block}.edit-grid{display:grid;grid-template-columns:1fr 150px 110px;gap:8px;margin-bottom:8px}.unit-row{display:grid;grid-template-columns:1fr 150px 150px auto;gap:8px;align-items:center;margin-top:6px}
 .empty{border:1px dashed #c9dcff;background:#f7fbff;border-radius:24px;padding:24px;text-align:center;color:#175cd3;font-weight:900}
 @media(max-width:760px){.app{padding:10px}.hero{border-radius:0 0 24px 24px;margin:-10px -10px 10px}.edit-grid,.unit-row{grid-template-columns:1fr}.site-head{display:block}.actions{margin-top:8px}}
-.user-panel{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:start}.user-form{background:#f7fbff;border:1px solid #c9dcff;border-radius:22px;padding:12px}.user-list{display:grid;gap:10px}.user-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:12px;box-shadow:0 8px 20px rgba(16,24,40,.06)}.user-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.user-role{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#eaf2ff;color:#175cd3}.user-role.admin{background:#fff4ed;color:#9a6700}.user-role.hausleitung{background:#e7f7ef;color:#0f8a5f}.user-role.tko{background:#f5f3ff;color:#6941c6}.user-scope{font-size:12px;color:var(--muted);font-weight:850;margin-top:4px}.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-top:6px}.check-pill{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px;font-size:12px;font-weight:900}.check-pill input{width:auto}.site-access{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:7px}.site-access-row{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--line);border-radius:14px;background:#fbfcfe;padding:8px}.site-access-empty{font-size:12px;color:var(--muted);font-weight:850}.pw-flag{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#fff4ed;color:#9a6700;margin-top:6px}.pw-flag.ok{background:#e7f7ef;color:#0f8a5f}.pw-option{margin:0 0 8px}.pw-option label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;background:#fff;padding:9px;font-size:12px;font-weight:900}.pw-option input{width:auto}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.form-row.one{grid-template-columns:1fr}@media(max-width:900px){.user-panel{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
+.user-panel{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:start}.user-form{background:#f7fbff;border:1px solid #c9dcff;border-radius:22px;padding:12px}.user-list{display:grid;gap:10px}.user-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:12px;box-shadow:0 8px 20px rgba(16,24,40,.06)}.user-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.user-role{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#eaf2ff;color:#175cd3}.user-role.admin{background:#fff4ed;color:#9a6700}.user-role.hausleitung{background:#e7f7ef;color:#0f8a5f}.user-role.tko{background:#f5f3ff;color:#6941c6}.user-scope{font-size:12px;color:var(--muted);font-weight:850;margin-top:4px}.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-top:6px}.check-pill{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px;font-size:12px;font-weight:900}.check-pill input{width:auto}.site-access{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:7px}.site-access-row{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--line);border-radius:14px;background:#fbfcfe;padding:8px}.site-access-empty{font-size:12px;color:var(--muted);font-weight:850}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.form-row.one{grid-template-columns:1fr}@media(max-width:900px){.user-panel{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
 
 
 .lock{position:fixed;inset:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
@@ -143,7 +142,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
       <div>
         <h2 style="margin:0">Benutzer und Rechte</h2>
-        <div class="mini">Start-Passwort wird an Supabase Auth übergeben. In ULMIPOINT wird nur Rolle, Zugriff und ob ein Passwortwechsel nötig ist gespeichert.</div>
+        <div class="mini">Passwort wird an Supabase Auth übergeben. In ULMIPOINT wird nur Rolle und Zugriff gespeichert.</div>
       </div>
       <button type="button" id="reloadUsersBtn">Benutzer laden</button>
     </div>
@@ -156,7 +155,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
           <label><span class="mini">E-Mail</span><input id="userEmail" autocomplete="username" placeholder="name@example.ch"></label>
         </div>
         <div class="form-row">
-          <label><span class="mini">Start-Passwort</span><input id="userPassword" type="password" autocomplete="new-password" placeholder="Voreingestelltes Passwort"></label>
+          <label><span class="mini">Passwort</span><input id="userPassword" type="password" autocomplete="new-password" placeholder="Nur beim Erstellen/Ändern eingeben"></label>
           <label><span class="mini">Rolle</span><select id="userRole">
             <option value="admin">Admin / Verwaltung</option>
             <option value="planner">Planer</option>
@@ -164,9 +163,6 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
             <option value="tko">TKO</option>
             <option value="employee">Mitarbeiter</option>
           </select></label>
-        </div>
-        <div class="pw-option">
-          <label><input id="userMustChangePassword" type="checkbox" checked> Benutzer muss Passwort beim ersten Login ändern</label>
         </div>
         <div class="form-row one">
           <label><span class="mini">Haus / Standort</span><select id="userSite"></select></label>
@@ -395,7 +391,6 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   function clearUserForm(){
     ['userName','userEmail','userPassword'].forEach(id=>{const el=$(id); if(el)el.value='';});
     if($('userRole'))$('userRole').value='hausleitung';
-    if($('userMustChangePassword'))$('userMustChangePassword').checked=true;
     if($('userSite'))$('userSite').value=(org.sites&&org.sites[0]?.id)||'';
     renderUserGroupChecks();
   }
@@ -405,7 +400,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     if(!users.length){list.innerHTML='<div class="empty">Noch keine Benutzer angelegt.</div>'; return;}
     list.innerHTML=users.map(u=>{
       const cls=String(u.role||'').toLowerCase();
-      return `<div class="user-card"><div class="user-card-head"><div><b>${esc(u.name||u.email)}</b><div class="mini">${esc(u.email||'')}</div><div class="user-scope">${esc(scopeText(u))}</div>${u.mustChangePassword?'<div class="pw-flag">Passwortwechsel beim ersten Login nötig</div>':'<div class="pw-flag ok">Passwortwechsel nicht offen</div>'}</div><span class="user-role ${esc(cls)}">${esc(roleLabel(u.role))}</span></div><div class="actions" style="margin-top:9px"><button type="button" onclick="window.__orgEditUser('${esc(u.email||'')}')">bearbeiten</button><button type="button" class="bad" onclick="window.__orgRemoveUser('${esc(u.email||'')}')">Recht entfernen</button></div></div>`;
+      return `<div class="user-card"><div class="user-card-head"><div><b>${esc(u.name||u.email)}</b><div class="mini">${esc(u.email||'')}</div><div class="user-scope">${esc(scopeText(u))}</div></div><span class="user-role ${esc(cls)}">${esc(roleLabel(u.role))}</span></div><div class="actions" style="margin-top:9px"><button type="button" onclick="window.__orgEditUser('${esc(u.email||'')}')">bearbeiten</button><button type="button" class="bad" onclick="window.__orgRemoveUser('${esc(u.email||'')}')">Recht entfernen</button></div></div>`;
     }).join('');
   }
   async function usersApi(body){
@@ -431,7 +426,6 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
       name:($('userName')?.value||'').trim(),
       email:($('userEmail')?.value||'').trim().toLowerCase(),
       password:$('userPassword')?.value||'',
-      mustChangePassword: !!$('userMustChangePassword')?.checked,
       role,
       siteIds:siteId?[siteId]:[],
       groupKeys:role==='tko'||role==='employee'?checked:[],
@@ -450,7 +444,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   }
   window.__orgEditUser=email=>{
     const u=users.find(x=>String(x.email||'').toLowerCase()===String(email||'').toLowerCase()); if(!u)return;
-    $('userName').value=u.name||''; $('userEmail').value=u.email||''; $('userPassword').value=''; $('userRole').value=u.role||'employee'; if($('userMustChangePassword'))$('userMustChangePassword').checked=!!u.mustChangePassword;
+    $('userName').value=u.name||''; $('userEmail').value=u.email||''; $('userPassword').value=''; $('userRole').value=u.role||'employee';
     const siteId=(Array.isArray(u.siteIds)&&u.siteIds[0])||u.siteId||''; $('userSite').value=siteId; renderUserGroupChecks();
     const set=new Set(Array.isArray(u.groupKeys)?u.groupKeys:[]); document.querySelectorAll('#userGroupChecks input').forEach(x=>{x.checked=set.has(x.value);});
     document.getElementById('usersCard')?.scrollIntoView({behavior:'smooth',block:'start'});
@@ -462,7 +456,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   };
   window.__orgPrepareUserForSite=(si,role)=>{
     const site=org.sites[si]; if(!site)return;
-    $('userRole').value=role||'hausleitung'; $('userSite').value=site.id; if($('userMustChangePassword'))$('userMustChangePassword').checked=true; renderUserGroupChecks(); document.getElementById('usersCard')?.scrollIntoView({behavior:'smooth',block:'start'}); userStatus('Benutzer für '+site.name+' vorbereiten. E-Mail, Name und Passwort eintragen.','warn');
+    $('userRole').value=role||'hausleitung'; $('userSite').value=site.id; renderUserGroupChecks(); document.getElementById('usersCard')?.scrollIntoView({behavior:'smooth',block:'start'}); userStatus('Benutzer für '+site.name+' vorbereiten. E-Mail, Name und Passwort eintragen.','warn');
   };
 
   function render(){
