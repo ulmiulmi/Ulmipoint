@@ -1,0 +1,8 @@
+{
+  "paket": "ulmipoint-v108-org-get-load",
+  "dateien": [
+    "api/org-structure.js"
+  ],
+  "zweck": "Planer-Startseite kann Organisation per GET laden.",
+  "keine_auto_gruppen": true
+}

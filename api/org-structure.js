@@ -144,9 +144,9 @@ function sanitizeUnit(unit){
 
 module.exports=async function handler(req,res){
   if(allow(req,res))return;
-  if(req.method!=='POST')return send(res,405,{ok:false,message:'Nur POST erlaubt.'});
+  if(req.method!=='POST' && req.method!=='GET')return send(res,405,{ok:false,message:'Nur GET oder POST erlaubt.'});
   try{
-    const body=await readBody(req);
+    const body=req.method==='GET' ? {mode:'load'} : await readBody(req);
     const mode=safe(body.mode||'load');
     const row=await fetchStore();
     const data=row.data||{};
