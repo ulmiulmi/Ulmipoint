@@ -1,0 +1,13 @@
+{
+  "paket": "ulmipoint-v107-freie-gruppen-kein-auto-namen",
+  "dateien": [
+    "api/org-structure.js"
+  ],
+  "verhalten": [
+    "Keine automatischen Gruppen beim Erstellen eines Hauses",
+    "Gruppen werden nur gespeichert, wenn sie in der Organisation angelegt werden",
+    "Gruppen können später hinzugefügt werden",
+    "Tageszentren dürfen ohne Gruppen bleiben"
+  ],
+  "ersetzt": "v106 automatische Gruppennamen-Ergänzung"
+}
