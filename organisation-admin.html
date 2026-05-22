@@ -378,10 +378,23 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
       units:[]
     };
   }
+  function uniquePlannerKeyForUnit(site, baseName){
+    const siteKey = slug((site && (site.id || site.name)) || 'standort') || 'standort';
+    const unitKey = slug(baseName || 'gruppe') || 'gruppe';
+    const base = siteKey + '_' + unitKey;
+    const used = new Set((site && site.units || []).map(u => String(u.plannerKey || u.id || '').toLowerCase()).filter(Boolean));
+    let key = base;
+    let i = 2;
+    while(used.has(key.toLowerCase())){
+      key = base + '_' + i;
+      i++;
+    }
+    return key;
+  }
   function defaultUnit(site,type='wohngruppe'){
     const n=(site.units||[]).length+1;
     const name = type==='tageszentrum' ? 'Team '+n : 'Gruppe '+n;
-    const id = slug(name);
+    const id = uniquePlannerKeyForUnit(site,name);
     return {id,name,type,plannerKey:id,active:true};
   }
   function syncBasics(){
