@@ -150,6 +150,21 @@ module.exports=async function handler(req,res){
     const mode=safe(body.mode||'load');
     const row=await fetchStore();
     const data=row.data||{};
+
+    // v109: Planer/Haus-Startseite darf die reine Organisationsstruktur lesend laden.
+    // Speichern, Benutzer und Rechte bleiben weiterhin geschützt.
+    if(req.method==='GET'){
+      const org=ensureOrg(data);
+      return send(res,200,{
+        ok:true,
+        mode:'load',
+        readOnly:true,
+        organisationStructure:org,
+        orgRevision:org.revisionId||org.updatedAt||row.updated_at||'',
+        updatedAt:row.updated_at||org.updatedAt||''
+      });
+    }
+
     const orgAdminOk=validOrgAdmin(data, body);
 
     let user=null;
