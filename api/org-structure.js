@@ -90,6 +90,48 @@ function destructiveSaveWouldRemoveSites(currentOrg,nextSites){
   const removed=currentSites.filter(s=>!nextIds.has(safe(s.id)));
   return removed.length>0 ? removed : false;
 }
+function removedUnitsBySite(currentOrg,nextSites){
+  const currentSites=(currentOrg&&Array.isArray(currentOrg.sites))?currentOrg.sites:[];
+  const nextMap=new Map((nextSites||[]).map(s=>[safe(s.id),s]));
+  const out=[];
+  currentSites.forEach(site=>{
+    const next=nextMap.get(safe(site.id));
+    if(!next) return;
+    const currentUnits=Array.isArray(site.units)?site.units:[];
+    if(currentUnits.length===0) return;
+    const nextIds=new Set((Array.isArray(next.units)?next.units:[]).map(u=>safe(u.id)).filter(Boolean));
+    const removed=currentUnits.filter(u=>!nextIds.has(safe(u.id)));
+    if(removed.length){
+      out.push({siteId:safe(site.id),siteName:safe(site.name||site.id),removedUnits:removed.map(u=>({id:safe(u.id),name:safe(u.name||u.id)}))});
+    }
+  });
+  return out;
+}
+function orgRevisionFrom(data,row,org){
+  return safe(data?.organisationRevision || org?.revisionId || org?.updatedAt || row?.updated_at || '');
+}
+function newOrgRevision(){
+  return 'orgrev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+}
+function assertNotStaleOrganisationSave(data,row,org,body){
+  const currentSites=siteCount(org);
+  if(currentSites===0) return;
+  const currentRevision=orgRevisionFrom(data,row,org);
+  const base=safe(body.baseOrgRevision || body.orgRevision || '');
+  if(!base){
+    const err=new Error('Speichern blockiert: Die Seite kennt den aktuellen Serverstand nicht. Bitte Organisation neu laden und danach erneut speichern.');
+    err.code='ORG_REVISION_REQUIRED';
+    err.currentOrgRevision=currentRevision;
+    throw err;
+  }
+  if(currentRevision && base !== currentRevision){
+    const err=new Error('Speichern blockiert: Auf dem Server liegt bereits ein anderer Organisationsstand. Bitte neu laden, damit kein älterer Stand den aktuellen überschreibt.');
+    err.code='STALE_ORG_VERSION';
+    err.currentOrgRevision=currentRevision;
+    err.baseOrgRevision=base;
+    throw err;
+  }
+}
 
 function defaultOrganisation(){
   return {
@@ -179,7 +221,8 @@ module.exports=async function handler(req,res){
         }
       }
       const updatedAt=row.updated_at;
-      return send(res,200,{ok:true,mode,organisationStructure:org,access,updatedAt,empty:normalized.empty,emptyReason:normalized.reason,seeded:false,organisationBackups:backupInfo(data)});
+      const orgRevision=orgRevisionFrom(data,row,org);
+      return send(res,200,{ok:true,mode,organisationStructure:org,access,updatedAt,orgRevision,empty:normalized.empty,emptyReason:normalized.reason,seeded:false,organisationBackups:backupInfo(data)});
     }
 
     if(mode==='save'){
@@ -195,10 +238,16 @@ module.exports=async function handler(req,res){
       if(!incoming || typeof incoming!=='object') throw new Error('Keine Organisationsstruktur übergeben.');
       let sites=Array.isArray(incoming.sites)?incoming.sites.map(sanitizeSite).filter(Boolean):[];
       if(sites.length===0) throw new Error('Keine Standorte zum Speichern. Es wurde nichts überschrieben.');
+      assertNotStaleOrganisationSave(data,row,org,body);
       const removedSites=destructiveSaveWouldRemoveSites(org,sites);
       if(removedSites && body.allowSiteReduction!==true){
-        return send(res,409,{ok:false,blocked:true,code:'SITE_DELETE_CONFIRM_REQUIRED',message:'Speichern blockiert: Der neue Stand würde vorhandene Standorte löschen: '+removedSites.map(s=>safe(s.name||s.id)).join(', ')+'. Bitte nur bestätigen, wenn das wirklich gewollt ist.',removedSites:removedSites.map(s=>({id:safe(s.id),name:safe(s.name)})),organisationStructure:org,organisationBackups:backupInfo(data)});
+        return send(res,409,{ok:false,blocked:true,code:'SITE_DELETE_CONFIRM_REQUIRED',message:'Speichern blockiert: Der neue Stand würde vorhandene Standorte löschen: '+removedSites.map(s=>safe(s.name||s.id)).join(', ')+'. Bitte nur bestätigen, wenn das wirklich gewollt ist.',removedSites:removedSites.map(s=>({id:safe(s.id),name:safe(s.name)})),organisationStructure:org,orgRevision:orgRevisionFrom(data,row,org),organisationBackups:backupInfo(data)});
       }
+      const removedUnits=removedUnitsBySite(org,sites);
+      if(removedUnits.length && body.allowUnitReduction!==true){
+        return send(res,409,{ok:false,blocked:true,code:'UNIT_DELETE_CONFIRM_REQUIRED',message:'Speichern blockiert: Der neue Stand würde Gruppen/Bereiche löschen. Bitte zuerst neu laden oder ausdrücklich bestätigen.',removedUnits,organisationStructure:org,orgRevision:orgRevisionFrom(data,row,org),organisationBackups:backupInfo(data)});
+      }
+      const nextRevision=newOrgRevision();
       const next={
         version:'1.0',
         organisation:{
@@ -209,9 +258,11 @@ module.exports=async function handler(req,res){
         sites,
         createdAt:(org&&org.createdAt)||new Date().toISOString(),
         updatedAt:new Date().toISOString(),
+        revisionId:nextRevision,
         updatedBy:{email:user.email||'',id:user.id||''}
       };
-      addOrganisationBackup(data, org, removedSites?'before-destructive-save':'before-save', user);
+      addOrganisationBackup(data, org, (removedSites||removedUnits.length)?'before-destructive-save':'before-save', user);
+      data.organisationRevision=nextRevision;
       data.organisationStructure=next;
       data.activity=[{
         id:'act_org_'+Date.now(),
@@ -222,11 +273,24 @@ module.exports=async function handler(req,res){
         note:next.sites.length+' Standorte'
       }].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
       const saved=await saveStore(data);
-      return send(res,200,{ok:true,mode,organisationStructure:next,access,updatedAt:saved.updated_at||next.updatedAt});
+      const verifyRow=await fetchStore();
+      const verifyData=verifyRow.data||{};
+      const verifyOrg=verifyData.organisationStructure;
+      const expectedIds=next.sites.map(s=>safe(s.id)).filter(Boolean);
+      const savedIds=(verifyOrg&&Array.isArray(verifyOrg.sites)?verifyOrg.sites:[]).map(s=>safe(s.id)).filter(Boolean);
+      const missing=expectedIds.filter(id=>!savedIds.includes(id));
+      if(missing.length){
+        return send(res,500,{ok:false,mode,confirmed:false,code:'SAVE_NOT_CONFIRMED',message:'Speichern nicht bestätigt: Der Server hat diese Standorte nicht zurückgeliefert: '+missing.join(', ')+'. Der Formularstand darf nicht verlassen werden.',missingSiteIds:missing,organisationStructure:next,orgRevision:nextRevision,organisationBackups:backupInfo(verifyData)});
+      }
+      return send(res,200,{ok:true,mode,confirmed:true,organisationStructure:verifyOrg||next,access,updatedAt:verifyRow.updated_at||saved.updated_at||next.updatedAt,orgRevision:orgRevisionFrom(verifyData,verifyRow,verifyOrg)||nextRevision,organisationBackups:backupInfo(verifyData)});
     }
 
     return send(res,400,{ok:false,message:'Unbekannter Modus.'});
   }catch(err){
-    return send(res,400,{ok:false,message:err.message||String(err)});
+    const payload={ok:false,message:err.message||String(err)};
+    if(err.code) payload.code=err.code;
+    if(err.currentOrgRevision) payload.currentOrgRevision=err.currentOrgRevision;
+    if(err.baseOrgRevision) payload.baseOrgRevision=err.baseOrgRevision;
+    return send(res,400,payload);
   }
 };
