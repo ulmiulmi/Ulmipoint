@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ULMIPOINT v106 Gruppen bereinigen</title>
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f6f8fc;color:#172033;margin:0;padding:18px}
+main{max-width:760px;margin:auto;background:#fff;border:1px solid #d9e2ef;border-radius:22px;padding:18px;box-shadow:0 12px 30px rgba(16,24,40,.08)}
+h1{font-size:32px;letter-spacing:-.05em;margin:0 0 8px}
+.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:14px;padding:10px;font-size:13px;font-weight:850;white-space:pre-wrap}
+.notice.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}.notice.warn{border-color:#f3d28f;background:#fffdf5;color:#9a6700}
+input{width:100%;border:1px solid #d9e2ef;border-radius:12px;padding:10px;font-weight:850;margin:8px 0}
+button{border:1px solid #d9e2ef;background:#2563eb;color:#fff;border-radius:999px;padding:10px 14px;font-weight:950}
+pre{white-space:pre-wrap;background:#111827;color:#fff;border-radius:14px;padding:12px;overflow:auto}
+</style>
+</head>
+<body>
+<main>
+<h1>v106 Auto-Gruppen bereinigen</h1>
+<div class="notice warn">Entfernt nur automatisch erzeugte Gruppen nach dem v106-Muster, z.B. haus_2_azoren / haus_2_bali / haus_2_capri / haus_2_delos. Haus 1 wird nicht angefasst.</div>
+<input id="pw" type="password" placeholder="Organisation Admin-Passwort">
+<button onclick="run()">Bereinigung ausführen</button>
+<div id="status" class="notice" style="margin-top:12px">Noch nicht gestartet.</div>
+<pre id="out" style="display:none"></pre>
+</main>
+<script>
+async function run(){
+  const status=document.getElementById('status');
+  const out=document.getElementById('out');
+  status.className='notice warn';
+  status.textContent='Bereinigung läuft …';
+  out.style.display='none';
+  try{
+    const resp=await fetch('/api/org-structure',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'cleanupV106AutoGroups',orgAdminPassword:document.getElementById('pw').value||''})});
+    const txt=await resp.text();
+    let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
+    status.className='notice ok';
+    status.textContent='Bereinigung fertig. Entfernt: '+((data.cleanup&&data.cleanup.removed&&data.cleanup.removed.length)||0);
+    out.style.display='block';
+    out.textContent=JSON.stringify(data.cleanup,null,2);
+  }catch(e){
+    status.className='notice bad';
+    status.textContent='Fehler: '+(e.message||e);
+  }
+}
+</script>
+</body>
+</html>
