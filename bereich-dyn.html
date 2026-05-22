@@ -2508,6 +2508,139 @@ function storageKeyForProfile(profile=storageProfile()){
   return profile&&profile!=='default'?`${APP_KEY}__${profile}`:APP_KEY;
 }
 function currentStorageKey(){return storageKeyForProfile('default');}
+
+
+// ULMIPOINT v103: separater Server-Speicher pro Gruppe/Bereich.
+// Der Browser bleibt nur Arbeitskopie. Gespeichert wird gezielt über api/group-state.js mit siteId + groupKey.
+const GROUP_STATE_API='/api/group-state';
+const SERVER_TOKEN_KEY='polypoint_server_session_v1';
+let __groupServerRevision='';
+let __groupServerSaveTimer=null;
+let __groupServerSaveBusy=false;
+let __groupServerLastHash='';
+let __groupServerPendingShow=false;
+function groupServerSession(){
+  try{
+    const raw=(localStorage&&localStorage.getItem?localStorage.getItem(SERVER_TOKEN_KEY):'') || (sessionStorage&&sessionStorage.getItem?sessionStorage.getItem(SERVER_TOKEN_KEY):'');
+    const s=raw?JSON.parse(raw):null;
+    if(s && s.access_token && (!s.expires_at || s.expires_at>Date.now()+30000)) return s;
+  }catch(_){ }
+  try{
+    if(window.parent && window.parent!==window){
+      const raw=window.parent.localStorage&&window.parent.localStorage.getItem?window.parent.localStorage.getItem(SERVER_TOKEN_KEY):'';
+      const s=raw?JSON.parse(raw):null;
+      if(s && s.access_token && (!s.expires_at || s.expires_at>Date.now()+30000)) return s;
+    }
+  }catch(_){ }
+  return null;
+}
+function groupServerHash(obj){
+  try{
+    const payload=JSON.stringify(obj||{});
+    let h=2166136261;
+    for(let i=0;i<payload.length;i++){h^=payload.charCodeAt(i);h=Math.imul(h,16777619);}
+    return 'h'+(h>>>0).toString(36);
+  }catch(_){return String(Date.now());}
+}
+function groupServerPayload(){
+  const payload=clone(state||{});
+  payload.planerGroupId=PLANER_GROUP_ID;
+  payload.planerGroupName=PLANER_GROUP_NAME;
+  payload.siteId=ULMI_DYNAMIC_CONTEXT.siteId||'';
+  payload.siteName=ULMI_DYNAMIC_CONTEXT.siteName||'';
+  payload.unitId=ULMI_DYNAMIC_CONTEXT.unitId||'';
+  payload.unitName=ULMI_DYNAMIC_CONTEXT.unitName||PLANER_GROUP_NAME;
+  payload.plannerKey=ULMI_DYNAMIC_CONTEXT.plannerKey||'';
+  if(payload.api&&typeof payload.api==='object') payload.api.key='';
+  delete payload._freshStart;
+  delete payload._freshSourceKey;
+  return payload;
+}
+async function groupServerCall(mode,extra={}){
+  const session=groupServerSession();
+  const headers={'Content-Type':'application/json'};
+  if(session&&session.access_token) headers.Authorization='Bearer '+session.access_token;
+  const body=Object.assign({
+    mode,
+    siteId:ULMI_DYNAMIC_CONTEXT.siteId||'',
+    siteName:ULMI_DYNAMIC_CONTEXT.siteName||'',
+    unitId:ULMI_DYNAMIC_CONTEXT.unitId||'',
+    unitName:ULMI_DYNAMIC_CONTEXT.unitName||PLANER_GROUP_NAME,
+    groupKey:ULMI_DYNAMIC_CONTEXT.plannerKey||ULMI_DYNAMIC_CONTEXT.unitId||PLANER_GROUP_ID,
+    groupId:PLANER_GROUP_ID,
+    storageKey:currentStorageKey()
+  },extra||{});
+  const resp=await fetch(GROUP_STATE_API,{method:'POST',headers,body:JSON.stringify(body)});
+  let data=null; try{data=await resp.json();}catch(_){data={ok:false,message:'Ungültige Serverantwort'};}
+  if(!resp.ok || !data.ok) throw Object.assign(new Error(data.message||('Serverfehler '+resp.status)),{status:resp.status,data});
+  return data;
+}
+function groupSetStatus(text,kind=''){
+  const el=q('saveStatus');
+  if(el) el.textContent=text;
+  try{ if(kind) el.className='pill '+(kind==='ok'?'green':kind==='bad'?'red':kind==='warn'?'yellow':'blue'); }catch(_){ }
+}
+async function loadGroupStateFromServer(show=true){
+  try{
+    groupSetStatus('Server lädt…','blue');
+    const data=await groupServerCall('load');
+    const entry=data.groupState;
+    if(entry&&entry.payload&&stateWeight(entry.payload)>0){
+      applyLoadedState(entry.payload);
+      __groupServerRevision=data.groupRevision||entry.revisionId||'';
+      state.groupRevision=__groupServerRevision;
+      state.serverGroupRevision=__groupServerRevision;
+      makeDates();
+      try{saveState(false,{force:true,allowEmpty:true,skipServer:true});}catch(_){ }
+      renderAll();
+      groupSetStatus(`${PLANER_GROUP_NAME} · Server geladen: `+(state.savedAt?new Date(state.savedAt).toLocaleString('de-CH'):'ohne Datum'),'ok');
+      if(show)toast(`${PLANER_GROUP_NAME}: vom Server geladen`,'ok');
+      return true;
+    }
+    groupSetStatus(`${PLANER_GROUP_NAME} · kein Serverstand gefunden`,'warn');
+    if(show)toast('Kein Gruppenstand auf dem Server gefunden','warn');
+    return false;
+  }catch(e){
+    groupSetStatus(`${PLANER_GROUP_NAME} · Server nicht verbunden`,'warn');
+    if(show)toast((e&&e.message)||'Server-Laden nicht möglich','warn');
+    return false;
+  }
+}
+async function saveGroupStateToServer(show=true,opts={}){
+  if(__groupServerSaveBusy){ __groupServerPendingShow=__groupServerPendingShow||!!show; return false; }
+  const payload=groupServerPayload();
+  const hash=groupServerHash(payload);
+  if(!show && hash===__groupServerLastHash) return true;
+  __groupServerSaveBusy=true;
+  groupSetStatus('Server speichert…','blue');
+  try{
+    const data=await groupServerCall('save',{state:payload,baseGroupRevision:__groupServerRevision||state.groupRevision||state.serverGroupRevision||'',requireRevision:false});
+    __groupServerRevision=data.groupRevision||data.groupState?.revisionId||'';
+    state.groupRevision=__groupServerRevision;
+    state.serverGroupRevision=__groupServerRevision;
+    __groupServerLastHash=hash;
+    groupSetStatus('Gruppe gespeichert und vom Server bestätigt.','ok');
+    if(show)toast('Gruppe gespeichert und vom Server bestätigt','ok');
+    return true;
+  }catch(e){
+    const msg=(e&&e.message)||'Server-Speichern nicht möglich';
+    groupSetStatus('NICHT servergespeichert – '+msg,'bad');
+    if(show)toast(msg,'bad');
+    return false;
+  }finally{
+    __groupServerSaveBusy=false;
+    if(__groupServerPendingShow){
+      __groupServerPendingShow=false;
+      setTimeout(()=>saveGroupStateToServer(true,opts),250);
+    }
+  }
+}
+function queueGroupServerSave(show=false,opts={}){
+  if(opts&&opts.skipServer) return;
+  clearTimeout(__groupServerSaveTimer);
+  const delay=show?80:1600;
+  __groupServerSaveTimer=setTimeout(()=>saveGroupStateToServer(!!show,opts),delay);
+}
 function storageKeyLabel(key){
   if(key===APP_KEY)return `${PLANER_GROUP_NAME} · dieses Gerät`;
   if(key===storageKeyForProfile('pc')||key===storageKeyForProfile('handy'))return `${PLANER_GROUP_NAME} · älterer Speicherstand`;
@@ -2670,7 +2803,7 @@ function saveState(show=true,opts={}){
       const old=JSON.parse(oldRaw);
       const oldWeight=stateWeight(old);
       if(oldWeight>1000 && newWeight<Math.max(50,oldWeight*0.15)){
-        if(show)toast('Speichern blockiert: aktueller Stand wirkt leer. Erst Daten retten oder bewusst Speicher löschen.','bad');
+        if(show)toast('Speichern blockiert: aktueller Gruppenstand wirkt leer. Erst Daten retten oder bewusst Speicher löschen.','bad');
         return false;
       }
     }
@@ -2679,13 +2812,19 @@ function saveState(show=true,opts={}){
   state.storageProfile=storageProfile();
   state.planerGroupId=PLANER_GROUP_ID;
   state.planerGroupName=PLANER_GROUP_NAME;
+  state.siteId=ULMI_DYNAMIC_CONTEXT.siteId||state.siteId||'';
+  state.siteName=ULMI_DYNAMIC_CONTEXT.siteName||state.siteName||'';
+  state.unitId=ULMI_DYNAMIC_CONTEXT.unitId||state.unitId||'';
+  state.unitName=ULMI_DYNAMIC_CONTEXT.unitName||state.unitName||PLANER_GROUP_NAME;
+  state.plannerKey=ULMI_DYNAMIC_CONTEXT.plannerKey||state.plannerKey||'';
   state.version=PLANER_VERSION;
   try{
     localStorage.setItem(key,JSON.stringify(state));
     try{sessionStorage.removeItem(FRESH_START_KEY);}catch(e){}
     delete state._freshStart;
-    if(q('saveStatus'))q('saveStatus').textContent='Gespeichert '+fmtTime();
-    if(show)toast(`${PLANER_GROUP_NAME} gespeichert ${fmtTime()} · ${storageProfileLabel()}`,'ok');
+    if(q('saveStatus'))q('saveStatus').textContent='Arbeitskopie gespeichert '+fmtTime();
+    if(show)toast(`${PLANER_GROUP_NAME}: Arbeitskopie gespeichert – Server bestätigt gleich separat`,'ok');
+    queueGroupServerSave(!!show,opts||{});
     return true;
   }catch(e){if(show)toast('Speichern nicht möglich','bad');console.warn(e);return false;}
 }
@@ -2730,30 +2869,29 @@ function loadState(show=true,opts={}){
       if(found && stateWeight(found.state)>Math.max(loadedWeight,0)){
         applyLoadedState(found.state);loadedOk=true;source=found.key;loadedWeight=stateWeight(state);
         if(show)toast(`${PLANER_GROUP_NAME}: vorhandener voller Speicherstand geladen`,'warn');
-        // aktuellen Schlüssel wieder mit dem gefundenen Stand füllen, damit er nicht leer bleibt
-        try{saveState(false,{force:true});}catch(e){console.warn(e);}
+        try{saveState(false,{force:true,skipServer:true});}catch(e){console.warn(e);}
       }
     }
     if(allowFallback && (!loadedOk || loadedWeight<1000)){
-      // Notfall: auch alte neutrale/sammelnde POLYPOINT-Schlüssel zulassen, aber nur wenn sonst gar nichts da ist.
       const loose=findBestStoredState({allowLoose:true});
       if(loose && stateWeight(loose.state)>loadedWeight){
         applyLoadedState(loose.state);loadedOk=true;source=loose.key;loadedWeight=stateWeight(state);
         if(show)toast(`${PLANER_GROUP_NAME}: Notfall-Speicherstand geladen – bitte Gruppe prüfen`,'warn');
       }
     }
-    if(loadedOk&&loadedWeight>0){if(show)toast(`${PLANER_GROUP_NAME} geladen · ${storageKeyLabel(source)}`,'ok');}
-    else{normalizeStorageObjects();normalizeRules();normalizeDutyCatalog();normalizeCalendarLists();normalizeMonthTargets();normalizeLearners();if(show)toast('Kein gefüllter Speicherstand gefunden','warn');}
+    if(loadedOk&&loadedWeight>0){if(show)toast(`${PLANER_GROUP_NAME} Arbeitskopie geladen · ${storageKeyLabel(source)}`,'ok');}
+    else{normalizeStorageObjects();normalizeRules();normalizeDutyCatalog();normalizeCalendarLists();normalizeMonthTargets();normalizeLearners();if(show)toast('Keine gefüllte Arbeitskopie gefunden – Server wird geprüft','warn');}
   }catch(e){
     console.warn(e);
     const found=findBestStoredState({allowLoose:true});
     if(found){try{applyLoadedState(found.state);loadedOk=true;source=found.key;if(show)toast('Altdaten geladen','ok');}catch(x){console.warn(x);}}
-    if(!loadedOk){normalizeStorageObjects();normalizeRules();normalizeDutyCatalog();normalizeCalendarLists();normalizeMonthTargets();normalizeLearners();if(show)toast('Laden nicht möglich','bad');}
+    if(!loadedOk){normalizeStorageObjects();normalizeRules();normalizeDutyCatalog();normalizeCalendarLists();normalizeMonthTargets();normalizeLearners();if(show)toast('Arbeitskopie laden nicht möglich – Server wird geprüft','warn');}
   }
-  if(q('saveStatus'))q('saveStatus').textContent=state.savedAt?`${PLANER_GROUP_NAME} · geladen: `+new Date(state.savedAt).toLocaleString('de-CH'):`${PLANER_GROUP_NAME} · nicht gespeichert`;
+  if(q('saveStatus'))q('saveStatus').textContent=state.savedAt?`${PLANER_GROUP_NAME} · Arbeitskopie: `+new Date(state.savedAt).toLocaleString('de-CH'):`${PLANER_GROUP_NAME} · nicht gespeichert`;
   if(q('monthSelect')){q('monthSelect').value=state.selectedMonth;q('yearSelect').value=state.selectedYear;}
   syncAPIUIFromState();
   makeDates();
+  if(!(opts&&opts.skipServer)) setTimeout(()=>loadGroupStateFromServer(!!show),60);
 }
 function renderAll(){if(q('monthSelect')){q('monthSelect').value=state.selectedMonth;q('yearSelect').value=state.selectedYear;}syncAPIUIFromState();renderPlan();renderEmployees();renderRules();renderBT();renderSystem();renderMonthTargets();}
 function resetDemoData(save=true){state.employees=[
