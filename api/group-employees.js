@@ -1,6 +1,2 @@
-const {makeHandler}=require('./_group-section');
-module.exports=makeHandler({
-  entity:'employees',
-  label:'Mitarbeitende',
-  keys:['employees','employeeLimits','monthTargets','balanceCarryovers']
-});
+const {handleSection}=require('./_group-storage');
+module.exports=(req,res)=>handleSection(req,res,'employees');
