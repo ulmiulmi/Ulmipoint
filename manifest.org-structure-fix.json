@@ -1,0 +1,7 @@
+{
+  "paket": "ulmipoint-org-structure-admin-load-save-fix-v53",
+  "dateien": [
+    "api/org-structure.js"
+  ],
+  "zweck": "Organisation laden/speichern mit Admin-Passwort/Admin-Token statt normaler Server-Sitzung."
+}

@@ -17,6 +17,43 @@ function validOrgAdminSession(data,tok){
   return true;
 }
 
+function configuredOrgAdminPassword(data){
+  return safe(
+    process.env.ULMIPOINT_ORG_ADMIN_PASSWORD ||
+    process.env.ULMIPOINT_ADMIN_PASSWORD ||
+    process.env.ADMIN_PASSWORD ||
+    data?.organisationAdmin?.password ||
+    data?.adminPassword ||
+    ''
+  );
+}
+function constantTimeEqual(a,b){
+  a=String(a||''); b=String(b||'');
+  if(!a || !b || a.length!==b.length) return false;
+  let r=0;
+  for(let i=0;i<a.length;i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r===0;
+}
+function validOrgAdminPassword(data,pw){
+  const configured=configuredOrgAdminPassword(data);
+  return !!configured && constantTimeEqual(safe(pw), configured);
+}
+function validOrgAdmin(data,body){
+  body=body||{};
+  return validOrgAdminSession(data, body.orgAdminToken) || validOrgAdminPassword(data, body.orgAdminPassword || body.adminPassword || body.password);
+}
+function orgAdminAccess(data){
+  return {
+    ok:true,
+    email:'org-admin',
+    role:'admin',
+    configured:Object.keys(roleStore(data)).length,
+    canManageOrganisation:true,
+    orgAdminOnly:true,
+    superAdmin:true
+  };
+}
+
 async function verifySupabaseUser(req){
   const auth=safe(req.headers.authorization || req.headers.Authorization);
   const token=auth.replace(/^Bearer\s+/i,'');
@@ -113,23 +150,36 @@ module.exports=async function handler(req,res){
     const mode=safe(body.mode||'load');
     const row=await fetchStore();
     const data=row.data||{};
-    const user=await verifySupabaseUser(req);
-    const access=assertAdminAccess(data,user);
+    const orgAdminOk=validOrgAdmin(data, body);
+
+    let user=null;
+    let access=null;
+
+    if(orgAdminOk){
+      user={id:'org-admin',email:'org-admin'};
+      access=orgAdminAccess(data);
+    }else{
+      user=await verifySupabaseUser(req);
+      access=assertAdminAccess(data,user);
+    }
+
     const org=ensureOrg(data);
 
-    // Lesen darf mit normaler Admin-/Planer-Server-Sitzung erfolgen.
-    // Speichern bleibt zusätzlich mit dem Admin-Passwort-Token geschützt.
+    // Laden darf mit Admin-Passwort/Admin-Token ODER normaler Admin-/Planer-Sitzung erfolgen.
     if(mode==='load'){
       return send(res,200,{ok:true,mode,organisationStructure:org,access,updatedAt:row.updated_at});
     }
 
-    if(!validOrgAdminSession(data, body.orgAdminToken)){
-      return send(res,401,{ok:false,message:'Organisation speichern nur mit Admin-Passwort.'});
+    // Speichern nur mit Admin-Passwort/Admin-Token.
+    // Dadurch hängt die Organisation nicht mehr an einer abgelaufenen normalen Server-Sitzung.
+    if(!orgAdminOk){
+      return send(res,401,{ok:false,message:'Organisation speichern nur mit Admin-Passwort. Bitte Organisation neu freischalten.'});
     }
 
     if(mode==='save'){
       const incoming=body.organisationStructure;
       if(!incoming || typeof incoming!=='object') throw new Error('Keine Organisationsstruktur übergeben.');
+
       const next={
         version:'1.0',
         organisation:{
@@ -142,7 +192,14 @@ module.exports=async function handler(req,res){
         updatedAt:new Date().toISOString(),
         updatedBy:{email:user.email||'',id:user.id||''}
       };
+
       data.organisationStructure=next;
+
+      // Rechte nur ändern, wenn die Oberfläche sie ausdrücklich mitsendet.
+      if(incoming.accessRoles && typeof incoming.accessRoles==='object'){
+        data.accessRoles=incoming.accessRoles;
+      }
+
       data.activity=[{
         id:'act_org_'+Date.now(),
         at:new Date().toISOString(),
@@ -151,6 +208,7 @@ module.exports=async function handler(req,res){
         area:'Organisation',
         note:next.sites.length+' Standorte'
       }].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
+
       const saved=await saveStore(data);
       return send(res,200,{ok:true,mode,organisationStructure:next,access,updatedAt:saved.updated_at||next.updatedAt});
     }
