@@ -1,7 +1,4 @@
-const {allow,send,readBody,fetchStore,saveStore}=require('./_wishlib');
-
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.ULMIPOINT_SUPABASE_URL || process.env.POLYPOINT_SUPABASE_URL;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY;
+const {allow,send,readBody,fetchStore,saveStore}=require('../lib/_wishlib');
 
 function safe(v){return String(v||'').trim();}
 function normEmail(v){return safe(v).toLowerCase();}
@@ -10,48 +7,40 @@ function arr(v){return Array.isArray(v)?v.map(x=>safe(x)).filter(Boolean):[];}
 function uniq(v){return [...new Set((v||[]).map(x=>safe(x)).filter(Boolean))];}
 function normalizeRole(v){
   v=safe(v).toLowerCase();
-  if(['administrator','verwaltung','leitung-admin','admin'].includes(v))return 'admin';
-  if(['planer','planung','planner'].includes(v))return 'planner';
-  if(['hausleitung','haus-leitung','hl'].includes(v))return 'hausleitung';
-  if(['tko','teamkoordination','team-koordinator','teamkoordinator'].includes(v))return 'tko';
-  if(['mitarbeiter','ma','employee'].includes(v))return 'employee';
-  return 'employee';
+  if(['administrator','verwaltung','leitung-admin','admin','geschaeftsleitung','geschäftsleitung'].includes(v)) return 'admin';
+  if(['planer','planung','planner'].includes(v)) return 'planner';
+  if(['leitung','hausleitung','haus-leitung','hl'].includes(v)) return 'hausleitung';
+  if(['tko','teamkoordination','team-koordinator','teamkoordinator'].includes(v)) return 'tko';
+  if(['mitarbeiter','ma','employee'].includes(v)) return 'employee';
+  return v||'employee';
 }
 function configuredOrgAdminPassword(data){
-  return safe(
-    process.env.ULMIPOINT_ORG_ADMIN_PASSWORD ||
-    process.env.ULMIPOINT_ADMIN_PASSWORD ||
-    process.env.ADMIN_PASSWORD ||
-    data?.organisationAdmin?.password ||
-    data?.adminPassword ||
-    ''
-  );
+  return safe(process.env.ULMIPOINT_ORG_ADMIN_PASSWORD||process.env.ULMIPOINT_ADMIN_PASSWORD||process.env.ADMIN_PASSWORD||data?.organisationAdmin?.password||data?.adminPassword||'');
 }
 function constantTimeEqual(a,b){
   a=String(a||''); b=String(b||'');
-  if(!a || !b || a.length!==b.length) return false;
-  let r=0; for(let i=0;i<a.length;i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  if(!a||!b||a.length!==b.length) return false;
+  let r=0; for(let i=0;i<a.length;i++) r|=a.charCodeAt(i)^b.charCodeAt(i);
   return r===0;
 }
 function validOrgAdminPassword(data,pw){
-  const configured=configuredOrgAdminPassword(data);
-  return !!configured && constantTimeEqual(safe(pw), configured);
+  const c=configuredOrgAdminPassword(data);
+  return !!c && constantTimeEqual(safe(pw),c);
 }
 function validOrgAdminSession(data,tok){
   tok=safe(tok);
-  const sessions=data?.organisationAdmin?.sessions || {};
-  const s=sessions[tok];
+  const s=(data?.organisationAdmin?.sessions||{})[tok];
   if(!s) return false;
-  if(s.expiresAt && new Date(s.expiresAt).getTime() < Date.now()) return false;
+  if(s.expiresAt && new Date(s.expiresAt).getTime()<Date.now()) return false;
   return true;
 }
-function assertOrgAdmin(data, body){
-  if(validOrgAdminSession(data, body.orgAdminToken)) return true;
-  if(validOrgAdminPassword(data, body.orgAdminPassword)) return true;
-  throw new Error('Admin-Zugriff fehlt oder ist abgelaufen. Bitte Organisation neu freischalten.');
+function assertOrgAdmin(data,body){
+  if(validOrgAdminSession(data,body.orgAdminToken)) return true;
+  if(validOrgAdminPassword(data,body.orgAdminPassword)) return true;
+  throw new Error('Admin-Zugriff fehlt oder ist abgelaufen.');
 }
 function roleStore(data){
-  if(!data.accessRoles || typeof data.accessRoles !== 'object') data.accessRoles={};
+  if(!data.accessRoles||typeof data.accessRoles!=='object') data.accessRoles={};
   return data.accessRoles;
 }
 function publicUsers(data){
@@ -64,15 +53,14 @@ function publicUsers(data){
       name:safe(entry.name||entry.employeeName||''),
       role,
       scope:safe(entry.scope)||((role==='admin'||role==='planner')?'all':(role==='hausleitung'?'site':'groups')),
-      siteIds:uniq(arr(entry.siteIds || (entry.siteId?[entry.siteId]:[])).map(slug)),
-      groupKeys:uniq(arr(entry.groupKeys || (entry.groupKey?[entry.groupKey]:[])).map(slug)),
+      siteIds:uniq(arr(entry.siteIds||(entry.siteId?[entry.siteId]:[])).map(slug)),
+      groupKeys:uniq(arr(entry.groupKeys||(entry.groupKey?[entry.groupKey]:[])).map(slug)),
       employeeId:safe(entry.employeeId||''),
       employeeName:safe(entry.employeeName||''),
       updatedAt:safe(entry.updatedAt||''),
       createdAt:safe(entry.createdAt||''),
       source:safe(entry.source||'organisation-admin'),
-      mustChangePassword: entry.mustChangePassword === true,
-      passwordChangedAt:safe(entry.passwordChangedAt||'')
+      mustChangePassword:entry.mustChangePassword===true
     };
   }).sort((a,b)=>(a.name||a.email).localeCompare(b.name||b.email,'de'));
 }
@@ -80,8 +68,8 @@ function sanitizeUser(input){
   input=input||{};
   const role=normalizeRole(input.role);
   const email=normEmail(input.email);
-  const siteIds=uniq(arr(input.siteIds || (input.siteId?[input.siteId]:[])).map(slug));
-  const groupKeys=uniq(arr(input.groupKeys || (input.groupKey?[input.groupKey]:[])).map(slug));
+  const siteIds=uniq(arr(input.siteIds||(input.siteId?[input.siteId]:[])).map(slug));
+  const groupKeys=uniq(arr(input.groupKeys||(input.groupKey?[input.groupKey]:[])).map(slug));
   const now=new Date().toISOString();
   return {
     email,
@@ -90,209 +78,28 @@ function sanitizeUser(input){
     scope:safe(input.scope)||((role==='admin'||role==='planner')?'all':(role==='hausleitung'?'site':'groups')),
     siteIds:(role==='admin'||role==='planner')?[]:siteIds,
     groupKeys:(role==='tko'||role==='employee')?groupKeys:[],
+    employeeId:safe(input.employeeId||''),
+    employeeName:safe(input.employeeName||''),
     createdAt:safe(input.createdAt)||now,
     updatedAt:now,
     source:'organisation-admin',
-    mustChangePassword: input.mustChangePassword === true
+    mustChangePassword:input.mustChangePassword===true
   };
 }
-async function authFetch(path,opt={}){
-  if(!SUPABASE_URL || !SERVICE_KEY) throw new Error('Server-Umgebung fehlt: SUPABASE_URL oder SUPABASE_SERVICE_ROLE_KEY.');
-  const resp=await fetch(SUPABASE_URL.replace(/\/+$/,'') + path, Object.assign({},opt,{headers:Object.assign({'apikey':SERVICE_KEY,'Authorization':'Bearer '+SERVICE_KEY},opt.headers||{})}));
-  const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
-  return {resp,data,txt};
-}
-async function findAuthUserByEmail(email){
-  try{
-    const {resp,data}=await authFetch('/auth/v1/admin/users?page=1&per_page=200',{method:'GET'});
-    if(!resp.ok) return null;
-    const list=Array.isArray(data?.users)?data.users:(Array.isArray(data)?data:[]);
-    return list.find(u=>normEmail(u.email)===normEmail(email))||null;
-  }catch(_){return null;}
-}
-
-async function authUserFromAccessToken(token){
-  token=safe(token);
-  if(!token) throw new Error('Login-Sitzung fehlt. Bitte neu einloggen.');
-  if(!SUPABASE_URL || !SERVICE_KEY) throw new Error('Server-Umgebung fehlt: SUPABASE_URL oder SUPABASE_SERVICE_ROLE_KEY.');
-  const resp=await fetch(SUPABASE_URL.replace(/\/+$/,'') + '/auth/v1/user', {headers:{'apikey':SERVICE_KEY,'Authorization':'Bearer '+token}});
-  const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
-  if(!resp.ok || !data || !data.id) throw new Error('Login-Sitzung konnte nicht geprüft werden. Bitte neu einloggen.');
-  data.email=normEmail(data.email||data.user?.email||'');
-  if(!data.email) throw new Error('Login enthält keine E-Mail-Adresse.');
-  return data;
-}
-
-async function updateSupabaseUser(user,password){
-  const existing=await findAuthUserByEmail(user.email);
-  if(!existing || !existing.id) return {updated:false, message:'Supabase-Benutzer existiert bereits; Rolle wurde aktualisiert.'};
-  const payload={user_metadata:{name:user.name||'',ulmipointRole:user.role,ulmipointScope:user.scope,ulmipointMustChangePassword:user.mustChangePassword===true}};
-  if(password) payload.password=password;
-  const {resp,data,txt}=await authFetch('/auth/v1/admin/users/'+encodeURIComponent(existing.id),{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  });
-  if(resp.ok) return {updated:true,userId:existing.id,message:password?'Supabase-Benutzer aktualisiert und Passwort gesetzt.':'Supabase-Benutzer aktualisiert.'};
-  const msg=safe(data.message||data.error_description||data.error||txt);
-  return {updated:false,userId:existing.id,message:'Supabase-Benutzer existiert; Rolle wurde aktualisiert.'+(msg?' Hinweis: '+msg:'')};
-}
-async function createSupabaseUser(user,password){
-  if(!password) return {created:false, skipped:true, message:'Kein Passwort übergeben; nur Rolle gespeichert.'};
-  const {resp,data,txt}=await authFetch('/auth/v1/admin/users', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({email:user.email,password,email_confirm:true,user_metadata:{name:user.name||'',ulmipointRole:user.role,ulmipointScope:user.scope,ulmipointMustChangePassword:user.mustChangePassword===true}})
-  });
-  if(resp.ok) return {created:true,userId:data.id||data.user?.id||'', message:'Supabase-Benutzer erstellt.'};
-  const msg=safe(data.message||data.error_description||data.error||txt);
-  if(/already|exist|registered|unique|duplicate|User already/i.test(msg)){
-    return updateSupabaseUser(user,password);
-  }
-  throw new Error('Supabase-Benutzer konnte nicht erstellt werden: '+(msg||('HTTP '+resp.status)));
-}
-
-
-function yesBool(v, fallback=false){
-  if(v===undefined || v===null || String(v).trim()==='') return !!fallback;
-  const s=safe(v).toLowerCase();
-  if(['1','ja','j','yes','true','x','✓','ok'].includes(s)) return true;
-  if(['0','nein','n','no','false','-'].includes(s)) return false;
-  return !!fallback;
-}
-function normalizePct(v){ const n=parseFloat(String(v??'').replace(',','.')); return Number.isFinite(n)?n:100; }
-function normalizeImportedEmployee(row, fallback={}){
-  row=row||{}; fallback=fallback||{};
-  const siteId=slug(row.siteId || fallback.siteId || '');
-  const groupKey=slug(row.groupKey || row.unitId || fallback.groupKey || row.groupName || fallback.groupName || '');
-  const groupName=safe(row.groupName || fallback.groupName || row.group || '');
-  const id=safe(row.id || row.short || row.nr || row.name || row.email).replace(/\s+/g,'_');
-  const name=safe(row.name || row.employeeName || row.id || row.short || row.email);
-  const role=safe(row.employeeRole || row.jobRole || row.planRole || row.role || 'FABE') || 'FABE';
-  const pct=normalizePct(row.pct ?? row.p ?? row.pensum);
-  const email=normEmail(row.email || row.loginEmail || row.mail || '');
-  const wishCode=safe(row.wishCode || row.portalCode || row.wunschCode || row.code || '');
-  return {
-    id, name, role, pct, email,
-    phone:safe(row.phone || row.telefon || ''),
-    nr:safe(row.nr || row.personalnummer || ''),
-    short:safe(row.short || row.kuerzel || id),
-    fp: yesBool(row.fp ?? row.fachperson, /fach|fabe|sozial|leitung/i.test(role)),
-    group: row.groupBoolean===undefined ? yesBool(row.groupWork ?? row.groupDienst, true) : !!row.groupBoolean,
-    tv: yesBool(row.tv, true),
-    split: yesBool(row.split ?? row.geteilt, true),
-    officePct: normalizePct(row.officePct ?? row.office ?? row.buero ?? 0) || 0,
-    vacationEntitlement: row.vacationEntitlement===''||row.vacationEntitlement==null?undefined:normalizePct(row.vacationEntitlement),
-    wishCode,
-    siteId, groupKey, groupName,
-    password:safe(row.password || row.startPassword || fallback.defaultPassword || ''),
-    mustChangePassword: row.mustChangePassword===undefined ? (fallback.mustChangePassword!==false) : row.mustChangePassword===true,
-    createLogin: row.createLogin===undefined ? !!fallback.createLogins : row.createLogin===true
-  };
-}
-function planEmployeeFromImport(emp){
-  const obj={
-    id:emp.id,
-    name:emp.name,
-    role:emp.role,
-    pct:emp.pct,
-    group:emp.group!==false,
-    fp:!!emp.fp,
-    tv:emp.tv!==false,
-    split:emp.split!==false,
-    officePct:emp.officePct||0,
-    blockMode:'block',
-    apprenticeYear:/ausbildung|lernend|schuel|schül/i.test(emp.role)?1:'',
-    age:'',
-    schoolDays:[],schoolFreeDays:[],officeDays:[],
-    activeFrom:'',activeUntil:'',active:true,
-    email:emp.email||'',loginEmail:emp.email||'',mail:emp.email||'',
-    phone:emp.phone||'',nr:emp.nr||'',short:emp.short||emp.id||'',
-    wishCode:emp.wishCode||'',portalCode:emp.wishCode||'',wunschCode:emp.wishCode||''
-  };
-  if(emp.vacationEntitlement!==undefined)obj.vacationEntitlement=emp.vacationEntitlement;
-  return obj;
-}
-function storageKeyForGroup(siteId, groupKey){
-  siteId=slug(siteId||'haus_1'); groupKey=slug(groupKey||'gruppe');
-  if((siteId==='haus_1'||siteId==='haus1') && ['azoren','bali','capri','delos'].includes(groupKey)) return 'polypoint_ki_planer_v13_clean__'+groupKey;
-  return 'polypoint_ki_planer_v13_clean__'+siteId+'__'+groupKey;
-}
-function parseJsonMaybe(v){ if(!v||typeof v!=='string')return null; try{return JSON.parse(v)}catch(_){return null} }
-function ensureGroupState(data, siteId, groupKey, groupName){
-  if(!data.items || typeof data.items!=='object') data.items={};
-  const key=storageKeyForGroup(siteId, groupKey);
-  let st=parseJsonMaybe(data.items[key]) || {};
-  st.version=st.version||'13.0.187';
-  st.planerGroupId=slug(siteId)+'__'+slug(groupKey);
-  if((slug(siteId)==='haus_1'||slug(siteId)==='haus1') && ['azoren','bali','capri','delos'].includes(slug(groupKey))) st.planerGroupId=slug(groupKey);
-  st.planerGroupName=groupName||st.planerGroupName||groupKey;
-  if(!Array.isArray(st.employees)) st.employees=[];
-  return {key, state:st};
-}
-function mergePlanEmployee(list, emp){
-  const incoming=planEmployeeFromImport(emp);
-  const email=normEmail(incoming.email||incoming.loginEmail||'');
-  const idx=list.findIndex(e=>{
-    if(String(e.id||'') && String(e.id)===String(incoming.id)) return true;
-    const ee=normEmail(e.email||e.loginEmail||e.mail||'');
-    if(email && ee && email===ee) return true;
-    return safe(e.name).toLowerCase()===safe(incoming.name).toLowerCase();
-  });
-  if(idx>=0) list[idx]=Object.assign({},list[idx],incoming);
-  else list.push(incoming);
-}
-
 function validateUser(user){
   if(!user.email) throw new Error('E-Mail fehlt.');
   if(!/^\S+@\S+\.\S+$/.test(user.email)) throw new Error('E-Mail ist ungültig.');
-  if((user.role==='hausleitung'||user.role==='tko'||user.role==='employee') && !user.siteIds.length) throw new Error('Für diese Rolle muss ein Haus/Standort gewählt werden.');
-  if(user.role==='tko' && !user.groupKeys.length) throw new Error('TKO braucht mindestens eine ausgewählte Gruppe.');
 }
 
 module.exports=async function handler(req,res){
-  if(allow(req,res))return;
-  if(req.method!=='POST')return send(res,405,{ok:false,message:'Nur POST erlaubt.'});
+  if(allow(req,res)) return;
+  if(req.method!=='POST') return send(res,405,{ok:false,message:'Nur POST erlaubt.'});
   try{
     const body=await readBody(req);
     const mode=safe(body.mode||'load');
     const row=await fetchStore();
     const data=row.data||{};
-
-    if(mode==='changeOwnPassword'){
-      const token=safe(body.accessToken||body.token||'');
-      const newPassword=safe(body.newPassword||body.password||'');
-      if(newPassword.length<8) throw new Error('Das neue Passwort muss mindestens 8 Zeichen haben.');
-      const authUser=await authUserFromAccessToken(token);
-      const email=normEmail(authUser.email);
-      const roles=roleStore(data);
-      const prev=roles[email] && typeof roles[email]==='object' ? roles[email] : null;
-      if(!prev) throw new Error('Für diesen Benutzer ist noch kein ULMIPOINT-Zugriff hinterlegt.');
-      const {resp,data:authData,txt}=await authFetch('/auth/v1/admin/users/'+encodeURIComponent(authUser.id),{
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({password:newPassword,user_metadata:Object.assign({},authUser.user_metadata||{},{name:prev.name||authUser.user_metadata?.name||'',ulmipointRole:prev.role||'',ulmipointScope:prev.scope||'',ulmipointMustChangePassword:false})})
-      });
-      if(!resp.ok){
-        const msg=safe(authData.message||authData.error_description||authData.error||txt);
-        throw new Error('Passwort konnte nicht geändert werden: '+(msg||('HTTP '+resp.status)));
-      }
-      roles[email]=Object.assign({},prev,{mustChangePassword:false,passwordChangedAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
-      data.accessRoles=roles;
-      data.roleVersion='ulmipoint-v91';
-      data.activity=[{
-        id:'act_pw_'+Date.now(),
-        at:new Date().toISOString(),
-        action:'Erstpasswort geändert',
-        user:{id:authUser.id||'',email},
-        area:'Benutzer',
-        note:email
-      }].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
-      const saved=await saveStore(data);
-      return send(res,200,{ok:true,message:'Passwort geändert. Du kannst jetzt weiterarbeiten.',users:publicUsers(data),updatedAt:saved.updated_at||new Date().toISOString()});
-    }
-
-    assertOrgAdmin(data, body);
+    assertOrgAdmin(data,body);
 
     if(mode==='load'){
       return send(res,200,{ok:true,users:publicUsers(data),updatedAt:row.updated_at||''});
@@ -301,92 +108,21 @@ module.exports=async function handler(req,res){
     if(mode==='saveUser'){
       const user=sanitizeUser(body.user||{});
       validateUser(user);
-      const password=safe(body.user?.password||'');
       const roles=roleStore(data);
-      const prev=roles[user.email] && typeof roles[user.email]==='object' ? roles[user.email] : {};
-      if(password){
-        user.mustChangePassword = body.user?.mustChangePassword !== false;
-      }else{
-        user.mustChangePassword = prev.mustChangePassword === true;
-      }
-      const authResult=await createSupabaseUser(user,password);
-      roles[user.email]=Object.assign({},prev,user,{auth:safe(authResult.userId)||safe(prev.auth||''),updatedAt:new Date().toISOString()});
-      if(password && user.mustChangePassword) roles[user.email].passwordChangedAt='';
-      if(password && user.mustChangePassword === false) roles[user.email].passwordChangedAt=safe(prev.passwordChangedAt||'');
+      const prev=roles[user.email]&&typeof roles[user.email]==='object'?roles[user.email]:{};
+      roles[user.email]=Object.assign({},prev,user,{updatedAt:new Date().toISOString()});
       data.accessRoles=roles;
-      data.roleVersion='ulmipoint-v91';
+      data.roleVersion='ulmipoint-v-basic';
       data.activity=[{
         id:'act_user_'+Date.now(),
         at:new Date().toISOString(),
         action:'Benutzer/Rechte gespeichert',
         user:{id:'org-admin-password',email:'org-admin-password'},
         area:'Organisation',
-        note:user.email+' · '+user.role+' · '+(authResult.message||'')
+        note:user.email+' · '+user.role
       }].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
       const saved=await saveStore(data);
-      return send(res,200,{ok:true,message:(authResult.message||'Benutzer gespeichert.')+' Zugriff gespeichert.',users:publicUsers(data),updatedAt:saved.updated_at||new Date().toISOString()});
-    }
-
-
-
-
-
-    if(mode==='importEmployees'){
-      const fallback={
-        siteId:safe(body.siteId||''),
-        groupKey:safe(body.groupKey||''),
-        groupName:safe(body.groupName||''),
-        defaultPassword:safe(body.defaultPassword||''),
-        createLogins:body.createLogins===true,
-        mustChangePassword:body.mustChangePassword!==false
-      };
-      const rows=Array.isArray(body.rows)?body.rows:[];
-      if(!rows.length) throw new Error('Keine Mitarbeiter-Zeilen übergeben.');
-      const imported=rows.map(r=>normalizeImportedEmployee(r,fallback)).filter(e=>e.id&&e.name&&e.siteId&&e.groupKey);
-      if(!imported.length) throw new Error('Keine gültigen Mitarbeiter-Zeilen gefunden. Name/Kürzel, Haus und Gruppe fehlen.');
-      const roles=roleStore(data);
-      let authCreated=0, authSkipped=0, accessSaved=0;
-      const byGroup=new Map();
-      for(const emp of imported){
-        const k=emp.siteId+'|'+emp.groupKey+'|'+(emp.groupName||emp.groupKey);
-        if(!byGroup.has(k))byGroup.set(k,[]);
-        byGroup.get(k).push(emp);
-        // CSV importiert Mitarbeitende in die Gruppe und speichert Wunsch-Codes in der Gruppenliste.
-        // Benutzer-/Login-Rechte werden nur angelegt, wenn createLogins ausdrücklich aktiviert ist.
-        if(emp.email && emp.createLogin){
-          const prev=roles[emp.email] && typeof roles[emp.email]==='object' ? roles[emp.email] : {};
-          const user={email:emp.email,name:emp.name,role:'employee',scope:'groups',siteIds:[emp.siteId],groupKeys:[emp.groupKey],employeeId:emp.id,employeeName:emp.name,createdAt:safe(prev.createdAt)||new Date().toISOString(),updatedAt:new Date().toISOString(),source:'csv-import',mustChangePassword:emp.password ? emp.mustChangePassword : (prev.mustChangePassword===true)};
-          if(emp.password){
-            const authResult=await createSupabaseUser(user, emp.password);
-            if(authResult.created || authResult.updated)authCreated++; else authSkipped++;
-            roles[emp.email]=Object.assign({},prev,user,{auth:safe(authResult.userId)||safe(prev.auth||''),passwordChangedAt:user.mustChangePassword?'':safe(prev.passwordChangedAt||''),wishCode:emp.wishCode||safe(prev.wishCode||'')});
-          }else{
-            authSkipped++;
-            roles[emp.email]=Object.assign({},prev,user,{auth:safe(prev.auth||''),wishCode:emp.wishCode||safe(prev.wishCode||'')});
-          }
-          accessSaved++;
-        }
-      }
-      byGroup.forEach((list,key)=>{
-        const [siteId,groupKey,groupName]=key.split('|');
-        const box=ensureGroupState(data,siteId,groupKey,groupName);
-        list.forEach(emp=>mergePlanEmployee(box.state.employees, emp));
-        box.state.savedAt=new Date().toISOString();
-        data.items[box.key]=JSON.stringify(box.state);
-      });
-      data.accessRoles=roles;
-      data.roleVersion='ulmipoint-v96';
-      data.activity=[{
-        id:'act_employee_csv_'+Date.now(),
-        at:new Date().toISOString(),
-        action:'Mitarbeiter per CSV importiert',
-        user:{id:'org-admin-password',email:'org-admin-password'},
-        area:'Organisation',
-        count:imported.length,
-        note:'Gruppen: '+byGroup.size+' · optionale Logins: '+authCreated+' · Rechte: '+accessSaved
-      }].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
-      const saved=await saveStore(data);
-      return send(res,200,{ok:true,message:'CSV importiert: '+imported.length+' Mitarbeitende. Gruppen aktualisiert: '+byGroup.size+'. Optionale Login-Konten/Rechte: '+accessSaved+'.',users:publicUsers(data),imported:imported.length,groups:byGroup.size,authCreated,authSkipped,updatedAt:saved.updated_at||new Date().toISOString()});
+      return send(res,200,{ok:true,message:'Benutzer/Rechte gespeichert.',users:publicUsers(data),updatedAt:saved.updated_at||new Date().toISOString()});
     }
 
     if(mode==='deleteUser'){
@@ -395,15 +131,6 @@ module.exports=async function handler(req,res){
       const roles=roleStore(data);
       delete roles[email];
       data.accessRoles=roles;
-      data.roleVersion='ulmipoint-v91';
-      data.activity=[{
-        id:'act_user_delete_'+Date.now(),
-        at:new Date().toISOString(),
-        action:'Benutzerrecht entfernt',
-        user:{id:'org-admin-password',email:'org-admin-password'},
-        area:'Organisation',
-        note:email
-      }].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
       const saved=await saveStore(data);
       return send(res,200,{ok:true,users:publicUsers(data),updatedAt:saved.updated_at||new Date().toISOString()});
     }

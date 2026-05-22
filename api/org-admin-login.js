@@ -1,4 +1,4 @@
-const {allow,send,readBody,fetchStore,saveStore}=require('./_wishlib');
+const {allow,send,readBody,fetchStore,saveStore}=require('../lib/_wishlib');
 
 function safe(v){return String(v||'').trim();}
 function constantTimeEqual(a,b){

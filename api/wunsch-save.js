@@ -1,4 +1,4 @@
-const {allow,send,readBody,fetchStore,saveStore,findEmployee,publicPayload,setWishes}=require('./_wishlib');
+const {allow,send,readBody,fetchStore,saveStore,findEmployee,publicPayload,setWishes}=require('../lib/_wishlib');
 module.exports=async function handler(req,res){
   try{
     if(allow(req,res))return;

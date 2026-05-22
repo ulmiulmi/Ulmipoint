@@ -1,5 +1,5 @@
-const {allow,send,readBody,fetchStore,saveStore}=require('./_wishlib');
-const {BASEL_STADT_DEFAULT_RULESET, baselStadtHolidays, isBaselStadtHoliday, isSunday}=require('./_timeClockRules');
+const {allow,send,readBody,fetchStore,saveStore}=require('../lib/_wishlib');
+const {BASEL_STADT_DEFAULT_RULESET, baselStadtHolidays, isBaselStadtHoliday, isSunday}=require('../lib/_timeClockRules');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.ULMIPOINT_SUPABASE_URL || process.env.POLYPOINT_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY;
