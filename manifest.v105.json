@@ -1,0 +1,24 @@
+{
+  "paket": "ulmipoint-v105-speicherlogik-unterbau",
+  "dateien": [
+    "api/group.js",
+    "api/events.js",
+    "lib/_group-section.js",
+    "vercel.json",
+    "README_V105.md"
+  ],
+  "urls": [
+    "/api/events",
+    "/api/group-state",
+    "/api/group-employees",
+    "/api/group-plan",
+    "/api/group-wishes"
+  ],
+  "vercel_hobby_kompatibel": true,
+  "nicht_angefasst": [
+    "organisation-admin.html",
+    "api/org-structure.js",
+    "planer.html",
+    "api/org-users.js"
+  ]
+}
