@@ -228,6 +228,8 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   let employeeCsvPreviewRows=[];
   let orgAdminTokenMemory='';
   let orgAdminPasswordMemory='';
+  let orgAdminReady=false;
+  let organisationLoadedOnce=false;
   const $=id=>document.getElementById(id);
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const slug=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'default';
@@ -320,7 +322,8 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
     return data;
   }
   function lockStatus(t,k=''){const el=$('orgAdminLoginStatus'); if(el){el.textContent=t; el.className='notice'+(k?' '+k:'');}}
-  function unlockOrgAdmin(){const el=$('orgLock'); if(el)el.style.display='none';}
+  function setSaveEnabled(){const b=$('saveBtn'); if(b){b.disabled=!orgAdminReady; b.title=orgAdminReady?'':'Zuerst Admin-Zugriff entsperren';}}
+  function unlockOrgAdmin(){const el=$('orgLock'); if(el)el.style.display='none'; orgAdminReady=true; setSaveEnabled();}
   async function orgAdminLogin(){
     const pw=$('orgAdminPassword').value;
     lockStatus('Admin-Zugriff wird geprüft …');
@@ -709,28 +712,37 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   window.__orgAddDayUnit=si=>{syncFromInputs(); const s=org.sites[si]; if(!s)return; s.units=s.units||[]; if(realUnits(s).length>=4){status('Pro Haus sind maximal 4 Gruppen/Räume vorgesehen.','bad'); return;} s.units.push(defaultUnit(s,'tageszentrum')); render(); $('edit-'+si)?.classList.add('show')};
   window.__orgRemoveUnit=(si,ui)=>{syncFromInputs(); if(org.sites[si])org.sites[si].units.splice(ui,1); render();};
   window.__orgRemoveSite=si=>{syncFromInputs(); if(confirm('Standort wirklich löschen?')){org.sites.splice(si,1); render();}};
-  async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); orgBaseRevision=String(data.orgRevision||data.updatedAt||''); if(data.empty || !data.organisationStructure){org=emptyOrganisation(); render(); status('Server enthält aktuell keine gespeicherten Häuser. Bitte Haus hinzufügen und danach Speichern klicken. Es wurde nichts automatisch mit Haus 1 repariert oder überschrieben.','warn'); return;} org=mergeWithDefaultOrganisation(data.organisationStructure); orgBaseRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||org.updatedAt||''); render(); status('Organisation geladen. Serverstand: '+(orgBaseRevision||'ohne Revision')+'.','ok');}catch(e){org=emptyOrganisation(); render(); status('Server konnte nicht laden: '+e.message+' — keine automatische Reparatur ausgeführt.','bad');}}
+  async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); organisationLoadedOnce=true; orgBaseRevision=String(data.orgRevision||data.updatedAt||''); if(data.empty || !data.organisationStructure){org=emptyOrganisation(); render(); status('Server enthält aktuell keine gespeicherten Häuser. Bitte Haus hinzufügen und danach Speichern klicken. Es wurde nichts automatisch mit Haus 1 repariert oder überschrieben.','warn'); return;} org=mergeWithDefaultOrganisation(data.organisationStructure); orgBaseRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||org.updatedAt||''); render(); status('Organisation geladen. Serverstand: '+(orgBaseRevision||'ohne Revision')+'.','ok');}catch(e){organisationLoadedOnce=false; render(); status('Server konnte nicht laden: '+e.message+' — NICHT speichern, zuerst neu laden. Der sichtbare Formularstand wurde nicht als Serverstand bestätigt.','bad');}}
   async function performSave(saveOptions){
     saveOptions=saveOptions||{};
-    const expectedIds=(org.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
-    const data=await api(Object.assign({mode:'save',organisationStructure:org,baseOrgRevision:orgBaseRevision}, saveOptions));
-    org=mergeWithDefaultOrganisation(data.organisationStructure||org);
-    orgBaseRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||org.updatedAt||orgBaseRevision||'');
-    saveOrgDraft(data.updatedAt);
+    if(!orgAdminReady){throw new Error('Zuerst Admin-Zugriff entsperren. Ohne Admin-Bestätigung wird nicht gespeichert.');}
+    if(!organisationLoadedOnce){throw new Error('Organisation wurde noch nicht vom Server geladen. Bitte zuerst „Laden“ drücken.');}
+    const pendingOrg=JSON.parse(JSON.stringify(mergeWithDefaultOrganisation(org)));
+    const expectedIds=(pendingOrg.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
+    if(!expectedIds.length){throw new Error('Keine Standorte zum Speichern. Es wurde nichts überschrieben.');}
+    const data=await api(Object.assign({mode:'save',organisationStructure:pendingOrg,baseOrgRevision:orgBaseRevision}, saveOptions));
+    const nextRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||orgBaseRevision||'');
     const verify=await api({mode:'load',verifyAfterSave:Date.now()});
-    orgBaseRevision=String(verify.orgRevision||verify.organisationStructure?.revisionId||verify.updatedAt||orgBaseRevision||'');
     const serverOrg=mergeWithDefaultOrganisation(verify.organisationStructure||{});
     const savedIds=(serverOrg.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
     const missing=expectedIds.filter(id=>!savedIds.includes(id));
     if(missing.length){
-      org=serverOrg; render();
-      throw new Error('Server-Bestätigung fehlt für: '+missing.join(', '));
+      org=pendingOrg;
+      render();
+      orgBaseRevision=nextRevision || orgBaseRevision;
+      throw new Error('NICHT gespeichert – der Server hat diese Standorte nicht bestätigt: '+missing.join(', ')+'. Bitte Seite nicht wechseln.');
     }
-    org=serverOrg; render();
+    org=serverOrg;
+    orgBaseRevision=String(verify.orgRevision||verify.organisationStructure?.revisionId||verify.updatedAt||nextRevision||orgBaseRevision||'');
+    saveOrgDraft(verify.updatedAt||data.updatedAt);
+    render();
     status('Organisation gespeichert und vom Server bestätigt. Standorte: '+savedIds.length+'.','ok');
   }
   async function save(){
     syncFromInputs(); cleanupAutoUnits(); org=mergeWithDefaultOrganisation(org);
+    if(!orgAdminReady){status('Nicht gespeichert: Bitte zuerst Admin-Zugriff entsperren.','bad'); return;}
+    if(!organisationLoadedOnce){status('Nicht gespeichert: Bitte zuerst Serverstand laden.','bad'); return;}
+    if(!Array.isArray(org.sites)||org.sites.length===0){status('Nicht gespeichert: Keine Standorte vorhanden. Leerer Stand wird nicht gespeichert.','bad'); return;}
     status('Organisation wird gespeichert …');
     try{
       await performSave({});
@@ -745,7 +757,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
       status('Server-Speichern fehlgeschlagen: '+e.message+' — der Stand wurde NICHT auf Supabase gespeichert. Bitte diese Meldung nicht ignorieren.','bad');
     }
   }
-  function addSite(type){syncFromInputs(); org.sites=org.sites||[]; const site=defaultSite(type); org.sites.push(site); render(); status(typeLabel(site.type)+' erstellt: '+site.name+'. Jetzt Name/Bereiche prüfen und Speichern klicken, damit es dauerhaft auf dem Server bleibt.','warn');}
+  function addSite(type){syncFromInputs(); if(!organisationLoadedOnce){status('Bitte zuerst Serverstand laden, bevor du ein Haus erstellst.','bad'); return;} org.sites=org.sites||[]; const site=defaultSite(type); org.sites.push(site); render(); status(typeLabel(site.type)+' erstellt: '+site.name+'. Jetzt Name/Bereiche prüfen und Speichern klicken, damit es dauerhaft auf dem Server bleibt.','warn');}
   window.__orgAddSiteQuick=addSite;
   ['newHouseBtn','newHouseBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('wohnheim');}); ['newDayBtn','newDayBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('tageszentrum');}); ['newOtherBtn','newOtherBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('sonstiges');});
   $('reloadUsersBtn').onclick=()=>loadUsers(true); $('saveUserBtn').onclick=()=>saveUserFromForm(); $('clearUserFormBtn').onclick=()=>clearUserForm(); $('userSite').onchange=renderUserGroupChecks; $('userRole').onchange=renderUserGroupChecks;
@@ -758,6 +770,7 @@ button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button
   $('loadBtn').onclick=()=>load().catch(e=>status('Fehler: '+e.message,'bad')); $('saveBtn').onclick=()=>save().catch(e=>status('Fehler: '+e.message,'bad'));
   $('orgName').oninput=syncBasics; $('payrollProfile').oninput=syncBasics;
   render();
+  setSaveEnabled();
   const loginBtn=$('orgAdminLoginBtn');
   if(loginBtn) loginBtn.onclick=()=>orgAdminLogin().catch(e=>lockStatus('Fehler: '+e.message,'bad'));
   const pwInput=$('orgAdminPassword');
