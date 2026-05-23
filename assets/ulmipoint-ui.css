@@ -1,4 +1,4 @@
-/* ULMIPOINT unified app style v69 */
+/* ULMIPOINT unified app style v69 + v118 system split */
 :root{
   --ui-bg:#f4f1e9;
   --ui-bg-2:#eef5fb;
@@ -24,9 +24,7 @@ html,body{
   color:var(--ui-text) !important;
   font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif !important;
 }
-.app,.wrap,main,.main{
-  max-width:1600px;
-}
+.app,.wrap,main,.main{max-width:1600px;}
 .hero,.head,.card,.panel,.lock-card,.notice,.site,.edit-panel,.fieldbox,.source,.today-card,.personal-plan,.plan-list,.tablewrap,.table-wrap,.monthbar,.house,.overview-hero,.overview-admin-card,.overview-card{
   border-radius:26px !important;
   border:1px solid var(--ui-line) !important;
@@ -42,124 +40,83 @@ html,body{
     var(--ui-card-solid) !important;
 }
 .hero::after,.overview-hero::after,.lock-card::after{
-  content:"";
-  position:absolute;
-  right:-40px;
-  bottom:-56px;
-  width:190px;
-  height:190px;
-  border-radius:50%;
-  background:rgba(148,163,184,.18);
-  pointer-events:none;
+  content:"";position:absolute;right:-40px;bottom:-56px;width:190px;height:190px;border-radius:50%;background:rgba(148,163,184,.18);pointer-events:none;
 }
-.card,.overview-card,.source,.site,.edit-panel,.today-card,.plan-list,.personal-plan,.tablewrap,.table-wrap{
-  position:relative;
-  overflow:hidden;
-}
-.card::after,.overview-card::after,.source::after,.site::after,.edit-panel::after,.today-card::after{
-  content:"";
-  position:absolute;
-  right:-34px;
-  top:-42px;
-  width:120px;
-  height:120px;
-  border-radius:50%;
-  background:rgba(148,163,184,.16);
-  pointer-events:none;
-}
+.card,.overview-card,.source,.site,.edit-panel,.today-card,.plan-list,.personal-plan,.tablewrap,.table-wrap{position:relative;overflow:hidden;}
+.card::after,.overview-card::after,.source::after,.site::after,.edit-panel::after,.today-card::after{content:"";position:absolute;right:-34px;top:-42px;width:120px;height:120px;border-radius:50%;background:rgba(148,163,184,.16);pointer-events:none;}
 .card > *,.overview-card > *,.source > *,.site > *,.edit-panel > *,.today-card > *{position:relative;z-index:1}
-h1,h2,h3,.title h1,.hero h1,.overview-hero h2{
-  letter-spacing:-.065em !important;
-  color:var(--ui-text) !important;
-}
-.eyebrow,.overview-eyebrow{
-  color:var(--ui-blue) !important;
-  font-weight:950 !important;
-  letter-spacing:.06em !important;
-}
-.mini,.muted,.overview-section-sub{
-  color:var(--ui-muted) !important;
-  font-weight:800 !important;
-}
-button,a.btn,.tab,.quick-tabs a,.overview-admin-card,.overview-card,.pill,.status-chip,.apk-download{
-  border-radius:999px !important;
-  font-weight:950 !important;
-}
-button,a.btn,.tab,.quick-tabs a,.overview-admin-card,.apk-download{
-  transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;
-}
-button:hover,a.btn:hover,.tab:hover,.quick-tabs a:hover,.overview-admin-card:hover,.overview-card:hover,.apk-download:hover{
-  transform:translateY(-1px);
-  box-shadow:0 10px 22px rgba(16,24,40,.10) !important;
-}
-button.primary,.btn.primary,.tab.active,.quick-tabs a.primary,.overview-card.is-primary{
-  background:var(--ui-blue) !important;
-  border-color:var(--ui-blue) !important;
-  color:#fff !important;
-}
-input,select,textarea{
-  border-radius:16px !important;
-  border:1px solid var(--ui-line) !important;
-  background:rgba(255,255,255,.93) !important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
-}
-.pill,.status-chip,.tag,.badge{
-  background:rgba(255,255,255,.72) !important;
-  border:1px solid var(--ui-line) !important;
-  color:#475467 !important;
-}
+h1,h2,h3,.title h1,.hero h1,.overview-hero h2{letter-spacing:-.065em !important;color:var(--ui-text) !important;}
+.eyebrow,.overview-eyebrow{color:var(--ui-blue) !important;font-weight:950 !important;letter-spacing:.06em !important;}
+.mini,.muted,.overview-section-sub{color:var(--ui-muted) !important;font-weight:800 !important;}
+button,a.btn,.tab,.quick-tabs a,.overview-admin-card,.overview-card,.pill,.status-chip,.apk-download{border-radius:999px !important;font-weight:950 !important;}
+button,a.btn,.tab,.quick-tabs a,.overview-admin-card,.apk-download{transition:transform .14s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;}
+button:hover,a.btn:hover,.tab:hover,.quick-tabs a:hover,.overview-admin-card:hover,.overview-card:hover,.apk-download:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(16,24,40,.10) !important;}
+button.primary,.btn.primary,.tab.active,.quick-tabs a.primary,.overview-card.is-primary{background:var(--ui-blue) !important;border-color:var(--ui-blue) !important;color:#fff !important;}
+input,select,textarea{border-radius:16px !important;border:1px solid var(--ui-line) !important;background:rgba(255,255,255,.93) !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);}
+.pill,.status-chip,.tag,.badge{background:rgba(255,255,255,.72) !important;border:1px solid var(--ui-line) !important;color:#475467 !important;}
 .pill.blue,.blue,.status-chip.blue{color:var(--ui-blue)!important;background:#edf5ff!important;border-color:#c7ddff!important}
 .pill.green,.green,.ok,.status-chip.green{color:var(--ui-green)!important;background:#eaf8f0!important;border-color:#bfe8d2!important}
 .pill.red,.red,.bad{color:var(--ui-red)!important;background:#fff0ec!important;border-color:#ffc6b9!important}
 .pill.yellow,.yellow,.warn{color:#9a6700!important;background:#fff7da!important;border-color:#f5df90!important}
 .pill.brown,.brown{color:#7c2d12!important;background:#fff4ed!important;border-color:#fed7aa!important}
-.table-wrap table,.tablewrap table,table{
-  border-collapse:separate !important;
-  border-spacing:0 !important;
+.table-wrap table,.tablewrap table,table{border-collapse:separate !important;border-spacing:0 !important;}
+th,td{border-color:rgba(148,163,184,.30) !important;} th{background:rgba(248,250,252,.85) !important;font-weight:950 !important;} tr:hover td{background:rgba(37,99,235,.035)}
+.overview-grid,.grid,.source-grid,.statgrid,.control-grid,.check-grid,.overview-admin-row{gap:14px !important;}
+.overview-card,.source,.stat,.role-card,.employee-row,.unit-row,.plan-row,.candidate,.groupbox,.fieldbox{border-radius:24px !important;border:1px solid var(--ui-line) !important;background:rgba(255,255,255,.82) !important;box-shadow:0 8px 18px rgba(16,24,40,.06) !important;}
+.overview-card{min-height:150px;padding:22px !important;}.overview-card-topline{height:5px !important;border-radius:999px !important;opacity:.95;}.overview-card .overview-icon,.overview-icon{box-shadow:0 10px 20px rgba(16,24,40,.10) !important;}.overview-card strong,.overview-card-title,.source strong,.site-title,.today-duty,.plan-duty{letter-spacing:-.04em;}.status-toast{border-radius:999px !important;box-shadow:var(--ui-shadow) !important;}
+@media(max-width:760px){.app,.wrap,main{padding:10px !important}.hero,.head{border-radius:22px !important;padding:14px !important}.card,.overview-card,.source{border-radius:22px !important}h1,.hero h1,.overview-hero h2{font-size:clamp(30px,10vw,48px) !important}}
+@media print{html,body{background:#fff!important}.hero,.card,.panel,.source,.tablewrap,.table-wrap{box-shadow:none!important;background:#fff!important}}
+
+/* v118: normaler Planer zeigt keine technische Serververwaltung mehr */
+#serverSyncBtn.server-btn,
+#serverSyncBtn{
+  font-size:0 !important;
+  background:#e7f7ef !important;
+  color:#0f8a5f !important;
+  border-color:#b7e4ca !important;
+  box-shadow:0 0 0 2px rgba(15,138,95,.10) !important;
 }
-th,td{
-  border-color:rgba(148,163,184,.30) !important;
-}
-th{
-  background:rgba(248,250,252,.85) !important;
+#serverSyncBtn::before{
+  content:"✓ Organisation verbunden";
+  font-size:12px !important;
   font-weight:950 !important;
 }
-tr:hover td{background:rgba(37,99,235,.035)}
-.overview-grid,.grid,.source-grid,.statgrid,.control-grid,.check-grid,.overview-admin-row{
-  gap:14px !important;
+#serverSyncBtn::after{content:"" !important;display:none !important;}
+#serverSyncModal .emp-modal{
+  width:min(760px,100%) !important;
 }
-.overview-card,.source,.stat,.role-card,.employee-row,.unit-row,.plan-row,.candidate,.groupbox,.fieldbox{
-  border-radius:24px !important;
-  border:1px solid var(--ui-line) !important;
-  background:rgba(255,255,255,.82) !important;
-  box-shadow:0 8px 18px rgba(16,24,40,.06) !important;
+#serverSyncModal #serverSyncTitle,
+#serverSyncModal .emp-modal > .mini,
+#serverSyncModal .emp-note,
+#serverSyncModal .server-grid,
+#serverSyncModal #serverSyncStatus{
+  display:none !important;
 }
-.overview-card{
-  min-height:150px;
-  padding:22px !important;
+#serverSyncModal .emp-modal::before{
+  content:"Organisation verbunden\A\AULMIPOINT ist dauerhaft mit der Organisation verbunden. Es müssen hier keine Supabase- oder Login-Daten eingegeben werden.\A\AArbeitsseiten speichern ihre eigenen Bereiche automatisch.\A\AGlobale Technik, Sicherungen, Speicherstände und Aktivität sind neu auf: /system-speicher.html";
+  display:block;
+  white-space:pre-wrap;
+  border:1px solid #b7e4ca;
+  background:#e7f7ef;
+  color:#0f8a5f;
+  border-radius:22px;
+  padding:16px;
+  font-size:14px;
+  line-height:1.42;
+  font-weight:850;
+  margin-bottom:12px;
 }
-.overview-card-topline{
-  height:5px !important;
-  border-radius:999px !important;
-  opacity:.95;
+#serverSyncModal .emp-modal::after{
+  content:"Für Admin: System & Speicher über die Startseite oder direkt über /system-speicher.html öffnen.";
+  display:block;
+  border:1px solid #c9dcff;
+  background:#f7fbff;
+  color:#175cd3;
+  border-radius:18px;
+  padding:12px;
+  font-size:12px;
+  font-weight:850;
+  margin-top:4px;
 }
-.overview-card .overview-icon,.overview-icon{
-  box-shadow:0 10px 20px rgba(16,24,40,.10) !important;
-}
-.overview-card strong,.overview-card-title,.source strong,.site-title,.today-duty,.plan-duty{
-  letter-spacing:-.04em;
-}
-.status-toast{
-  border-radius:999px !important;
-  box-shadow:var(--ui-shadow) !important;
-}
-@media(max-width:760px){
-  .app,.wrap,main{padding:10px !important}
-  .hero,.head{border-radius:22px !important;padding:14px !important}
-  .card,.overview-card,.source{border-radius:22px !important}
-  h1,.hero h1,.overview-hero h2{font-size:clamp(30px,10vw,48px) !important}
-}
-@media print{
-  html,body{background:#fff!important}
-  .hero,.card,.panel,.source,.tablewrap,.table-wrap{box-shadow:none!important;background:#fff!important}
-}
+#serverSyncModal .emp-modal-actions{justify-content:flex-end !important;}
+#serverSyncModal #serverSyncCloseBtn{display:inline-flex !important;}
