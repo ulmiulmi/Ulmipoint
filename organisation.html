@@ -1,6 +1,73 @@
 <!doctype html>
 <html lang="de">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Organisation</title>
-<script>location.replace('organisation-admin.html');</script></head>
-<body><p>Organisation wird geöffnet… <a href="organisation-admin.html">Organisation verwalten</a></p></body>
+<head>
+<script>
+(function(){
+  'use strict';
+  function safeParentStore(){try{if(window.parent&&window.parent!==window&&window.parent.__ULMIPOINT_MEMORY_STORAGE__)return window.parent.__ULMIPOINT_MEMORY_STORAGE__;}catch(_){ }return null;}
+  function makeVolatileStorage(name){const mem=Object.create(null);function keys(){return Object.keys(mem)}function changed(key){try{if(typeof window.__ULMIPOINT_STORAGE_CHANGED__==='function')window.__ULMIPOINT_STORAGE_CHANGED__(String(key||''));}catch(_){ }try{if(window.parent&&window.parent!==window&&typeof window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__==='function')window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__(String(key||''));}catch(_){ }}return{__volatile:true,__name:name||'ulmipoint-memory',getItem(key){key=String(key);return Object.prototype.hasOwnProperty.call(mem,key)?mem[key]:null},setItem(key,value){key=String(key);mem[key]=String(value);changed(key)},removeItem(key){key=String(key);if(Object.prototype.hasOwnProperty.call(mem,key)){delete mem[key];changed(key)}},clear(){keys().forEach(k=>delete mem[k]);changed('*')},key(index){return keys()[Number(index)]||null},get length(){return keys().length},__dump(){return Object.assign({},mem)},__load(items,replace){if(replace)this.clear();Object.entries(items||{}).forEach(([k,v])=>{mem[String(k)]=String(v??'')});changed('*')}};}
+  function shouldRemovePersistedKey(key){key=String(key||'');return /^(polypoint_|ulmipoint_|POLYPOINT_|ULMIPOINT_|sb-|supabase\.)/.test(key)||key.indexOf('supabase.auth.token')>=0;}
+  try{const real=window.localStorage;if(real&&!window.__ULMIPOINT_REAL_LOCAL_STORAGE__)window.__ULMIPOINT_REAL_LOCAL_STORAGE__=real;const doomed=[];if(real){for(let i=0;i<real.length;i++){const k=real.key(i);if(shouldRemovePersistedKey(k))doomed.push(k)}}doomed.forEach(k=>{try{real.removeItem(k)}catch(_){}});}catch(_){ }
+  const appStore=safeParentStore()||window.__ULMIPOINT_MEMORY_STORAGE__||makeVolatileStorage('ulmipoint-app');
+  const sessionStore=(function(){try{if(window.parent&&window.parent!==window&&window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__)return window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__;}catch(_){ }return window.__ULMIPOINT_MEMORY_SESSION_STORAGE__||makeVolatileStorage('ulmipoint-session');})();
+  window.__ULMIPOINT_MEMORY_STORAGE__=appStore;window.__ULMIPOINT_MEMORY_SESSION_STORAGE__=sessionStore;window.__ULMIPOINT_PERSISTENT_BROWSER_STORAGE_DISABLED__=true;
+  try{Object.defineProperty(window,'localStorage',{value:appStore,configurable:true});}catch(_){ }try{Object.defineProperty(window,'sessionStorage',{value:sessionStore,configurable:true});}catch(_){ }
+})();
+</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ULMIPOINT Organisation</title>
+<style>
+:root{--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--yellow:#9a6700;--red:#c73636;--shadow:0 12px 30px rgba(16,24,40,.08)}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 14% 10%,rgba(37,99,235,.10),transparent 30%),radial-gradient(circle at 86% 18%,rgba(243,155,47,.12),transparent 28%),linear-gradient(135deg,#f4f1e9,#fbfcff 62%,#eef5fb);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}.app{max-width:1180px;margin:0 auto;padding:18px}.hero,.card{background:rgba(255,255,255,.90);border:1px solid var(--line);border-radius:30px;padding:18px;box-shadow:var(--shadow)}.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start}.eyebrow{display:inline-flex;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:10px}h1{margin:0 0 8px;font-size:clamp(42px,8vw,78px);line-height:.9;letter-spacing:-.08em}h2{font-size:24px;letter-spacing:-.04em;margin:0}.lead,.mini{color:var(--muted);font-weight:850;line-height:1.4}.lead{font-size:15px;max-width:760px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px}.card{display:flex;flex-direction:column;gap:10px;min-height:220px}.icon{font-size:38px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}a.btn,button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:11px 14px;font-weight:950;cursor:pointer}.primary{background:var(--blue)!important;border-color:var(--blue)!important;color:#fff!important}.ok{background:#e7f7ef!important;border-color:#b7e4ca!important;color:var(--green)!important}.warn{background:#fff7e6!important;border-color:#f3d28f!important;color:var(--yellow)!important}.notice{margin-top:14px;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:12px;font-size:13px;font-weight:850}.pill{display:inline-flex;border:1px solid var(--line);background:#fbfcfe;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;color:#475467;margin:2px}.pill.ok{background:#e7f7ef;color:var(--green);border-color:#b7e4ca}.pill.warn{background:#fff7e6;color:var(--yellow);border-color:#f3d28f}@media(max-width:720px){.app{padding:10px}.hero{grid-template-columns:1fr;border-radius:0 0 26px 26px;margin:-10px -10px 0}h1{font-size:52px}.card{min-height:0}}
+</style>
+<link rel="stylesheet" href="assets/ulmipoint-ui.css?v=119">
+</head>
+<body>
+<div class="app">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">ULMIPOINT Verwaltung</div>
+      <h1>Organisation</h1>
+      <div class="lead">Hier liegt alles, was zur Organisation gehört. Die fachliche Verwaltung bleibt getrennt vom technischen Bereich, ist aber trotzdem unter Organisation erreichbar.</div>
+      <div class="notice" id="orgState">Organisation wird geprüft …</div>
+    </div>
+    <div class="actions"><a class="btn" href="index.html">Startseite</a></div>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <div class="icon">🏢</div>
+      <h2>Organisation verwalten</h2>
+      <div class="mini">Fachliche Verwaltung: Häuser, Gruppen, Bereiche, Mitarbeitende, Rollen, Rechte, Zuweisungen und Wunschfrist.</div>
+      <div><span class="pill ok">fachlich</span><span class="pill">Admin geschützt</span></div>
+      <div class="actions"><a class="btn ok" href="organisation-admin.html">Organisation verwalten</a></div>
+    </article>
+
+    <article class="card">
+      <div class="icon">🛠️</div>
+      <h2>System & Speicher</h2>
+      <div class="mini">Technische Verwaltung: Verbindung, Serverstatus, Speicherübersicht, Sicherungen, globale Aktivität und Diagnose.</div>
+      <div><span class="pill warn">technisch</span><span class="pill">geschützt</span></div>
+      <div class="actions"><a class="btn warn" href="system-speicher.html">System & Speicher öffnen</a></div>
+    </article>
+
+    <article class="card">
+      <div class="icon">📚</div>
+      <h2>Gruppen-Speicher prüfen</h2>
+      <div class="mini">Kontrollansicht pro Haus, Gruppe und Bereich: Daten vorhanden, Revision, Hash, zuletzt bearbeitet und Bearbeitungshistorie. Diese Seite schreibt nichts.</div>
+      <div><span class="pill">liest nur</span><span class="pill ok">gruppenbezogen</span></div>
+      <div class="actions"><a class="btn" href="gruppen-speicher.html?admin=1">Gruppen-Speicher prüfen</a></div>
+    </article>
+  </section>
+
+  <div class="notice">Startseite bleibt einfach. Technische Verwaltung erscheint nicht mehr als eigene Hauptkarte, sondern unter Organisation.</div>
+</div>
+<script>
+(function(){
+  async function fetchJson(url){const r=await fetch(url,{cache:'no-store'});const t=await r.text();let d={};try{d=t?JSON.parse(t):{};}catch(_){d={message:t};}if(!r.ok||d.ok===false)throw new Error(d.message||('HTTP '+r.status));return d;}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  fetchJson('/api/org-structure?ts='+Date.now()).then(d=>{const org=d.organisationStructure||{};const sites=Array.isArray(org.sites)?org.sites:[];document.getElementById('orgState').innerHTML='Organisation verbunden · '+esc(org.organisation?.name||org.name||'LIV – Leben in Vielfalt')+' · '+sites.length+' Standorte';}).catch(e=>{document.getElementById('orgState').textContent='Organisation konnte nicht geprüft werden: '+e.message;});
+})();
+</script>
+</body>
 </html>
