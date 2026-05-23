@@ -6,105 +6,25 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABAS
 function safe(v){return String(v||'').trim();}
 function normEmail(v){return safe(v).toLowerCase();}
 function slug(v){return safe(v).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'default';}
-function normalizeRole(v){v=safe(v).toLowerCase(); if(['admin','administrator','leitung'].includes(v))return 'admin'; if(['planner','planer','planung'].includes(v))return 'planner'; if(['employee','mitarbeiter','ma'].includes(v))return 'employee'; return v;}
+function normalizeRole(v){v=safe(v).toLowerCase(); if(['admin','administrator','leitung','verwaltung'].includes(v))return 'admin'; if(['planner','planer','planung'].includes(v))return 'planner'; if(['employee','mitarbeiter','ma'].includes(v))return 'employee'; return v;}
 function roleStore(data){const roles=(data&&typeof data==='object')?(data.accessRoles||data.roles||{}):{}; return roles&&typeof roles==='object'?roles:{};}
-function validOrgAdminSession(data,tok){
-  tok=safe(tok);
-  const sessions=data?.organisationAdmin?.sessions || {};
-  const s=sessions[tok];
-  if(!s) return false;
-  if(s.expiresAt && new Date(s.expiresAt).getTime() < Date.now()) return false;
-  return true;
-}
-
-function configuredOrgAdminPassword(data){
-  return safe(
-    process.env.ULMIPOINT_ORG_ADMIN_PASSWORD ||
-    process.env.ULMIPOINT_ADMIN_PASSWORD ||
-    process.env.ADMIN_PASSWORD ||
-    data?.organisationAdmin?.password ||
-    data?.adminPassword ||
-    ''
-  );
-}
-function constantTimeEqual(a,b){
-  a=String(a||''); b=String(b||'');
-  if(!a || !b || a.length!==b.length) return false;
-  let r=0;
-  for(let i=0;i<a.length;i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return r===0;
-}
-function validOrgAdminPassword(data,pw){
-  const configured=configuredOrgAdminPassword(data);
-  return !!configured && constantTimeEqual(safe(pw), configured);
-}
-function validOrgAdmin(data,body){
-  body=body||{};
-  return validOrgAdminSession(data, body.orgAdminToken) || validOrgAdminPassword(data, body.orgAdminPassword || body.adminPassword || body.password);
-}
-function orgAdminAccess(data){
-  return {
-    ok:true,
-    email:'org-admin',
-    role:'admin',
-    configured:Object.keys(roleStore(data)).length,
-    canManageOrganisation:true,
-    orgAdminOnly:true,
-    superAdmin:true
-  };
-}
-
-async function verifySupabaseUser(req){
-  const auth=safe(req.headers.authorization || req.headers.Authorization);
-  const token=auth.replace(/^Bearer\s+/i,'');
-  if(!token) throw new Error('Keine Server-Sitzung übergeben. Bitte im Hauptplaner über ☁️ Server einloggen.');
-  if(!SUPABASE_URL || !SERVICE_KEY) throw new Error('Server-Umgebung fehlt: SUPABASE_URL oder SERVICE KEY.');
-  const resp=await fetch(SUPABASE_URL + '/auth/v1/user', {method:'GET', headers:{'apikey':SERVICE_KEY,'Authorization':'Bearer '+token}});
-  const txt=await resp.text(); let user=null; try{user=txt?JSON.parse(txt):null;}catch(_){}
-  if(!resp.ok || !user || !user.id) throw new Error('Server-Sitzung ungültig oder abgelaufen. Bitte neu einloggen.');
-  return user;
-}
-function assertAdminAccess(data,user){
-  const email=normEmail(user.email);
-  const roles=roleStore(data);
-  const configured=Object.keys(roles).length;
-  if(!configured) return {ok:true,email,role:'transition',configured};
-  const entry=roles[email];
-  const role=normalizeRole(typeof entry==='string'?entry:entry?.role);
-  if(role==='admin' || role==='planner') return {ok:true,email,role,configured};
-  throw new Error('Keine Admin-/Planer-Rolle für '+(email||'diese Sitzung')+'.');
-}
 
 function defaultOrganisation(){
   return {
     version:'1.0',
     organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},
     payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',
-    sites:[
-      {
-        id:'haus_1',
-        name:'Haus 1',
-        type:'wohnheim',
-        canton:'BS',
-        active:true,
-        automaticFunctions:{nachtwache:true,pikett:true,hausdienstplan:true},
-        units:[
-          {id:'azoren',name:'Azoren',type:'wohngruppe',plannerKey:'azoren',active:true},
-          {id:'bali',name:'Bali',type:'wohngruppe',plannerKey:'bali',active:true},
-          {id:'capri',name:'Capri',type:'wohngruppe',plannerKey:'capri',active:false},
-          {id:'delos',name:'Delos',type:'wohngruppe',plannerKey:'delos',active:true}
-        ]
-      }
-    ],
+    sites:[],
+    dutyCatalog:[],
     createdAt:new Date().toISOString(),
     updatedAt:new Date().toISOString()
   };
 }
 function ensureOrg(data){
-  if(!data.organisationStructure || typeof data.organisationStructure!=='object'){
-    data.organisationStructure=defaultOrganisation();
-  }
+  if(!data.organisationStructure || typeof data.organisationStructure!=='object') data.organisationStructure=defaultOrganisation();
+  if(!data.organisationStructure.organisation || typeof data.organisationStructure.organisation!=='object') data.organisationStructure.organisation={id:'liv',name:'LIV – Leben in Vielfalt'};
   if(!Array.isArray(data.organisationStructure.sites)) data.organisationStructure.sites=[];
+  if(!Array.isArray(data.organisationStructure.dutyCatalog)) data.organisationStructure.dutyCatalog=[];
   return data.organisationStructure;
 }
 function defaultAutomaticFunctions(type){
@@ -114,176 +34,170 @@ function defaultAutomaticFunctions(type){
 }
 function sanitizeAutomaticFunctions(site,type){
   const def=defaultAutomaticFunctions(type);
-  const incoming=site && site.automaticFunctions && typeof site.automaticFunctions==='object' ? site.automaticFunctions : {};
+  const incoming=site&&site.automaticFunctions&&typeof site.automaticFunctions==='object'?site.automaticFunctions:{};
   return {
     nachtwache: incoming.nachtwache===undefined ? def.nachtwache : !!incoming.nachtwache,
     pikett: incoming.pikett===undefined ? def.pikett : !!incoming.pikett,
     hausdienstplan: incoming.hausdienstplan===undefined ? def.hausdienstplan : !!incoming.hausdienstplan
   };
 }
+function sanitizeUnit(unit){
+  unit=unit&&typeof unit==='object'?unit:{};
+  const name=safe(unit.name)||'Bereich';
+  const id=slug(unit.id||unit.plannerKey||name);
+  const type=safe(unit.type)||'bereich';
+  if(['pikett','hausdienstplan','nachtwache'].includes(type)) return null;
+  return {
+    id,
+    name,
+    type,
+    plannerKey:safe(unit.plannerKey)||id,
+    active:unit.active!==false
+  };
+}
 function sanitizeSite(site){
+  site=site&&typeof site==='object'?site:{};
   const name=safe(site.name)||'Standort';
   const id=slug(site.id||name);
   const type=safe(site.type)||'wohnheim';
-  const units=Array.isArray(site.units)
-    ? site.units.map(sanitizeUnit).filter(Boolean).filter(u=>!['pikett','hausdienstplan','nachtwache'].includes(u.type))
-    : [];
+  const units=Array.isArray(site.units)?site.units.map(sanitizeUnit).filter(Boolean):[];
   return {
-    id,name,type,canton:safe(site.canton)||'BS',active:site.active!==false,
+    id,
+    name,
+    type,
+    canton:safe(site.canton)||'BS',
+    active:site.active!==false,
     automaticFunctions:sanitizeAutomaticFunctions(site,type),
     units
   };
 }
-function sanitizeUnit(unit){
-  const name=safe(unit.name)||'Bereich';
-  const id=slug(unit.id||name);
-  let type=safe(unit.type)||'bereich';
-  if(type==='pikett' || type==='hausdienstplan' || type==='nachtwache') return null;
-  return {id,name,type,plannerKey:safe(unit.plannerKey)||id,active:unit.active!==false};
-}
-
-function isV106AutoGeneratedUnit(site,unit){
-  if(!site || !unit) return false;
-  const siteId=slug(site.id||site.name||'');
-  if(siteId==='haus_1' || siteId==='haus1') return false; // Haus 1 nicht anfassen.
-  const n=safe(unit.name);
-  const key=slug(unit.id||unit.plannerKey||unit.name||'');
-  const expected=['azoren','bali','capri','delos'];
-  const nameSlug=slug(n);
-  if(!expected.includes(nameSlug)) return false;
-  // Nur löschen, wenn der technische Schlüssel exakt nach dem v106-Muster aussieht.
-  // Beispiel: haus_2_azoren, haus_3_bali
-  return key===siteId+'_'+nameSlug || key===nameSlug;
-}
-function cleanupV106AutoGroups(org){
-  const result={removed:[],sites:0};
-  if(!org || !Array.isArray(org.sites)) return result;
-  org.sites.forEach(site=>{
-    if(!site || !Array.isArray(site.units)) return;
-    const before=site.units.length;
-    const kept=[];
-    site.units.forEach(unit=>{
-      if(isV106AutoGeneratedUnit(site,unit)){
-        result.removed.push({
-          siteId:site.id||'',
-          siteName:site.name||'',
-          unitId:unit.id||'',
-          plannerKey:unit.plannerKey||'',
-          unitName:unit.name||''
-        });
-      }else{
-        kept.push(unit);
-      }
-    });
-    site.units=kept;
-    if(before!==kept.length) result.sites++;
+function unitCountBySite(org){
+  const map={};
+  (org.sites||[]).forEach(site=>{
+    const id=slug(site.id||site.name||'');
+    map[id]=(Array.isArray(site.units)?site.units:[]).filter(u=>u&&!['pikett','hausdienstplan','nachtwache'].includes(String(u.type||''))).length;
   });
-  return result;
+  return map;
+}
+function deletedSites(before,after){
+  const a=new Set((after.sites||[]).map(s=>slug(s.id||s.name||'')));
+  return (before.sites||[]).filter(s=>!a.has(slug(s.id||s.name||''))).map(s=>s.name||s.id).filter(Boolean);
+}
+function reducedUnits(before,after){
+  const b=unitCountBySite(before), a=unitCountBySite(after);
+  return Object.keys(b).filter(k=>(a[k]||0)<b[k]).map(k=>({siteId:k,before:b[k],after:a[k]||0}));
+}
+function configuredOrgAdminPassword(data){
+  return safe(process.env.ULMIPOINT_ORG_ADMIN_PASSWORD || process.env.ULMIPOINT_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || data?.organisationAdmin?.password || data?.adminPassword || '');
+}
+function constantTimeEqual(a,b){
+  a=String(a||''); b=String(b||'');
+  if(!a || !b || a.length!==b.length) return false;
+  let r=0;
+  for(let i=0;i<a.length;i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r===0;
+}
+function validOrgAdminSession(data,tok){
+  tok=safe(tok);
+  const s=data?.organisationAdmin?.sessions?.[tok];
+  if(!s) return false;
+  if(s.expiresAt && new Date(s.expiresAt).getTime()<Date.now()) return false;
+  return true;
+}
+function validOrgAdmin(data,body){
+  body=body||{};
+  const pw=configuredOrgAdminPassword(data);
+  return validOrgAdminSession(data,body.orgAdminToken) || (!!pw && constantTimeEqual(safe(body.orgAdminPassword || body.adminPassword || body.password),pw));
+}
+async function verifySupabaseUser(req){
+  const auth=safe(req.headers.authorization || req.headers.Authorization);
+  const token=auth.replace(/^Bearer\s+/i,'');
+  if(!token) throw new Error('Keine Anmeldung übergeben. Bitte über Organisation mit E-Mail und Passwort einloggen.');
+  if(!SUPABASE_URL || !SERVICE_KEY) throw new Error('Server-Umgebung fehlt: SUPABASE_URL oder SERVICE KEY.');
+  const resp=await fetch(SUPABASE_URL + '/auth/v1/user',{method:'GET',headers:{apikey:SERVICE_KEY,Authorization:'Bearer '+token}});
+  const txt=await resp.text(); let user=null; try{user=txt?JSON.parse(txt):null;}catch(_){}
+  if(!resp.ok || !user || !user.id) throw new Error('Anmeldung ungültig oder abgelaufen. Bitte neu einloggen.');
+  return user;
+}
+function assertAdminOrPlanner(data,user){
+  const email=normEmail(user.email);
+  const roles=roleStore(data);
+  const configured=Object.keys(roles).length;
+  if(!configured) return {ok:true,email,role:'transition',configured};
+  const entry=roles[email];
+  const role=normalizeRole(typeof entry==='string'?entry:entry?.role);
+  if(role==='admin' || role==='planner') return {ok:true,email,role,configured};
+  throw new Error('Keine Admin-/Planer-Rolle für '+(email||'diese Anmeldung')+'.');
+}
+function orgAdminAccess(data){return {ok:true,email:'org-admin',role:'admin',configured:Object.keys(roleStore(data)).length,orgAdminOnly:true};}
+function mergePreservedOrgFields(next,previous){
+  // WICHTIG v126: Fachliche Organisations-Speicherung darf den zentralen Dienstkatalog nicht löschen.
+  next.dutyCatalog=Array.isArray(previous.dutyCatalog)?previous.dutyCatalog:[];
+  if(previous.dutyCatalogUpdatedAt) next.dutyCatalogUpdatedAt=previous.dutyCatalogUpdatedAt;
+  if(previous.dutyCatalogUpdatedBy) next.dutyCatalogUpdatedBy=previous.dutyCatalogUpdatedBy;
+  return next;
 }
 
 module.exports=async function handler(req,res){
-  if(allow(req,res))return;
-  if(req.method!=='POST' && req.method!=='GET')return send(res,405,{ok:false,message:'Nur GET oder POST erlaubt.'});
+  if(allow(req,res)) return;
+  if(req.method!=='GET' && req.method!=='POST') return send(res,405,{ok:false,message:'Nur GET oder POST erlaubt.'});
   try{
-    const body=req.method==='GET' ? {mode:'load'} : await readBody(req);
-    const mode=safe(body.mode||'load');
     const row=await fetchStore();
     const data=row.data||{};
+    const org=ensureOrg(data);
 
-    // v109: Planer/Haus-Startseite darf die reine Organisationsstruktur lesend laden.
-    // Speichern, Benutzer und Rechte bleiben weiterhin geschützt.
     if(req.method==='GET'){
-      const org=ensureOrg(data);
-      return send(res,200,{
-        ok:true,
-        mode:'load',
-        readOnly:true,
-        organisationStructure:org,
-        orgRevision:org.revisionId||org.updatedAt||row.updated_at||'',
-        updatedAt:row.updated_at||org.updatedAt||''
-      });
+      return send(res,200,{ok:true,mode:'load',readOnly:true,organisationStructure:org,orgRevision:org.revisionId||org.updatedAt||row.updated_at||'',updatedAt:row.updated_at||org.updatedAt||''});
     }
 
-    const orgAdminOk=validOrgAdmin(data, body);
-
-    let user=null;
-    let access=null;
-
+    const body=await readBody(req);
+    const mode=safe(body.mode||'load');
+    const orgAdminOk=validOrgAdmin(data,body);
+    let user=null, access=null;
     if(orgAdminOk){
       user={id:'org-admin',email:'org-admin'};
       access=orgAdminAccess(data);
     }else{
       user=await verifySupabaseUser(req);
-      access=assertAdminAccess(data,user);
+      access=assertAdminOrPlanner(data,user);
     }
 
-    const org=ensureOrg(data);
-
-    if(mode==='cleanupV106AutoGroups'){
-      if(!orgAdminOk){
-        return send(res,401,{ok:false,message:'Cleanup nur mit Admin-Passwort. Bitte Organisation neu freischalten.'});
-      }
-      const cleanup=cleanupV106AutoGroups(org);
-      org.updatedAt=new Date().toISOString();
-      data.organisationStructure=org;
-      data.activity=[{
-        id:'act_cleanup_v106_'+Date.now(),
-        at:new Date().toISOString(),
-        action:'v106 Auto-Gruppen bereinigt',
-        user:{id:user.id||'',name:user.email||'',email:user.email||''},
-        area:'Organisation',
-        note:cleanup.removed.length+' automatisch erzeugte Gruppen entfernt'
-      }].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
-      const saved=await saveStore(data);
-      return send(res,200,{ok:true,mode,cleanup,organisationStructure:org,updatedAt:saved.updated_at||org.updatedAt});
-    }
-
-    // Laden darf mit Admin-Passwort/Admin-Token ODER normaler Admin-/Planer-Sitzung erfolgen.
     if(mode==='load'){
-      return send(res,200,{ok:true,mode,organisationStructure:org,access,updatedAt:row.updated_at});
-    }
-
-    // Speichern nur mit Admin-Passwort/Admin-Token.
-    // Dadurch hängt die Organisation nicht mehr an einer abgelaufenen normalen Server-Sitzung.
-    if(!orgAdminOk){
-      return send(res,401,{ok:false,message:'Organisation speichern nur mit Admin-Passwort. Bitte Organisation neu freischalten.'});
+      return send(res,200,{ok:true,mode,organisationStructure:org,access,orgRevision:org.revisionId||org.updatedAt||row.updated_at||'',updatedAt:row.updated_at||org.updatedAt||''});
     }
 
     if(mode==='save'){
       const incoming=body.organisationStructure;
       if(!incoming || typeof incoming!=='object') throw new Error('Keine Organisationsstruktur übergeben.');
-
-      const next={
+      const next=mergePreservedOrgFields({
         version:'1.0',
-        organisation:{
-          id:slug(incoming.organisation?.id || incoming.organisation?.name || 'liv'),
-          name:safe(incoming.organisation?.name)||'LIV – Leben in Vielfalt'
-        },
+        organisation:{id:slug(incoming.organisation?.id || incoming.organisation?.name || 'liv'),name:safe(incoming.organisation?.name)||'LIV – Leben in Vielfalt'},
         payrollProfileDefault:safe(incoming.payrollProfileDefault)||'CH_BS_PERSONALRECHT_DEFAULT',
         sites:Array.isArray(incoming.sites)?incoming.sites.map(sanitizeSite):[],
         createdAt:org.createdAt||new Date().toISOString(),
         updatedAt:new Date().toISOString(),
-        updatedBy:{email:user.email||'',id:user.id||''}
-      };
+        revisionId:'org_'+Date.now().toString(36),
+        updatedBy:{email:user.email||'',id:user.id||'',role:access.role||''}
+      },org);
 
-      data.organisationStructure=next;
-
-      // Rechte nur ändern, wenn die Oberfläche sie ausdrücklich mitsendet.
-      if(incoming.accessRoles && typeof incoming.accessRoles==='object'){
-        data.accessRoles=incoming.accessRoles;
+      const currentSites=Array.isArray(org.sites)?org.sites:[];
+      if(currentSites.length>0 && next.sites.length===0 && !body.allowEmptyOrganisation){
+        return send(res,409,{ok:false,code:'EMPTY_ORGANISATION_BLOCKED',message:'Speichern blockiert: Der neue Stand enthält keine Häuser. Häuser wurden nicht überschrieben.'});
+      }
+      const removed=deletedSites(org,next);
+      if(removed.length && !body.allowSiteReduction && !body.destructiveConfirm){
+        return send(res,409,{ok:false,code:'SITE_DELETE_CONFIRM_REQUIRED',message:'Speichern blockiert: Es würden Standorte entfernt: '+removed.join(', ')+'. Häuser wurden nicht überschrieben.',removedSites:removed});
+      }
+      const reduced=reducedUnits(org,next);
+      if(reduced.length && !body.allowUnitReduction && !body.destructiveConfirm){
+        return send(res,409,{ok:false,code:'UNIT_DELETE_CONFIRM_REQUIRED',message:'Speichern blockiert: Es würden Gruppen/Bereiche entfernt. Häuser wurden nicht überschrieben.',reducedUnits:reduced});
       }
 
-      data.activity=[{
-        id:'act_org_'+Date.now(),
-        at:new Date().toISOString(),
-        action:'Organisation gespeichert',
-        user:{id:user.id||'',name:user.email||'',email:user.email||''},
-        area:'Organisation',
-        note:next.sites.length+' Standorte'
-      }].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
-
+      data.organisationStructure=next;
+      if(incoming.accessRoles && typeof incoming.accessRoles==='object') data.accessRoles=incoming.accessRoles;
+      data.activity=[{id:'act_org_'+Date.now(),at:new Date().toISOString(),action:'Organisation gespeichert',user:{id:user.id||'',name:user.email||'',email:user.email||''},area:'Organisation',note:next.sites.length+' Standorte · Dienstkatalog erhalten'}].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
       const saved=await saveStore(data);
-      return send(res,200,{ok:true,mode,organisationStructure:next,access,updatedAt:saved.updated_at||next.updatedAt});
+      return send(res,200,{ok:true,mode,organisationStructure:next,access,orgRevision:next.revisionId,updatedAt:saved.updated_at||next.updatedAt});
     }
 
     return send(res,400,{ok:false,message:'Unbekannter Modus.'});
