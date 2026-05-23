@@ -1,5 +1,8 @@
 const {allow,send,readBody,fetchStore,saveStore}=require('../lib/_wishlib');
 
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.ULMIPOINT_SUPABASE_URL || process.env.POLYPOINT_SUPABASE_URL;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY;
+
 function safe(v){return String(v||'').trim();}
 function normEmail(v){return safe(v).toLowerCase();}
 function slug(v){return safe(v).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'default';}
@@ -34,14 +37,36 @@ function validOrgAdminSession(data,tok){
   if(s.expiresAt && new Date(s.expiresAt).getTime()<Date.now()) return false;
   return true;
 }
-function assertOrgAdmin(data,body){
-  if(validOrgAdminSession(data,body.orgAdminToken)) return true;
-  if(validOrgAdminPassword(data,body.orgAdminPassword)) return true;
-  throw new Error('Admin-Zugriff fehlt oder ist abgelaufen.');
-}
 function roleStore(data){
   if(!data.accessRoles||typeof data.accessRoles!=='object') data.accessRoles={};
   return data.accessRoles;
+}
+async function verifySupabaseUser(req){
+  const auth=safe(req.headers.authorization || req.headers.Authorization);
+  const token=auth.replace(/^Bearer\s+/i,'');
+  if(!token) return null;
+  if(!SUPABASE_URL || !SERVICE_KEY) throw new Error('Server-Umgebung fehlt: SUPABASE_URL oder SERVICE KEY.');
+  const resp=await fetch(SUPABASE_URL + '/auth/v1/user', {method:'GET', headers:{apikey:SERVICE_KEY, Authorization:'Bearer '+token}});
+  const txt=await resp.text(); let user=null; try{user=txt?JSON.parse(txt):null;}catch(_){}
+  if(!resp.ok || !user || !user.id) throw new Error('Login ungültig oder abgelaufen. Bitte neu einloggen.');
+  return user;
+}
+function assertRoleAccess(data,user){
+  const email=normEmail(user?.email||'');
+  const roles=roleStore(data);
+  const count=Object.keys(roles).length;
+  if(!count) return {email,role:'transition',count};
+  const entry=roles[email];
+  const role=normalizeRole(typeof entry==='string'?entry:entry?.role);
+  if(role==='admin' || role==='planner') return {email,role,count};
+  throw new Error('Keine Admin-/Planer-Rolle für '+(email||'diese Anmeldung')+'.');
+}
+async function assertOrgAdmin(req,data,body){
+  if(validOrgAdminSession(data,body.orgAdminToken)) return {email:'org-admin',role:'admin',source:'org-admin-token'};
+  if(validOrgAdminPassword(data,body.orgAdminPassword)) return {email:'org-admin',role:'admin',source:'org-admin-password'};
+  const user=await verifySupabaseUser(req);
+  if(user) return Object.assign(assertRoleAccess(data,user),{source:'supabase'});
+  throw new Error('Admin-Zugriff fehlt oder ist abgelaufen.');
 }
 function publicUsers(data){
   const roles=roleStore(data);
@@ -99,10 +124,10 @@ module.exports=async function handler(req,res){
     const mode=safe(body.mode||'load');
     const row=await fetchStore();
     const data=row.data||{};
-    assertOrgAdmin(data,body);
+    const access=await assertOrgAdmin(req,data,body);
 
     if(mode==='load'){
-      return send(res,200,{ok:true,users:publicUsers(data),updatedAt:row.updated_at||''});
+      return send(res,200,{ok:true,users:publicUsers(data),access,updatedAt:row.updated_at||''});
     }
 
     if(mode==='saveUser'){
@@ -117,12 +142,12 @@ module.exports=async function handler(req,res){
         id:'act_user_'+Date.now(),
         at:new Date().toISOString(),
         action:'Benutzer/Rechte gespeichert',
-        user:{id:'org-admin-password',email:'org-admin-password'},
+        user:{id:access.source||'',email:access.email||''},
         area:'Organisation',
         note:user.email+' · '+user.role
       }].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
       const saved=await saveStore(data);
-      return send(res,200,{ok:true,message:'Benutzer/Rechte gespeichert.',users:publicUsers(data),updatedAt:saved.updated_at||new Date().toISOString()});
+      return send(res,200,{ok:true,message:'Benutzer/Rechte gespeichert.',users:publicUsers(data),access,updatedAt:saved.updated_at||new Date().toISOString()});
     }
 
     if(mode==='deleteUser'){
@@ -131,8 +156,9 @@ module.exports=async function handler(req,res){
       const roles=roleStore(data);
       delete roles[email];
       data.accessRoles=roles;
+      data.activity=[{id:'act_user_delete_'+Date.now(),at:new Date().toISOString(),action:'Benutzer/Rechte gelöscht',user:{id:access.source||'',email:access.email||''},area:'Organisation',note:email}].concat(Array.isArray(data.activity)?data.activity:[]).slice(0,80);
       const saved=await saveStore(data);
-      return send(res,200,{ok:true,users:publicUsers(data),updatedAt:saved.updated_at||new Date().toISOString()});
+      return send(res,200,{ok:true,users:publicUsers(data),access,updatedAt:saved.updated_at||new Date().toISOString()});
     }
 
     return send(res,400,{ok:false,message:'Unbekannter Modus.'});

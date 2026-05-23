@@ -27,6 +27,14 @@
       "destination": "/api/group?section=plan"
     },
     {
+      "source": "/api/group-duties.js",
+      "destination": "/api/group?section=duties"
+    },
+    {
+      "source": "/api/group-duties",
+      "destination": "/api/group?section=duties"
+    },
+    {
       "source": "/api/group-wishes.js",
       "destination": "/api/group?section=wishes"
     },
