@@ -217,10 +217,10 @@
 </head>
 <body>
 
-<div id="adminRoleGate" class="role-gate hidden" aria-hidden="true">
+<div id="adminRoleGate" class="role-gate" aria-hidden="false">
   <div class="role-card" role="dialog" aria-modal="true" aria-labelledby="adminRoleGateTitle">
-    <h2 id="adminRoleGateTitle">Planerbereich geschützt</h2>
-    <div class="mini">Der normale Dienstplaner ist nur für Admin/Planer gedacht. Mitarbeiter benutzen das Wunschportal.</div>
+    <h2 id="adminRoleGateTitle">Organisation-Login erforderlich</h2>
+    <div class="mini">Der Planer ist geschützt. Die Anmeldung läuft über dieselbe Organisation-Sitzung wie Organisation verwalten. Mitarbeitende benutzen das Wunschportal.</div>
     <div id="adminRoleGateStatus" class="notice">Rolle wird geprüft…</div>
     <div class="role-form">
       <label><span class="mini">E-Mail</span><input id="adminGateEmail" type="email" autocomplete="username" placeholder="name@example.ch"></label>
@@ -420,6 +420,39 @@
   const ORG_DRAFT_KEY = "ulmipoint_org_structure_draft_v1";
   const PLANNER_LAST_TARGET_KEY = "ulmipoint_planner_last_target_v1";
   const SERVER_TOKEN_KEY = "polypoint_server_session_v1";
+  const ORG_AUTH_HANDOFF_KEY = "ULMIPOINT_ORG_AUTH_V121";
+
+  function orgSessionFresh(s){
+    return !!(s && s.access_token && (!s.expires_at || s.expires_at > Date.now() + 30000));
+  }
+  function readOrgAuthHandoff(){
+    try{
+      const box = JSON.parse(window.name || '{}') || {};
+      const session = box[ORG_AUTH_HANDOFF_KEY] || null;
+      if(orgSessionFresh(session)){
+        localStorage.setItem(SERVER_TOKEN_KEY, JSON.stringify(session));
+        return session;
+      }
+    }catch(_){ }
+    return null;
+  }
+  function writeOrgAuthHandoff(session){
+    if(!orgSessionFresh(session)) return;
+    try{
+      const box = JSON.parse(window.name || '{}') || {};
+      box[ORG_AUTH_HANDOFF_KEY] = session;
+      window.name = JSON.stringify(box);
+    }catch(_){
+      try{ window.name = JSON.stringify({[ORG_AUTH_HANDOFF_KEY]:session}); }catch(__){ }
+    }
+  }
+  function clearOrgAuthHandoff(){
+    try{
+      const box = JSON.parse(window.name || '{}') || {};
+      delete box[ORG_AUTH_HANDOFF_KEY];
+      window.name = JSON.stringify(box);
+    }catch(_){ }
+  }
 
   function safeJsonParse(value){
     try{ return JSON.parse(value || "null"); }catch(_){ return null; }
@@ -871,9 +904,9 @@
   function serverSession(){
     try{
       const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}');
-      if(s && s.access_token && (!s.expires_at || s.expires_at > Date.now()+30000)) return s;
+      if(orgSessionFresh(s)) return s;
     }catch(_){}
-    return null;
+    return readOrgAuthHandoff();
   }
   function saveOrgDraft(org, updatedAt){ return !!(org && Array.isArray(org.sites)); }
   async function ensureHouseContextFromServer(){
@@ -953,8 +986,8 @@
     if(!btn) return;
     btn.classList.remove('server-connected','server-ready','server-error','server-dirty');
     if(state) btn.classList.add('server-' + state);
-    btn.textContent = state === 'connected' ? '🛟 Gruppen-Speicher ✓' : state === 'dirty' ? '🛟 Gruppen-Speicher •' : state === 'error' ? '🛟 Gruppen-Speicher !' : '🛟 Gruppen-Speicher';
-    btn.title = label || 'Speichern und Laden betrifft nur die aktuell geöffnete Gruppe.';
+    btn.textContent = state === 'connected' ? '☁️ Server ✓' : state === 'dirty' ? '☁️ Server •' : state === 'error' ? '☁️ Server !' : '☁️ Server';
+    btn.title = label || (state === 'connected' ? 'Server verbunden' : state === 'dirty' ? 'Lokale Änderungen noch nicht auf Server gespeichert' : state === 'error' ? 'Server-Verbindung prüfen' : 'Server bereit, bitte einloggen');
     btn.setAttribute('aria-label', btn.title);
   }
   function normalizeServerUrl(url){ return String(url || '').trim().replace(/\/+$/, ''); }
@@ -1044,8 +1077,11 @@
   function localStorageSnapshot(){ const items = collectUlmipointStorage(); return {items, hash: stableHashFromItems(items), count: Object.keys(items).length}; }
   function isServerSessionFresh(s){ return !!(s && s.access_token && (!s.expires_at || s.expires_at > Date.now() + 30000)); }
   function loadServerSession(){
-    try { const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY) || '{}'); if(s && (s.access_token || s.refresh_token)) return s; } catch(e){ console.warn(e); }
-    return null;
+    try {
+      const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY) || '{}');
+      if(s && (s.access_token || s.refresh_token)) return s;
+    } catch(e){ console.warn(e); }
+    return readOrgAuthHandoff();
   }
   function refreshServerLocalInfo(){
     const info = document.getElementById('serverLocalInfo');
@@ -1099,6 +1135,7 @@
   }
   function forgetServerConfig(){
     localStorage.removeItem(SERVER_TOKEN_KEY);
+    clearOrgAuthHandoff();
     localStorage.removeItem(SERVER_META_KEY);
     ['serverEmailInput','serverPasswordInput'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     const urlEl = document.getElementById('serverUrlInput'); if(urlEl) urlEl.value = SERVER_DEFAULT_URL || '';
@@ -1113,6 +1150,7 @@
     if(!userWithFallback.email && cfg?.email) userWithFallback.email = cfg.email;
     const session = {access_token:data.access_token, refresh_token:data.refresh_token, user:userWithFallback, expires_at:Date.now() + Math.max(60, (data.expires_in || 3600)) * 1000};
     localStorage.setItem(SERVER_TOKEN_KEY, JSON.stringify(session));
+    writeOrgAuthHandoff(session);
     if(cfg) localStorage.setItem(SERVER_CONFIG_KEY, JSON.stringify({url:cfg.url, anon:cfg.anon, store:cfg.store, email:cfg.email, savedAt:new Date().toISOString()}));
     setServerButtonState('connected','Server verbunden' + (session.user?.email ? ' · ' + session.user.email : ''));
     refreshServerSyncInfo();
@@ -1164,7 +1202,7 @@
       serverStatus(data?.user ? 'Registriert. Falls E-Mail-Bestätigung aktiv ist, bitte Mail bestätigen. Danach einloggen.' : 'Registrierung gesendet.', 'ok');
     } catch(e){ serverStatus('Registrierung nicht möglich: ' + e.message, 'bad'); }
   }
-  function serverLogout(){ localStorage.removeItem(SERVER_TOKEN_KEY); setServerButtonState('ready','Server bereit'); serverStatus('Abgemeldet.', 'ok'); refreshServerSyncInfo(); setAdminGate(false, '', ''); }
+  function serverLogout(){ localStorage.removeItem(SERVER_TOKEN_KEY); clearOrgAuthHandoff(); setServerButtonState('ready','Organisation-Login erforderlich'); serverStatus('Abgemeldet.', 'ok'); refreshServerSyncInfo(); setAdminGate(true, 'Abgemeldet. Bitte über Organisation-Login erneut anmelden.', 'warn'); }
   function countLocalEmergencyBackups(){
     let n = 0;
     for(let i=0;i<localStorage.length;i++){ if(/^polypoint_sicherung__/i.test(localStorage.key(i) || '')) n++; }
@@ -1332,9 +1370,7 @@
     info.allowed = accessAllowsPlanner(info, activeId || 'overview');
     return info;
   }
-  const PLANER_ROLE_GATE_DISABLED = true;
   function setAdminGate(show, msg='', kind=''){
-    if(PLANER_ROLE_GATE_DISABLED) show = false;
     const gate = document.getElementById('adminRoleGate');
     const status = document.getElementById('adminRoleGateStatus');
     if(!gate) return;
@@ -1394,20 +1430,20 @@
       const ge = document.getElementById('adminGateEmail'); if(ge && email) ge.value = email;
       setAccessContext(null);
       setPasswordChangeBox(false);
-      setAdminGate(false, '', '');
-      if(showStatus) setServerRoleInfo('Keine zusätzliche Planer-Anmeldung nötig. Organisation/Login läuft zentral.', 'ok');
-      return true;
+      setAdminGate(true, 'Bitte mit dem Organisation-Login anmelden. Dieselbe Sitzung wird danach für Organisation, Planer und Gruppen-Speicher übernommen. Erlaubt sind Admin, Planer, Hausleitung oder TKO für freigegebene Gruppen.', 'warn');
+      if(showStatus) setServerRoleInfo('Nicht eingeloggt. Planerbereich gesperrt.', 'bad');
+      return false;
     }
     try{
       const row = await fetchServerRow(cfg, session);
       const info = userRoleFromData(row?.data || {}, session);
       const label = info.email || serverUserLabel(serverUserFromSession(session));
       if(entryMustChangePassword(info)){
-        setAccessContext(info);
-        setAdminGate(false, '', '');
-        setPasswordChangeBox(false);
-        if(showStatus) setServerRoleInfo('Hinweis: Passwortwechsel nötig · ' + label, 'warn');
-        return true;
+        setAccessContext(null);
+        setAdminGate(true, 'Bitte zuerst das voreingestellte Start-Passwort ändern: ' + label, 'warn');
+        setPasswordChangeBox(true, 'Dieses Konto muss beim ersten Login ein eigenes Passwort setzen.');
+        if(showStatus) setServerRoleInfo('Passwortwechsel nötig · ' + label, 'bad');
+        return false;
       }
       setPasswordChangeBox(false);
       if(info.employee){
@@ -2495,7 +2531,7 @@
   refreshServerButtonFromSession();
   startServerAutosaveWatcher();
   startWishAutoSyncWatcher();
-  evaluateAdminAccess(false).then(ok => { refreshServerButtonFromSession(); if(ok){ scheduleWishAutoRefresh(); } }).catch(() => setServerButtonState('error','Server-Verbindung prüfen'));
+  evaluateAdminAccess(false).then(ok => { refreshServerButtonFromSession(); if(ok){ serverLoadPrimaryOnStart(); scheduleWishAutoRefresh(); } }).catch(() => setServerButtonState('error','Server-Verbindung prüfen'));
 
 })();
 </script>
