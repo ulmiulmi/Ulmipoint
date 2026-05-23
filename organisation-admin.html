@@ -4,796 +4,92 @@
 <script>
 (function(){
   'use strict';
-  // ULMIPOINT v63: App-Daten werden nicht mehr dauerhaft im Browser gespeichert.
-  // Erlaubt bleibt nur der Passwortmanager des Browsers über autocomplete="username/current-password".
-  function safeParentStore(){
-    try{
-      if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_STORAGE__){
-        return window.parent.__ULMIPOINT_MEMORY_STORAGE__;
-      }
-    }catch(_){ }
-    return null;
-  }
-  function makeVolatileStorage(name){
-    const mem = Object.create(null);
-    function keys(){ return Object.keys(mem); }
-    function changed(key){
-      try{ if(typeof window.__ULMIPOINT_STORAGE_CHANGED__ === 'function') window.__ULMIPOINT_STORAGE_CHANGED__(String(key||'')); }catch(_){ }
-      try{ if(window.parent && window.parent !== window && typeof window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__ === 'function') window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__(String(key||'')); }catch(_){ }
-    }
-    return {
-      __volatile:true,
-      __name:name||'ulmipoint-memory',
-      getItem(key){ key=String(key); return Object.prototype.hasOwnProperty.call(mem,key) ? mem[key] : null; },
-      setItem(key,value){ key=String(key); mem[key]=String(value); changed(key); },
-      removeItem(key){ key=String(key); if(Object.prototype.hasOwnProperty.call(mem,key)){ delete mem[key]; changed(key); } },
-      clear(){ keys().forEach(k=>delete mem[k]); changed('*'); },
-      key(index){ return keys()[Number(index)] || null; },
-      get length(){ return keys().length; },
-      __dump(){ return Object.assign({}, mem); },
-      __load(items, replace){ if(replace) this.clear(); Object.entries(items||{}).forEach(([k,v])=>{mem[String(k)]=String(v ?? '');}); changed('*'); }
-    };
-  }
-  function shouldRemovePersistedKey(key){
-    key=String(key||'');
-    return /^(polypoint_|ulmipoint_|POLYPOINT_|ULMIPOINT_|sb-|supabase\.)/.test(key) || key.indexOf('supabase.auth.token')>=0;
-  }
-  try{
-    const real = window.localStorage;
-    if(real && !window.__ULMIPOINT_REAL_LOCAL_STORAGE__){ window.__ULMIPOINT_REAL_LOCAL_STORAGE__ = real; }
-    const doomed=[];
-    if(real){ for(let i=0;i<real.length;i++){ const k=real.key(i); if(shouldRemovePersistedKey(k)) doomed.push(k); } }
-    doomed.forEach(k=>{ try{ real.removeItem(k); }catch(_){ } });
-  }catch(_){ }
-  const parentStore = safeParentStore();
-  const appStore = parentStore || window.__ULMIPOINT_MEMORY_STORAGE__ || makeVolatileStorage('ulmipoint-app');
-  const sessionStore = (function(){
-    try{ if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__) return window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__; }catch(_){ }
-    return window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ || makeVolatileStorage('ulmipoint-session');
-  })();
-  window.__ULMIPOINT_MEMORY_STORAGE__ = appStore;
-  window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ = sessionStore;
-  window.__ULMIPOINT_PERSISTENT_BROWSER_STORAGE_DISABLED__ = true;
-  try{ Object.defineProperty(window,'localStorage',{value:appStore, configurable:true}); }catch(_){ }
-  try{ Object.defineProperty(window,'sessionStorage',{value:sessionStore, configurable:true}); }catch(_){ }
+  function safeParentStore(){try{if(window.parent&&window.parent!==window&&window.parent.__ULMIPOINT_MEMORY_STORAGE__)return window.parent.__ULMIPOINT_MEMORY_STORAGE__;}catch(_){ }return null;}
+  function makeVolatileStorage(name){const mem=Object.create(null);function keys(){return Object.keys(mem)}function changed(key){try{if(typeof window.__ULMIPOINT_STORAGE_CHANGED__==='function')window.__ULMIPOINT_STORAGE_CHANGED__(String(key||''));}catch(_){ }try{if(window.parent&&window.parent!==window&&typeof window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__==='function')window.parent.__ULMIPOINT_CHILD_STORAGE_CHANGED__(String(key||''));}catch(_){ }}return{__volatile:true,__name:name||'ulmipoint-memory',getItem(key){key=String(key);return Object.prototype.hasOwnProperty.call(mem,key)?mem[key]:null},setItem(key,value){key=String(key);mem[key]=String(value);changed(key)},removeItem(key){key=String(key);if(Object.prototype.hasOwnProperty.call(mem,key)){delete mem[key];changed(key)}},clear(){keys().forEach(k=>delete mem[k]);changed('*')},key(index){return keys()[Number(index)]||null},get length(){return keys().length},__dump(){return Object.assign({},mem)},__load(items,replace){if(replace)this.clear();Object.entries(items||{}).forEach(([k,v])=>{mem[String(k)]=String(v??'')});changed('*')}};}
+  function shouldRemovePersistedKey(key){key=String(key||'');return /^(polypoint_|ulmipoint_|POLYPOINT_|ULMIPOINT_|sb-|supabase\.)/.test(key)||key.indexOf('supabase.auth.token')>=0;}
+  try{const real=window.localStorage;if(real&&!window.__ULMIPOINT_REAL_LOCAL_STORAGE__)window.__ULMIPOINT_REAL_LOCAL_STORAGE__=real;const doomed=[];if(real){for(let i=0;i<real.length;i++){const k=real.key(i);if(shouldRemovePersistedKey(k))doomed.push(k)}}doomed.forEach(k=>{try{real.removeItem(k)}catch(_){}});}catch(_){ }
+  const appStore=safeParentStore()||window.__ULMIPOINT_MEMORY_STORAGE__||makeVolatileStorage('ulmipoint-app');
+  const sessionStore=(function(){try{if(window.parent&&window.parent!==window&&window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__)return window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__;}catch(_){ }return window.__ULMIPOINT_MEMORY_SESSION_STORAGE__||makeVolatileStorage('ulmipoint-session');})();
+  window.__ULMIPOINT_MEMORY_STORAGE__=appStore;window.__ULMIPOINT_MEMORY_SESSION_STORAGE__=sessionStore;window.__ULMIPOINT_PERSISTENT_BROWSER_STORAGE_DISABLED__=true;
+  try{Object.defineProperty(window,'localStorage',{value:appStore,configurable:true});}catch(_){ }try{Object.defineProperty(window,'sessionStorage',{value:sessionStore,configurable:true});}catch(_){ }
 })();
 </script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ULMIPOINT Organisation verwalten</title>
 <style>
-:root{--bg:#f6f8fc;--card:#fff;--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--yellow:#9a6700;--shadow:0 12px 30px rgba(16,24,40,.08)}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
-.app{max-width:1320px;margin:0 auto;padding:14px}.hero,.card{background:#fff;border:1px solid var(--line);border-radius:26px;padding:16px;box-shadow:var(--shadow)}.card{margin-top:12px}
-.hero{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}.eyebrow{font-size:12px;font-weight:950;color:var(--blue);letter-spacing:.06em;text-transform:uppercase}
-h1{margin:3px 0 2px;font-size:clamp(34px,5vw,58px);line-height:.95;letter-spacing:-.07em}h2{margin:0 0 8px;font-size:22px;letter-spacing:-.04em}h3{margin:0;font-size:18px;letter-spacing:-.03em}.mini{font-size:12px;color:var(--muted);font-weight:850;line-height:1.35}
-.toolbar,.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
-input,select{width:100%;border:1px solid var(--line);border-radius:13px;background:#fff;padding:9px;font-weight:850;color:var(--text)}
-button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:950;cursor:pointer;color:var(--text)}button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(16,24,40,.08)}
-button.primary{background:var(--blue);border-color:var(--blue);color:#fff}button.ok{background:#e7f7ef;border-color:#b7e4ca;color:var(--green)}button.bad{background:#ffe7e7;border-color:#f2a3a3;color:#c73636}
-.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:10px;font-size:12px;font-weight:850;white-space:pre-wrap}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}.notice.warn{border-color:#fed7aa;background:#fff7ed;color:#9a6700}
-.site{background:#fff;border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
-.site-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.site-title{display:flex;gap:9px;align-items:flex-start}.icon{width:42px;height:42px;border-radius:16px;background:#eaf2ff;color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto}
-.pill{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:950;background:#eef2f7;color:#475467}.pill.green{background:#e7f7ef;color:#0f8a5f}.pill.yellow{background:#fff7e6;color:#9a6700}
-.units{display:flex;gap:7px;flex-wrap:wrap}.unit-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fbfcfe;border-radius:999px;padding:7px 9px;font-size:12px;font-weight:900}.unit-chip button{padding:2px 6px;font-size:10px;background:#fffafa;color:#c73636;border-color:#f2a3a3}
-.edit-panel{display:none;border:1px solid #c9dcff;background:#f7fbff;border-radius:18px;padding:10px}.edit-panel.show{display:block}.edit-grid{display:grid;grid-template-columns:1fr 150px 110px;gap:8px;margin-bottom:8px}.unit-row{display:grid;grid-template-columns:1fr 150px 150px auto auto;gap:8px;align-items:center;margin-top:6px}
-.empty{border:1px dashed #c9dcff;background:#f7fbff;border-radius:24px;padding:24px;text-align:center;color:#175cd3;font-weight:900}
-@media(max-width:760px){.app{padding:10px}.hero{border-radius:0 0 24px 24px;margin:-10px -10px 10px}.edit-grid,.unit-row{grid-template-columns:1fr}.site-head{display:block}.actions{margin-top:8px}}
-.user-panel{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:start}.user-form{background:#f7fbff;border:1px solid #c9dcff;border-radius:22px;padding:12px}.user-list{display:grid;gap:10px}.user-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:12px;box-shadow:0 8px 20px rgba(16,24,40,.06)}.user-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.user-role{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#eaf2ff;color:#175cd3}.user-role.admin{background:#fff4ed;color:#9a6700}.user-role.hausleitung{background:#e7f7ef;color:#0f8a5f}.user-role.tko{background:#f5f3ff;color:#6941c6}.user-scope{font-size:12px;color:var(--muted);font-weight:850;margin-top:4px}.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;margin-top:6px}.check-pill{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px;font-size:12px;font-weight:900}.check-pill input{width:auto}.site-access{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:7px}.site-access-row{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid var(--line);border-radius:14px;background:#fbfcfe;padding:8px}.site-access-empty{font-size:12px;color:var(--muted);font-weight:850}.pw-flag{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#fff4ed;color:#9a6700;margin-top:6px}.pw-flag.ok{background:#e7f7ef;color:#0f8a5f}.pw-option{margin:0 0 8px}.pw-option label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;background:#fff;padding:9px;font-size:12px;font-weight:900}.pw-option input{width:auto}
-
-.csv-import{background:#f7fbff;border:1px solid #c9dcff;border-radius:22px;padding:12px;margin-bottom:12px}.csv-preview{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;margin-top:10px}.csv-preview table{width:100%;border-collapse:collapse;font-size:12px}.csv-preview th,.csv-preview td{padding:7px;border-bottom:1px solid var(--line);text-align:left}.csv-preview th{position:sticky;top:0;background:#f7fbff}.csv-badge{display:inline-flex;border-radius:999px;padding:3px 7px;font-weight:950;font-size:11px}.csv-badge.good{background:#e7f7ef;color:#0f8a5f}.csv-badge.warn{background:#fff7ed;color:#9a6700}.csv-badge.bad{background:#ffe7e7;color:#c73636}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.form-row.one{grid-template-columns:1fr}@media(max-width:900px){.user-panel{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
-
-
-.lock{position:fixed;inset:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
-.lock-card{max-width:520px;width:100%;background:#fff;border:1px solid var(--line);border-radius:28px;padding:18px;box-shadow:var(--shadow)}
-.lock-card h1{font-size:42px;margin:0 0 10px}
-.auto-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0}
-.auto-toggle{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:9px;font-weight:950;font-size:12px}
-.auto-toggle input{width:auto}
+:root{--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--yellow:#9a6700;--shadow:0 12px 30px rgba(16,24,40,.08)}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 14% 10%,rgba(37,99,235,.10),transparent 30%),radial-gradient(circle at 86% 18%,rgba(243,155,47,.12),transparent 28%),linear-gradient(135deg,#f4f1e9,#fbfcff 62%,#eef5fb);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}body.auth-pending .app{display:none}.app{max-width:1320px;margin:0 auto;padding:14px}.hero,.card,.site{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:26px;padding:16px;box-shadow:var(--shadow)}.card{margin-top:12px}.hero{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}.eyebrow{display:inline-flex;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:10px}h1{margin:3px 0 2px;font-size:clamp(36px,6vw,64px);line-height:.92;letter-spacing:-.07em}h2{margin:0 0 8px;font-size:24px;letter-spacing:-.04em}h3{margin:0;font-size:18px;letter-spacing:-.03em}.mini{font-size:12px;color:var(--muted);font-weight:850;line-height:1.35}.toolbar,.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}.field-grid{display:grid;grid-template-columns:1.2fr .65fr .45fr;gap:8px;margin:8px 0}.unit-row{display:grid;grid-template-columns:1fr .7fr .7fr auto;gap:8px;align-items:center;margin-top:7px}input,select{width:100%;border:1px solid var(--line);border-radius:13px;background:#fff;padding:10px;font-weight:850;color:var(--text)}button,a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 14px;font-weight:950;cursor:pointer;color:var(--text)}button.primary,.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}button.ok,.btn.ok{background:#e7f7ef;border-color:#b7e4ca;color:var(--green)}button.bad,.btn.bad{background:#ffe7e7;border-color:#f2a3a3;color:#c73636}button.warn,.btn.warn{background:#fff7e6;border-color:#f3d28f;color:#9a6700}.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:11px;font-size:12px;font-weight:850;white-space:pre-wrap}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:#c73636}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:#0f8a5f}.notice.warn{border-color:#fed7aa;background:#fff7ed;color:#9a6700}.site{display:flex;flex-direction:column;gap:10px}.site-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.pill{display:inline-flex;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;background:#eef2f7;color:#475467}.pill.ok{background:#e7f7ef;color:#0f8a5f}.pill.warn{background:#fff7e6;color:#9a6700}.auth-lock{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 20% 10%,rgba(37,99,235,.14),transparent 30%),linear-gradient(135deg,#f4f1e9,#fbfcff 62%,#eef5fb)}.auth-card{width:min(560px,100%);background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:30px;box-shadow:0 26px 80px rgba(15,23,42,.22);padding:18px}.auth-card h1{font-size:clamp(34px,8vw,56px);line-height:.9;letter-spacing:-.07em;margin:0 0 8px}.auth-card label{display:block;margin-top:10px}.field-label{display:block;color:var(--muted);font-size:12px;font-weight:950;margin-bottom:4px}.auth-card input{width:100%;border:1px solid var(--line);border-radius:15px;background:#fff;padding:12px;font-weight:900;color:var(--text)}@media(max-width:760px){.app{padding:10px}.hero{border-radius:0 0 24px 24px;margin:-10px -10px 10px}.field-grid,.unit-row{grid-template-columns:1fr}.site-head{display:block}.actions{margin-top:8px}}
 </style>
-<link rel="stylesheet" href="assets/ulmipoint-ui.css?v=69">
+<link rel="stylesheet" href="assets/ulmipoint-ui.css?v=122">
 </head>
-<body>
-<div id="orgLock" class="lock">
-  <div class="lock-card">
-    <div class="eyebrow">ULMIPOINT Verwaltung</div>
-    <h1>Admin-Zugriff</h1>
-    <div class="mini">Organisation verwalten ist geschützt.</div>
-    <div style="margin-top:12px">
-      <label><span class="mini">Admin-Passwort</span><input id="orgAdminPassword" type="password" autocomplete="current-password" placeholder="Admin-Passwort"></label>
-    </div>
-    <div class="actions" style="margin-top:12px">
-      <button class="primary" id="orgAdminLoginBtn" type="button">Freischalten</button>
-      <button type="button" onclick="location.href='index.html'">Zurück</button>
-    </div>
-    <div id="orgAdminLoginStatus" class="notice" style="margin-top:12px">Bitte Admin-Passwort eingeben.</div>
+<body class="auth-pending">
+<div id="orgAuthLock" class="auth-lock">
+  <div class="auth-card">
+    <div class="eyebrow">ULMIPOINT Organisation</div>
+    <h1>Login</h1>
+    <div class="mini">Direkter Aufruf: bitte mit E-Mail und Passwort anmelden. Wenn du von Organisation kommst, wird die Anmeldung automatisch übernommen.</div>
+    <label><span class="field-label">E-Mail</span><input id="orgAuthEmail" type="email" autocomplete="username" placeholder="name@example.ch"></label>
+    <label><span class="field-label">Passwort</span><input id="orgAuthPassword" type="password" autocomplete="current-password" placeholder="Passwort"></label>
+    <div class="actions" style="margin-top:14px"><button class="primary" id="orgAuthLoginBtn" type="button">Einloggen</button><a class="btn" href="organisation.html">Zurück</a></div>
+    <div id="orgAuthStatus" class="notice warn" style="margin-top:12px">Bitte einloggen.</div>
   </div>
 </div>
 <div class="app">
   <section class="hero">
-    <div><div class="eyebrow">ULMIPOINT Verwaltung</div><h1>Organisation</h1></div>
-    <div class="toolbar">
-      <button class="primary" id="loadBtn">Laden</button>
-      <button class="ok" id="saveBtn">Speichern</button>
-      <button id="newHouseBtn">+ Haus</button>
-      <button id="newDayBtn">+ Tageszentrum</button>
-      <button id="newOtherBtn">+ Standort</button>
-    </div>
+    <div><div class="eyebrow">ULMIPOINT Verwaltung</div><h1>Organisation verwalten</h1><div class="mini" id="userState">Angemeldet.</div></div>
+    <div class="toolbar"><button class="primary" id="loadBtn">Laden</button><button class="ok" id="saveBtn">Speichern</button><button id="newHouseBtn">+ Haus</button><button id="newDayBtn">+ Tageszentrum</button><a class="btn" href="organisation.html">Organisation</a></div>
   </section>
   <section class="card">
     <h2>Grunddaten</h2>
-    <div class="grid">
-      <label><span class="mini">Name</span><input id="orgName" value="LIV – Leben in Vielfalt"></label>
-      <label><span class="mini">Standard-Regelwerk</span><input id="payrollProfile" value="CH_BS_PERSONALRECHT_DEFAULT"></label>
-    </div>
+    <div class="grid"><label><span class="mini">Name</span><input id="orgName" value="LIV – Leben in Vielfalt"></label><label><span class="mini">Standard-Regelwerk</span><input id="payrollProfile" value="CH_BS_PERSONALRECHT_DEFAULT"></label></div>
     <div id="status" class="notice" style="margin-top:10px">Noch nicht geladen.</div>
   </section>
   <section class="card">
-    <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
-      <h2 style="margin:0">Häuser und Bereiche</h2>
-      <span class="pill" id="countPill">0 Standorte</span>
-    </div>
-    <div class="toolbar" style="margin-bottom:12px">
-      <button type="button" class="primary" id="newHouseBtn2">+ Haus hinzufügen</button>
-      <button type="button" id="newDayBtn2">+ Tageszentrum hinzufügen</button>
-      <button type="button" id="newOtherBtn2">+ Sonstigen Standort hinzufügen</button>
-    </div>
+    <div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0">Häuser und Bereiche</h2><span class="pill" id="countPill">0 Standorte</span></div>
     <div id="sites" class="grid"></div>
-  </section>
-
-  <section class="card" id="employeeImportCard">
-    <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
-      <div>
-        <h2 style="margin:0">Mitarbeitende der Gruppe importieren</h2>
-        <div class="mini">CSV wird in die ausgewählte Gruppe übernommen. Wunsch-Code/E-Mail bleiben bei den Mitarbeitenden der Gruppe. Login-Konten werden nur erstellt, wenn du die Option ausdrücklich aktivierst.</div>
-      </div>
-    </div>
-    <div class="csv-import" id="employeeCsvImportBox">
-      <h3>CSV-Import</h3>
-      <div class="form-row" style="margin-top:10px">
-        <label><span class="mini">Haus / Standort</span><select id="csvImportSite"></select></label>
-        <label><span class="mini">Gruppe / Bereich</span><select id="csvImportGroup"></select></label>
-      </div>
-      <div class="form-row">
-        <label><span class="mini">Start-Passwort nur für optionale Login-Konten</span><input id="csvImportPassword" type="password" autocomplete="new-password" placeholder="leer lassen = kein Login erstellen"></label>
-        <label><span class="mini">Import-Art</span><select id="csvImportLoginMode"><option value="codes">Nur Mitarbeitende/Wunsch-Codes in die Gruppe importieren</option><option value="logins">Zusätzlich Mitarbeiter-Logins für Zeilen mit E-Mail erstellen/aktualisieren</option></select></label>
-      </div>
-      <div class="pw-option"><label><input id="csvImportMustChangePassword" type="checkbox" checked> Bei optionalen Logins Passwort beim ersten Login ändern lassen</label></div>
-      <input id="employeeCsvFile" type="file" accept=".csv,.txt,text/csv,text/plain" style="display:none">
-      <div class="actions">
-        <button type="button" class="primary" id="chooseEmployeeCsvBtn">CSV wählen</button>
-        <button type="button" class="ok" id="applyEmployeeCsvBtn">Vorschau übernehmen</button>
-        <button type="button" id="downloadEmployeeCsvTemplateBtn">Mitarbeiter-Vorlage</button>
-      </div>
-      <div id="employeeCsvStatus" class="notice" style="margin-top:10px">Noch keine CSV geladen.</div>
-      <div id="employeeCsvPreview" class="csv-preview" style="display:none"></div>
-    </div>
-  </section>
-
-  <section class="card" id="usersCard">
-    <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
-      <div>
-        <h2 style="margin:0">Benutzer und Rechte</h2>
-        <div class="mini">Start-Passwort wird an Supabase Auth übergeben. In ULMIPOINT wird nur Rolle, Zugriff und ob ein Passwortwechsel nötig ist gespeichert.</div>
-      </div>
-      <button type="button" id="reloadUsersBtn">Benutzer laden</button>
-    </div>
-    <div id="userStatus" class="notice" style="margin-bottom:10px">Benutzer noch nicht geladen.</div>
-    <div class="user-panel">
-      <div class="user-form">
-        <h3>Benutzer hinzufügen / ändern</h3>
-        <div class="form-row">
-          <label><span class="mini">Name</span><input id="userName" autocomplete="name" placeholder="Name"></label>
-          <label><span class="mini">E-Mail</span><input id="userEmail" autocomplete="username" placeholder="name@example.ch"></label>
-        </div>
-        <div class="form-row">
-          <label><span class="mini">Start-Passwort</span><input id="userPassword" type="password" autocomplete="new-password" placeholder="Voreingestelltes Passwort"></label>
-          <label><span class="mini">Rolle</span><select id="userRole">
-            <option value="admin">Admin / Verwaltung</option>
-            <option value="planner">Planer</option>
-            <option value="hausleitung">Hausleitung</option>
-            <option value="tko">TKO</option>
-            <option value="employee">Mitarbeiter</option>
-          </select></label>
-        </div>
-        <div class="pw-option">
-          <label><input id="userMustChangePassword" type="checkbox" checked> Benutzer muss Passwort beim ersten Login ändern</label>
-        </div>
-        <div class="form-row one">
-          <label><span class="mini">Haus / Standort</span><select id="userSite"></select></label>
-        </div>
-        <div class="mini">Gruppen-Zugriff</div>
-        <div id="userGroupChecks" class="check-grid"></div>
-        <div class="actions" style="margin-top:10px">
-          <button type="button" class="primary" id="saveUserBtn">Benutzer speichern</button>
-          <button type="button" id="clearUserFormBtn">Formular leeren</button>
-        </div>
-      </div>
-      <div>
-        <h3>Aktuelle Benutzer</h3>
-        <div id="userList" class="user-list"><div class="empty">Noch keine Benutzer geladen.</div></div>
-      </div>
-    </div>
   </section>
 </div>
 <script>
 (function(){
-  const SERVER_TOKEN_KEY='polypoint_server_session_v1';
-  const ORG_ADMIN_TOKEN_KEY='ulmipoint_org_admin_token_v1';
-  const ORG_DRAFT_KEY='ulmipoint_org_structure_draft_v1';
-  let org=defaultOrg();
-  let orgBaseRevision='';
-  let users=[];
-  let employeeCsvPreviewRows=[];
-  let orgAdminTokenMemory='';
-  let orgAdminPasswordMemory='';
-  let orgAdminReady=false;
-  let organisationLoadedOnce=false;
-  const $=id=>document.getElementById(id);
-  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const slug=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'default';
-  function defaultOrg(){return {version:'1.0',organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',sites:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};}
-  function mergeWithDefaultOrganisation(value){const def=defaultOrg(); const incoming=(value&&typeof value==='object')?value:{}; const sites=Array.isArray(incoming.sites)?incoming.sites:[]; return Object.assign({},def,incoming,{organisation:Object.assign({},def.organisation,incoming.organisation||{}),payrollProfileDefault:incoming.payrollProfileDefault||def.payrollProfileDefault,sites});}
-  function emptyOrganisation(){const def=defaultOrg(); return Object.assign({},def,{sites:[],updatedAt:new Date().toISOString()});}
-  function saveOrgDraft(updatedAt){ /* v72: keine Organisationsdaten lokal speichern. Nur Arbeitsspeicher während der offenen Seite. */ }
-  function status(t,k=''){const el=$('status');el.textContent=t;el.className='notice'+(k?' '+k:'')}
-  function destructiveStatus(message, removedInfo){
-    const el=$('status');
-    if(!el){return;}
-    el.className='notice bad';
-    el.innerHTML='';
-    const msg=document.createElement('div');
-    msg.textContent=message+' Deine Änderungen bleiben im Formular sichtbar. Es wurde noch nichts auf Supabase gespeichert.';
-    const hint=document.createElement('div');
-    hint.className='mini';
-    hint.style.marginTop='8px';
-    hint.textContent='Nur bestätigen, wenn du wirklich Standorte oder Gruppen entfernen willst. Sonst Abbrechen drücken und den Stand prüfen.';
-    const bar=document.createElement('div');
-    bar.className='actions';
-    bar.style.marginTop='10px';
-    const yes=document.createElement('button');
-    yes.type='button';
-    yes.className='bad';
-    yes.textContent='Ja, bewusst löschen und speichern';
-    yes.onclick=async()=>{
-      try{
-        status('Bewusst bestätigtes Löschen wird gespeichert …','warn');
-        await performSave({allowSiteReduction:true, allowUnitReduction:true, destructiveConfirm:true});
-      }catch(e){
-        status('Server-Speichern fehlgeschlagen: '+(e.message||e)+' — der Stand wurde NICHT auf Supabase gespeichert.','bad');
-      }
-    };
-    const no=document.createElement('button');
-    no.type='button';
-    no.textContent='Abbrechen – Änderungen behalten';
-    no.onclick=()=>status('Speichern abgebrochen. Deine Änderungen sind noch im Formular sichtbar. Nicht auf „Laden“ drücken, wenn du sie behalten willst.','warn');
-    bar.appendChild(yes); bar.appendChild(no);
-    el.appendChild(msg); el.appendChild(hint); el.appendChild(bar);
-  }
-  function icon(type){return type==='tageszentrum'?'☀️':type==='verwaltung'?'🗂️':type==='zentrale_dienste'?'⚙️':'🏠'}
-  function typeLabel(t){return ({wohnheim:'Haus',tageszentrum:'Tageszentrum',verwaltung:'Verwaltung',zentrale_dienste:'Zentrale Dienste',sonstiges:'Sonstiges'})[t]||t}
-  function defaultAutoFunctions(type){
-    return type==='wohnheim'
-      ? {nachtwache:true,pikett:true,hausdienstplan:true}
-      : {nachtwache:false,pikett:false,hausdienstplan:false};
-  }
-  function autoFunctions(site){
-    const def=defaultAutoFunctions(site&&site.type);
-    const a=(site&&site.automaticFunctions&&typeof site.automaticFunctions==='object')?site.automaticFunctions:{};
-    return {
-      nachtwache:a.nachtwache===undefined?def.nachtwache:!!a.nachtwache,
-      pikett:a.pikett===undefined?def.pikett:!!a.pikett,
-      hausdienstplan:a.hausdienstplan===undefined?def.hausdienstplan:!!a.hausdienstplan
-    };
-  }
-  function realUnits(site){return (site.units||[]).filter(u=>!['pikett','hausdienstplan','nachtwache'].includes(u.type))}
-  function autoFunctionChips(site){
-    const a=autoFunctions(site);
-    let out='';
-    if(a.nachtwache) out+='<span class="unit-chip">Nachtwache <small>automatisch</small></span>';
-    if(a.pikett) out+='<span class="unit-chip">Haus-Pikett <small>automatisch</small></span>';
-    if(a.hausdienstplan) out+='<span class="unit-chip">Haus-Dienstplan <small>automatisch</small></span>';
-    return out;
-  }
-  function cleanupAutoUnits(){
-    (org.sites||[]).forEach(site=>{
-      site.units=realUnits(site);
-      site.automaticFunctions=autoFunctions(site);
-      if(site.type==='wohnheim' && /^Wohnheim\s+\d+$/i.test(String(site.name||''))){
-        site.name=String(site.name).replace(/^Wohnheim/i,'Haus');
-        site.id=slug(site.name);
-      }
-    });
-  }
-  function session(){try{const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}'); if(s&&s.access_token&&(!s.expires_at||s.expires_at>Date.now()+30000))return s;}catch(_){} return null}
-  async function api(body){
-    const s=session();
-    const headers={'Content-Type':'application/json'};
-    if(s&&s.access_token)headers.Authorization='Bearer '+s.access_token;
-    const resp=await fetch('/api/org-structure',{method:'POST',headers,body:JSON.stringify(Object.assign({},body,{orgAdminToken:orgAdminTokenMemory || localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'', orgAdminPassword:orgAdminPasswordMemory||''}))});
-    const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
-    if(!resp.ok||data.ok===false){
-      const err=new Error(data.message||('HTTP '+resp.status));
-      err.data=data;
-      err.status=resp.status;
-      throw err;
-    }
-    return data;
-  }
-  function lockStatus(t,k=''){const el=$('orgAdminLoginStatus'); if(el){el.textContent=t; el.className='notice'+(k?' '+k:'');}}
-  function setSaveEnabled(){const b=$('saveBtn'); if(b){b.disabled=!orgAdminReady; b.title=orgAdminReady?'':'Zuerst Admin-Zugriff entsperren';}}
-  function unlockOrgAdmin(){const el=$('orgLock'); if(el)el.style.display='none'; orgAdminReady=true; setSaveEnabled();}
-  async function orgAdminLogin(){
-    const pw=$('orgAdminPassword').value;
-    lockStatus('Admin-Zugriff wird geprüft …');
-    const resp=await fetch('/api/org-admin-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'login',password:pw})});
-    const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
-    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
-    orgAdminTokenMemory=data.token||'';
-    orgAdminPasswordMemory=pw||'';
-    try{localStorage.setItem(ORG_ADMIN_TOKEN_KEY,data.token||'');}catch(_){}
-    unlockOrgAdmin();
-    status('Admin-Zugriff aktiv. Organisation kann gespeichert werden.','ok');
-    await load();
-    await loadUsers(false);
-  }
-  async function checkOrgAdmin(){
-    const tok=orgAdminTokenMemory || localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'';
-    if(!tok) return false;
-    try{
-      const resp=await fetch('/api/org-admin-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'check',token:tok})});
-      const data=await resp.json();
-      if(data.ok&&data.authenticated){orgAdminTokenMemory=tok; unlockOrgAdmin();return true;}
-    }catch(_){}
-    return false;
-  }
-  function nextHouseNumber(){
-    const nums=(org.sites||[])
-      .filter(s=>s.type==='wohnheim')
-      .map(s=>{
-        const m=String(s.name||'').match(/(?:haus|wohnheim)\s*(\d+)/i);
-        return m?Number(m[1]):0;
-      })
-      .filter(Boolean);
-    let n=1;
-    while(nums.includes(n)) n++;
-    return n;
-  }
-  function defaultSite(type){
-    type=type||'wohnheim';
-    let base='Haus', n=1;
-    if(type==='wohnheim'){ n=nextHouseNumber(); base='Haus'; }
-    else {
-      base=type==='tageszentrum'?'Tageszentrum':type==='zentrale_dienste'?'Zentrale Dienste':type==='verwaltung'?'Verwaltung':'Standort';
-      n=(org.sites||[]).filter(s=>s.type===type).length+1;
-    }
-    return {
-      id:slug(base+' '+n),
-      name:base+' '+n,
-      type,
-      canton:'BS',
-      active:true,
-      automaticFunctions:defaultAutoFunctions(type),
-      units:[]
-    };
-  }
-  function uniquePlannerKeyForUnit(site, baseName){
-    const siteKey = slug((site && (site.id || site.name)) || 'standort') || 'standort';
-    const unitKey = slug(baseName || 'gruppe') || 'gruppe';
-    const base = siteKey + '_' + unitKey;
-    const used = new Set((site && site.units || []).map(u => String(u.plannerKey || u.id || '').toLowerCase()).filter(Boolean));
-    let key = base;
-    let i = 2;
-    while(used.has(key.toLowerCase())){
-      key = base + '_' + i;
-      i++;
-    }
-    return key;
-  }
-  function defaultUnit(site,type='wohngruppe'){
-    const n=(site.units||[]).length+1;
-    const name = type==='tageszentrum' ? 'Team '+n : 'Gruppe '+n;
-    const id = uniquePlannerKeyForUnit(site,name);
-    return {id,name,type,plannerKey:id,active:true};
-  }
-  function syncBasics(){
-    org.organisation=org.organisation||{};
-    org.organisation.name=$('orgName').value.trim()||'LIV – Leben in Vielfalt';
-    org.organisation.id=slug(org.organisation.name);
-    org.payrollProfileDefault=$('payrollProfile').value.trim()||'CH_BS_PERSONALRECHT_DEFAULT';
-  }
-
-  function userStatus(t,k=''){const el=$('userStatus'); if(el){el.textContent=t; el.className='notice'+(k?' '+k:'');}}
-  function roleLabel(role){return ({admin:'Admin',planner:'Planer',hausleitung:'Hausleitung',tko:'TKO',employee:'Mitarbeiter'})[String(role||'').toLowerCase()]||String(role||'Benutzer');}
-  function selectedUserSite(){return $('userSite')?.value || ''}
-  function findSiteById(id){return (org.sites||[]).find(s=>String(s.id)===String(id))||null;}
-  function userMatchesSite(u,site){
-    if(!u||!site)return false;
-    const role=String(u.role||'').toLowerCase();
-    if(role==='admin'||role==='planner')return true;
-    const siteIds=Array.isArray(u.siteIds)?u.siteIds:[];
-    if(siteIds.includes(site.id))return true;
-    if(String(u.siteId||'')===String(site.id))return true;
-    return false;
-  }
-  function scopeText(u){
-    const role=String(u.role||'').toLowerCase();
-    if(role==='admin'||role==='planner')return 'alle Häuser und alle Gruppen';
-    const siteNames=(Array.isArray(u.siteIds)?u.siteIds:[]).map(id=>findSiteById(id)?.name||id).filter(Boolean);
-    const groups=(Array.isArray(u.groupKeys)?u.groupKeys:[]).map(g=>String(g)).filter(Boolean);
-    if(role==='hausleitung')return (siteNames.length?siteNames.join(', '):'Haus nicht gewählt')+' · alle Gruppen';
-    if(role==='tko')return (siteNames.length?siteNames.join(', '):'Haus nicht gewählt')+' · '+(groups.length?groups.join(', '):'keine Gruppe gewählt');
-    if(role==='employee')return (siteNames.length?siteNames.join(', '):'')+(groups.length?' · '+groups.join(', '):'');
-    return siteNames.concat(groups).join(' · ')||'kein Zugriff gesetzt';
-  }
-  function renderUserSiteOptions(){
-    const sel=$('userSite'); if(!sel)return;
-    const current=sel.value;
-    sel.innerHTML='<option value="">kein Haus gewählt</option>'+ (org.sites||[]).map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
-    if(current && [...sel.options].some(o=>o.value===current))sel.value=current;
-  }
-  function renderUserGroupChecks(){
-    const box=$('userGroupChecks'); if(!box)return;
-    const site=findSiteById(selectedUserSite());
-    const units=site?realUnits(site):[];
-    if(!site){box.innerHTML='<div class="site-access-empty">Zuerst Haus/Standort wählen.</div>';return;}
-    if(!units.length){box.innerHTML='<div class="site-access-empty">Dieser Standort hat noch keine Gruppen.</div>';return;}
-    box.innerHTML=units.map(u=>`<label class="check-pill"><input type="checkbox" value="${esc(u.id||u.plannerKey||u.name)}"> ${esc(u.name)}</label>`).join('');
-  }
-
-  function renderCsvImportOptions(){
-    const siteSel=$('csvImportSite'); const groupSel=$('csvImportGroup');
-    if(!siteSel||!groupSel)return;
-    const oldSite=siteSel.value, oldGroup=groupSel.value;
-    const sites=org.sites||[];
-    siteSel.innerHTML=sites.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('') || '<option value="">kein Standort</option>';
-    if(oldSite && [...siteSel.options].some(o=>o.value===oldSite))siteSel.value=oldSite;
-    else if(!siteSel.value && sites[0])siteSel.value=sites[0].id;
-    const site=findSiteById(siteSel.value)||sites[0];
-    const units=site?realUnits(site):[];
-    groupSel.innerHTML=units.map(u=>`<option value="${esc(u.id||u.plannerKey||u.name)}" data-name="${esc(u.name)}">${esc(u.name)}</option>`).join('') || '<option value="">keine Gruppe</option>';
-    if(oldGroup && [...groupSel.options].some(o=>o.value===oldGroup))groupSel.value=oldGroup;
-  }
-  function selectCsvImportTarget(siteId, groupKey, message){
-    const siteSel=$('csvImportSite'); const groupSel=$('csvImportGroup');
-    renderCsvImportOptions();
-    if(siteSel && siteId){ siteSel.value=siteId; renderCsvImportOptions(); }
-    if(groupSel && groupKey){
-      const wanted=String(groupKey);
-      const opt=[...groupSel.options].find(o=>String(o.value)===wanted || slug(o.value)===slug(wanted) || slug(o.dataset.name||o.textContent)===slug(wanted));
-      if(opt) groupSel.value=opt.value;
-    }
-    employeeCsvPreviewRows=[];
-    renderEmployeeCsvPreview();
-    document.getElementById('employeeImportCard')?.scrollIntoView({behavior:'smooth',block:'start'});
-    csvStatus(message || 'Import-Ziel gewählt. Jetzt CSV wählen.', 'warn');
-  }
-  function csvStatus(t,k=''){const el=$('employeeCsvStatus'); if(el){el.textContent=t; el.className='notice'+(k?' '+k:'');}}
-  function detectCsvDelimiter(text){
-    const first=(String(text||'').split(/\r?\n/).find(l=>l.trim())||'');
-    const semi=(first.match(/;/g)||[]).length, comma=(first.match(/,/g)||[]).length, tab=(first.match(/\t/g)||[]).length;
-    return tab>semi&&tab>comma?'\t':(semi>=comma?';':',');
-  }
-  function parseCsvText(text){
-    const delim=detectCsvDelimiter(text); const rows=[]; let row=[],cur='',q=false;
-    text=String(text||'').replace(/^\ufeff/,'');
-    for(let i=0;i<text.length;i++){
-      const ch=text[i], next=text[i+1];
-      if(ch==='"'&&q&&next==='"'){cur+='"';i++;continue;}
-      if(ch==='"'){q=!q;continue;}
-      if(ch===delim&&!q){row.push(cur);cur='';continue;}
-      if((ch==='\n'||ch==='\r')&&!q){if(ch==='\r'&&next==='\n')i++;row.push(cur);cur=''; if(row.some(x=>String(x).trim()!==''))rows.push(row); row=[]; continue;}
-      cur+=ch;
-    }
-    row.push(cur); if(row.some(x=>String(x).trim()!==''))rows.push(row); return rows;
-  }
-  function normHead(h){return String(h||'').trim().toLowerCase().replace(/[ä]/g,'ae').replace(/[ö]/g,'oe').replace(/[ü]/g,'ue').replace(/[^a-z0-9%]+/g,'');}
-  function findCol(headers,words){const hs=headers.map(normHead); for(const w of words){const i=hs.findIndex(h=>h.includes(normHead(w))); if(i>=0)return i;} return -1;}
-  function csvBool(v, fallback=false){const s=String(v??'').trim().toLowerCase(); if(!s)return fallback; if(['1','ja','j','yes','true','x','✓'].includes(s))return true; if(['0','nein','n','no','false','-'].includes(s))return false; return fallback;}
-  function csvValue(row, idx){return idx>=0?String(row[idx]??'').trim():'';}
-  function mapEmployeeCsv(text){
-    const rows=parseCsvText(text); const headers=rows[0]||[]; const data=rows.slice(1);
-    const idx={
-      name:findCol(headers,['name','mitarbeiter','vollname']), id:findCol(headers,['kuerzel','kürzel','id','personalnummer']), role:findCol(headers,['rolle','funktion','beruf']), pct:findCol(headers,['pensum','prozent','pct','%']), email:findCol(headers,['email','e-mail','mail']), phone:findCol(headers,['telefon','phone','mobile','handy']), nr:findCol(headers,['personalnummer','nummer','nr']), short:findCol(headers,['kurz','kuerzel','kürzel']), fp:findCol(headers,['fachperson','fp']), tv:findCol(headers,['tv']), split:findCol(headers,['geteilt','gd','split']), office:findCol(headers,['buero','büro','office']), vacation:findCol(headers,['ferienanspruch','ferien','urlaub']), wishCode:findCol(headers,['wunschcode','wunsch-code','portalcode','portal-code','code']), groupName:findCol(headers,['gruppe','wohngruppe','bereich','team']), password:findCol(headers,['startpasswort','passwort','password'])
-    };
-    const defaultSite=$('csvImportSite')?.value||''; const defaultGroup=$('csvImportGroup')?.value||'';
-    const defaultGroupName=$('csvImportGroup')?.selectedOptions?.[0]?.dataset?.name || $('csvImportGroup')?.selectedOptions?.[0]?.textContent || '';
-    return data.map((r,line)=>{
-      const rawName=csvValue(r,idx.name); const rawId=csvValue(r,idx.id); const role=csvValue(r,idx.role)||'FABE';
-      let groupName=csvValue(r,idx.groupName);
-      if(/^(ja|nein|j|n|yes|no|true|false|1|0|x)$/i.test(groupName))groupName='';
-      const row={line:line+2,name:rawName||rawId,id:rawId||rawName,role,pct:csvValue(r,idx.pct)||'100',email:csvValue(r,idx.email),phone:csvValue(r,idx.phone),nr:csvValue(r,idx.nr),short:csvValue(r,idx.short)||rawId,wishCode:csvValue(r,idx.wishCode),password:csvValue(r,idx.password),siteId:defaultSite,groupKey:defaultGroup,groupName:groupName||defaultGroupName,fp:csvBool(csvValue(r,idx.fp),/fach|fabe|sozial|leitung/i.test(role)),tv:csvBool(csvValue(r,idx.tv),true),split:csvBool(csvValue(r,idx.split),true),officePct:csvValue(r,idx.office)||'0',vacationEntitlement:csvValue(r,idx.vacation),severity:'good',message:'wird importiert'};
-      if(!row.name||!row.id){row.severity='bad';row.message='Name/Kürzel fehlt';}
-      if(!row.siteId||!row.groupKey){row.severity='bad';row.message='Haus oder Gruppe fehlt';}
-      return row;
-    });
-  }
-  function renderEmployeeCsvPreview(){
-    const box=$('employeeCsvPreview'); if(!box)return;
-    const rows=employeeCsvPreviewRows||[];
-    if(!rows.length){box.style.display='none';return;}
-    box.style.display='block';
-    box.innerHTML=`<table><thead><tr><th>Status</th><th>Zeile</th><th>Name</th><th>Kürzel</th><th>E-Mail</th><th>Gruppe</th><th>Code</th><th>Meldung</th></tr></thead><tbody>${rows.slice(0,200).map(r=>`<tr><td><span class="csv-badge ${r.severity}">${r.severity}</span></td><td>${r.line}</td><td>${esc(r.name)}</td><td>${esc(r.id)}</td><td>${esc(r.email)}</td><td>${esc(r.groupName)}</td><td>${r.wishCode?'✓':'-'}</td><td>${esc(r.message)}</td></tr>`).join('')}</tbody></table>`;
-  }
-  function loadEmployeeCsvFile(ev){
-    const file=ev.target.files&&ev.target.files[0]; if(!file)return;
-    const reader=new FileReader();
-    reader.onload=()=>{try{employeeCsvPreviewRows=mapEmployeeCsv(String(reader.result||'')); const ok=employeeCsvPreviewRows.filter(r=>r.severity!=='bad').length; const bad=employeeCsvPreviewRows.length-ok; renderEmployeeCsvPreview(); csvStatus(`CSV geladen: ${ok} gültig, ${bad} fehlerhaft. Erst mit „Vorschau übernehmen“ wird gespeichert.`, bad?'warn':'ok');}catch(e){employeeCsvPreviewRows=[];renderEmployeeCsvPreview();csvStatus('CSV konnte nicht gelesen werden: '+e.message,'bad');}};
-    reader.readAsText(file,'utf-8'); ev.target.value='';
-  }
-  function csvEscape(v){return '"'+String(v??'').replace(/"/g,'""')+'"';}
-  function downloadEmployeeCsvTemplate(){
-    const rows=[['Name','Kürzel','Rolle','Pensum','E-Mail','Telefon','Personalnummer','Kurz','Fachperson','TV','Geteilt','Büro %','Ferienanspruch','Wunsch-Code','Startpasswort'],['Muster Anna','MA013','Fachperson','80','anna.muster@example.ch','','013','MA13','ja','ja','ja','0','20','A7K9','Start1234'],['Beispiel Ben','MA014','Assistenz','60','ben.beispiel@example.ch','','014','MA14','nein','ja','ja','0','15','B4T2','Start1234']];
-    const blob=new Blob(['\ufeff'+rows.map(r=>r.map(csvEscape).join(';')).join('\n')],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='ulmipoint_mitarbeiter_import_vorlage.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
-  }
-  async function applyEmployeeCsvImport(){
-    const valid=(employeeCsvPreviewRows||[]).filter(r=>r.severity!=='bad');
-    if(!valid.length){csvStatus('Keine gültigen CSV-Zeilen vorhanden.','bad');return;}
-    const mode=$('csvImportLoginMode')?.value||'codes';
-    const defaultPassword=$('csvImportPassword')?.value||'';
-    const createLogins=mode==='logins';
-    csvStatus('CSV wird in die ausgewählte Gruppe übernommen …');
-    try{
-      const data=await usersApi({mode:'importEmployees',rows:valid,siteId:$('csvImportSite')?.value||'',groupKey:$('csvImportGroup')?.value||'',groupName:$('csvImportGroup')?.selectedOptions?.[0]?.dataset?.name||'',defaultPassword,createLogins,mustChangePassword:!!$('csvImportMustChangePassword')?.checked});
-      users=Array.isArray(data.users)?data.users:users; renderUsers(); csvStatus(data.message||'CSV übernommen.','ok'); employeeCsvPreviewRows=[]; renderEmployeeCsvPreview(); if($('csvImportPassword'))$('csvImportPassword').value='';
-    }catch(e){csvStatus('CSV konnte nicht übernommen werden: '+e.message,'bad');}
-  }
-
-  function clearUserForm(){
-    ['userName','userEmail','userPassword'].forEach(id=>{const el=$(id); if(el)el.value='';});
-    if($('userRole'))$('userRole').value='hausleitung';
-    if($('userMustChangePassword'))$('userMustChangePassword').checked=true;
-    if($('userSite'))$('userSite').value=(org.sites&&org.sites[0]?.id)||'';
-    renderUserGroupChecks();
-  }
-  function renderUsers(){
-    renderUserSiteOptions(); renderUserGroupChecks();
-    const list=$('userList'); if(!list)return;
-    if(!users.length){list.innerHTML='<div class="empty">Noch keine Benutzer angelegt.</div>'; return;}
-    list.innerHTML=users.map(u=>{
-      const cls=String(u.role||'').toLowerCase();
-      return `<div class="user-card"><div class="user-card-head"><div><b>${esc(u.name||u.email)}</b><div class="mini">${esc(u.email||'')}</div><div class="user-scope">${esc(scopeText(u))}</div>${u.mustChangePassword?'<div class="pw-flag">Passwortwechsel beim ersten Login nötig</div>':'<div class="pw-flag ok">Passwortwechsel nicht offen</div>'}</div><span class="user-role ${esc(cls)}">${esc(roleLabel(u.role))}</span></div><div class="actions" style="margin-top:9px"><button type="button" onclick="window.__orgEditUser('${esc(u.email||'')}')">bearbeiten</button><button type="button" class="bad" onclick="window.__orgRemoveUser('${esc(u.email||'')}')">Recht entfernen</button></div></div>`;
-    }).join('');
-  }
-  async function usersApi(body){
-    const resp=await fetch('/api/org-users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({},body,{orgAdminToken:orgAdminTokenMemory || localStorage.getItem(ORG_ADMIN_TOKEN_KEY)||'', orgAdminPassword:orgAdminPasswordMemory||''}))});
-    const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
-    if(!resp.ok||data.ok===false){
-      const err=new Error(data.message||('HTTP '+resp.status));
-      err.data=data;
-      err.status=resp.status;
-      throw err;
-    }
-    return data;
-  }
-  async function loadUsers(show=true){
-    try{const data=await usersApi({mode:'load'}); users=Array.isArray(data.users)?data.users:[]; renderUsers(); if(show)userStatus('Benutzer geladen: '+users.length+'.','ok');}
-    catch(e){userStatus('Benutzer konnten nicht geladen werden: '+e.message,'bad');}
-  }
-  function collectUserForm(){
-    const siteId=selectedUserSite();
-    const role=String($('userRole')?.value||'employee').toLowerCase();
-    const checked=[...document.querySelectorAll('#userGroupChecks input:checked')].map(x=>x.value);
-    const user={
-      name:($('userName')?.value||'').trim(),
-      email:($('userEmail')?.value||'').trim().toLowerCase(),
-      password:$('userPassword')?.value||'',
-      mustChangePassword: !!$('userMustChangePassword')?.checked,
-      role,
-      siteIds:siteId?[siteId]:[],
-      groupKeys:role==='tko'||role==='employee'?checked:[],
-      scope:(role==='admin'||role==='planner')?'all':(role==='hausleitung'?'site':'groups')
-    };
-    return user;
-  }
-  async function saveUserFromForm(){
-    const user=collectUserForm();
-    if(!user.email){userStatus('Bitte E-Mail eintragen.','bad');return;}
-    if((user.role==='hausleitung'||user.role==='tko'||user.role==='employee')&&!user.siteIds.length){userStatus('Bitte Haus/Standort wählen.','bad');return;}
-    if(user.role==='tko'&&!user.groupKeys.length){userStatus('TKO braucht mindestens eine ausgewählte Gruppe.','bad');return;}
-    userStatus('Benutzer wird gespeichert …');
-    try{const data=await usersApi({mode:'saveUser',user}); users=Array.isArray(data.users)?data.users:[]; renderUsers(); $('userPassword').value=''; userStatus(data.message||'Benutzer gespeichert.','ok');}
-    catch(e){userStatus('Benutzer konnte nicht gespeichert werden: '+e.message,'bad');}
-  }
-  window.__orgEditUser=email=>{
-    const u=users.find(x=>String(x.email||'').toLowerCase()===String(email||'').toLowerCase()); if(!u)return;
-    $('userName').value=u.name||''; $('userEmail').value=u.email||''; $('userPassword').value=''; $('userRole').value=u.role||'employee'; if($('userMustChangePassword'))$('userMustChangePassword').checked=!!u.mustChangePassword;
-    const siteId=(Array.isArray(u.siteIds)&&u.siteIds[0])||u.siteId||''; $('userSite').value=siteId; renderUserGroupChecks();
-    const set=new Set(Array.isArray(u.groupKeys)?u.groupKeys:[]); document.querySelectorAll('#userGroupChecks input').forEach(x=>{x.checked=set.has(x.value);});
-    document.getElementById('usersCard')?.scrollIntoView({behavior:'smooth',block:'start'});
-  };
-  window.__orgRemoveUser=async email=>{
-    if(!confirm('Zugriff für '+email+' entfernen? Der Supabase-Login selbst bleibt bestehen.'))return;
-    try{const data=await usersApi({mode:'deleteUser',email}); users=Array.isArray(data.users)?data.users:[]; renderUsers(); userStatus('Zugriff entfernt.','ok');}
-    catch(e){userStatus('Zugriff konnte nicht entfernt werden: '+e.message,'bad');}
-  };
-  window.__orgPrepareUserForSite=(si,role)=>{
-    const site=org.sites[si]; if(!site)return;
-    $('userRole').value=role||'hausleitung'; $('userSite').value=site.id; if($('userMustChangePassword'))$('userMustChangePassword').checked=true; renderUserGroupChecks(); document.getElementById('usersCard')?.scrollIntoView({behavior:'smooth',block:'start'}); userStatus('Benutzer für '+site.name+' vorbereiten. E-Mail, Name und Passwort eintragen.','warn');
-  };
-  window.__orgPrepareCsvForGroup=(si,ui)=>{
-    syncFromInputs();
-    const site=org.sites[si]; const unit=site && realUnits(site)[ui];
-    if(!site||!unit){status('Gruppe für CSV-Import nicht gefunden.','bad');return;}
-    selectCsvImportTarget(site.id, unit.id||unit.plannerKey||unit.name, 'CSV-Import vorbereitet für '+site.name+' · '+unit.name+'.');
-  };
-
-  function render(){
-    cleanupAutoUnits();
-    $('orgName').value=org.organisation?.name||'LIV – Leben in Vielfalt';
-    $('payrollProfile').value=org.payrollProfileDefault||'CH_BS_PERSONALRECHT_DEFAULT';
-    $('countPill').textContent=(org.sites||[]).length+' Standorte';
-    $('sites').innerHTML=(org.sites||[]).map((site,si)=>`
-      <article class="site">
-        <div class="site-head">
-          <div class="site-title">
-            <div class="icon">${icon(site.type)}</div>
-            <div>
-              <h3>${esc(site.name)}</h3>
-              <div><span class="pill green">${esc(typeLabel(site.type))}</span> <span class="pill">${esc(site.canton||'BS')}</span> <span class="pill yellow">${realUnits(site).length} Bereiche</span></div>
-            </div>
-          </div>
-          <div class="actions">
-            <button type="button" class="primary" onclick="window.__orgOpenSite(${si})">öffnen</button>
-            <button type="button" onclick="window.__orgToggle(${si})">bearbeiten</button>
-            <button type="button" class="bad" onclick="window.__orgRemoveSite(${si})">löschen</button>
-          </div>
-        </div>
-        <div class="units">
-          ${realUnits(site).map((u,ui)=>`<span class="unit-chip">${esc(u.name)} <small>${esc(u.type)}</small><button onclick="window.__orgRemoveUnit(${si},${ui})">×</button></span>`).join('') || '<span class="mini">Noch keine Bereiche</span>'}
-          ${autoFunctionChips(site)}
-        </div>
-        <div class="edit-panel" id="edit-${si}">
-          <div class="edit-grid">
-            <label><span class="mini">Name</span><input data-site="${si}" data-field="name" value="${esc(site.name)}"></label>
-            <label><span class="mini">Typ</span><select data-site="${si}" data-field="type">
-              ${['wohnheim','tageszentrum','verwaltung','zentrale_dienste','sonstiges'].map(t=>`<option value="${t}" ${site.type===t?'selected':''}>${typeLabel(t)}</option>`).join('')}
-            </select></label>
-            <label><span class="mini">Kanton</span><input data-site="${si}" data-field="canton" value="${esc(site.canton||'BS')}"></label>
-          </div>
-
-          <div class="mini" style="margin-top:6px">Zugriff für diesen Standort</div>
-          <div class="site-access">
-            ${(users||[]).filter(u=>userMatchesSite(u,site)).map(u=>`<div class="site-access-row"><div><b>${esc(u.name||u.email)}</b><div class="mini">${esc(roleLabel(u.role))} · ${esc(scopeText(u))}</div></div><button type="button" onclick="window.__orgEditUser('${esc(u.email||'')}')">ändern</button></div>`).join('') || '<div class="site-access-empty">Noch kein Benutzer für diesen Standort zugewiesen.</div>'}
-            <div class="actions"><button type="button" onclick="window.__orgPrepareUserForSite(${si},'hausleitung')">+ Hausleitung</button><button type="button" onclick="window.__orgPrepareUserForSite(${si},'tko')">+ TKO für Gruppen</button></div>
-          </div>
-          <div class="mini">Hausfunktionen für diesen Standort</div>
-          <div class="auto-grid">
-            <label class="auto-toggle"><input type="checkbox" data-site="${si}" data-auto="nachtwache" ${autoFunctions(site).nachtwache?'checked':''}> Nachtwache</label>
-            <label class="auto-toggle"><input type="checkbox" data-site="${si}" data-auto="pikett" ${autoFunctions(site).pikett?'checked':''}> Haus-Pikett</label>
-            <label class="auto-toggle"><input type="checkbox" data-site="${si}" data-auto="hausdienstplan" ${autoFunctions(site).hausdienstplan?'checked':''}> Haus-Dienstplan</label>
-          </div>
-          <div class="actions">
-            <button type="button" onclick="window.__orgAddUnit(${si})">+ Gruppe/Bereich</button>
-            <button type="button" onclick="window.__orgAddDayUnit(${si})">+ Tageszentrum-Team</button>
-          </div>
-          ${realUnits(site).map((u,ui)=>`
-            <div class="unit-row">
-              <label><span class="mini">Bereich</span><input data-site="${si}" data-unit="${ui}" data-field="name" value="${esc(u.name)}"></label>
-              <label><span class="mini">Typ</span><select data-site="${si}" data-unit="${ui}" data-field="type">
-                ${['wohngruppe','tageszentrum','team','sonstiges'].map(t=>`<option value="${t}" ${u.type===t?'selected':''}>${t}</option>`).join('')}
-              </select></label>
-              <label><span class="mini">Planer-Key</span><input data-site="${si}" data-unit="${ui}" data-field="plannerKey" value="${esc(u.plannerKey||u.id)}"></label>
-              <button type="button" onclick="window.__orgPrepareCsvForGroup(${si},${ui})">CSV</button>
-              <button type="button" class="bad" onclick="window.__orgRemoveUnit(${si},${ui})">löschen</button>
-            </div>
-          `).join('')}
-        </div>
-      </article>
-    `).join('') || '<div class="empty">Noch keine Häuser oder Tageszentren erstellt.<br><br><button type="button" class="primary" onclick="window.__orgAddSiteQuick && window.__orgAddSiteQuick(\'wohnheim\')">+ Haus hinzufügen</button> <button type="button" onclick="window.__orgAddSiteQuick && window.__orgAddSiteQuick(\'tageszentrum\')">+ Tageszentrum</button></div>';
-    document.querySelectorAll('[data-site]').forEach(el=>{el.oninput=syncFromInputs;el.onchange=syncFromInputs;});
-    renderUserSiteOptions();
-    renderCsvImportOptions();
-  }
-  function syncFromInputs(){
-    cleanupAutoUnits();
-    syncBasics();
-    document.querySelectorAll('[data-site]:not([data-unit])').forEach(el=>{
-      const si=Number(el.dataset.site), f=el.dataset.field;
-      if(org.sites[si]){org.sites[si][f]=el.value; /* ID bleibt stabil; Name ändern darf keinen Standort löschen. */}
-    });
-    document.querySelectorAll('[data-auto]').forEach(el=>{
-      const si=Number(el.dataset.site), f=el.dataset.auto;
-      if(org.sites[si]){
-        org.sites[si].automaticFunctions=autoFunctions(org.sites[si]);
-        org.sites[si].automaticFunctions[f]=!!el.checked;
-      }
-    });
-    document.querySelectorAll('[data-unit]').forEach(el=>{
-      const si=Number(el.dataset.site), ui=Number(el.dataset.unit), f=el.dataset.field;
-      if(org.sites[si]&&org.sites[si].units[ui]){org.sites[si].units[ui][f]=el.value; /* Bereich-ID bleibt stabil; Name ändern darf keine Gruppe löschen. */}
-    });
-  }
-  window.__orgOpenSite=si=>{
-    syncFromInputs();
-    const site=org.sites[si];
-    if(!site)return;
-    localStorage.setItem('ulmipoint_selected_site_v1',JSON.stringify({
-      id:site.id,
-      name:site.name,
-      type:site.type,
-      canton:site.canton||'BS',
-      units:site.units||[],
-      automaticFunctions:site.automaticFunctions||autoFunctions(site),
-      selectedAt:new Date().toISOString()
-    }));
-    window.open('planer.html?site='+encodeURIComponent(site.id),'_blank');
-  };
-  window.__orgToggle=si=>{const el=$('edit-'+si); if(el)el.classList.toggle('show')};
-  window.__orgAddUnit=si=>{syncFromInputs(); const s=org.sites[si]; if(!s)return; s.units=s.units||[]; if(realUnits(s).length>=4){status('Pro Haus sind maximal 4 Gruppen/Räume vorgesehen.','bad'); return;} s.units.push(defaultUnit(s,'wohngruppe')); render(); $('edit-'+si)?.classList.add('show')};
-  window.__orgAddDayUnit=si=>{syncFromInputs(); const s=org.sites[si]; if(!s)return; s.units=s.units||[]; if(realUnits(s).length>=4){status('Pro Haus sind maximal 4 Gruppen/Räume vorgesehen.','bad'); return;} s.units.push(defaultUnit(s,'tageszentrum')); render(); $('edit-'+si)?.classList.add('show')};
-  window.__orgRemoveUnit=(si,ui)=>{syncFromInputs(); if(org.sites[si])org.sites[si].units.splice(ui,1); render();};
-  window.__orgRemoveSite=si=>{syncFromInputs(); if(confirm('Standort wirklich löschen?')){org.sites.splice(si,1); render();}};
-  async function load(){status('Organisation wird geladen …'); try{const data=await api({mode:'load'}); organisationLoadedOnce=true; orgBaseRevision=String(data.orgRevision||data.updatedAt||''); if(data.empty || !data.organisationStructure){org=emptyOrganisation(); render(); status('Server enthält aktuell keine gespeicherten Häuser. Bitte Haus hinzufügen und danach Speichern klicken. Es wurde nichts automatisch mit Haus 1 repariert oder überschrieben.','warn'); return;} org=mergeWithDefaultOrganisation(data.organisationStructure); orgBaseRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||org.updatedAt||''); render(); status('Organisation geladen. Serverstand: '+(orgBaseRevision||'ohne Revision')+'.','ok');}catch(e){organisationLoadedOnce=false; render(); status('Server konnte nicht laden: '+e.message+' — NICHT speichern, zuerst neu laden. Der sichtbare Formularstand wurde nicht als Serverstand bestätigt.','bad');}}
-  async function performSave(saveOptions){
-    saveOptions=saveOptions||{};
-    if(!orgAdminReady){throw new Error('Zuerst Admin-Zugriff entsperren. Ohne Admin-Bestätigung wird nicht gespeichert.');}
-    if(!organisationLoadedOnce){throw new Error('Organisation wurde noch nicht vom Server geladen. Bitte zuerst „Laden“ drücken.');}
-    const pendingOrg=JSON.parse(JSON.stringify(mergeWithDefaultOrganisation(org)));
-    const expectedIds=(pendingOrg.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
-    if(!expectedIds.length){throw new Error('Keine Standorte zum Speichern. Es wurde nichts überschrieben.');}
-    const data=await api(Object.assign({mode:'save',organisationStructure:pendingOrg,baseOrgRevision:orgBaseRevision}, saveOptions));
-    const nextRevision=String(data.orgRevision||data.organisationStructure?.revisionId||data.updatedAt||orgBaseRevision||'');
-    const verify=await api({mode:'load',verifyAfterSave:Date.now()});
-    const serverOrg=mergeWithDefaultOrganisation(verify.organisationStructure||{});
-    const savedIds=(serverOrg.sites||[]).map(s=>String(s.id||'')).filter(Boolean);
-    const missing=expectedIds.filter(id=>!savedIds.includes(id));
-    if(missing.length){
-      org=pendingOrg;
-      render();
-      orgBaseRevision=nextRevision || orgBaseRevision;
-      throw new Error('NICHT gespeichert – der Server hat diese Standorte nicht bestätigt: '+missing.join(', ')+'. Bitte Seite nicht wechseln.');
-    }
-    org=serverOrg;
-    orgBaseRevision=String(verify.orgRevision||verify.organisationStructure?.revisionId||verify.updatedAt||nextRevision||orgBaseRevision||'');
-    saveOrgDraft(verify.updatedAt||data.updatedAt);
-    render();
-    status('Organisation gespeichert und vom Server bestätigt. Standorte: '+savedIds.length+'.','ok');
-  }
-  async function save(){
-    syncFromInputs(); cleanupAutoUnits(); org=mergeWithDefaultOrganisation(org);
-    if(!orgAdminReady){status('Nicht gespeichert: Bitte zuerst Admin-Zugriff entsperren.','bad'); return;}
-    if(!organisationLoadedOnce){status('Nicht gespeichert: Bitte zuerst Serverstand laden.','bad'); return;}
-    if(!Array.isArray(org.sites)||org.sites.length===0){status('Nicht gespeichert: Keine Standorte vorhanden. Leerer Stand wird nicht gespeichert.','bad'); return;}
-    status('Organisation wird gespeichert …');
-    try{
-      await performSave({});
-    }catch(e){
-      const d=e && e.data ? e.data : null;
-      const code=String(d?.code||'');
-      if(code==='SITE_DELETE_CONFIRM_REQUIRED' || code==='UNIT_DELETE_CONFIRM_REQUIRED'){
-        destructiveStatus(d.message||e.message||'Speichern wurde blockiert.', d);
-        return;
-      }
-      render();
-      status('Server-Speichern fehlgeschlagen: '+e.message+' — der Stand wurde NICHT auf Supabase gespeichert. Bitte diese Meldung nicht ignorieren.','bad');
-    }
-  }
-  function addSite(type){syncFromInputs(); if(!organisationLoadedOnce){status('Bitte zuerst Serverstand laden, bevor du ein Haus erstellst.','bad'); return;} org.sites=org.sites||[]; const site=defaultSite(type); org.sites.push(site); render(); status(typeLabel(site.type)+' erstellt: '+site.name+'. Jetzt Name/Bereiche prüfen und Speichern klicken, damit es dauerhaft auf dem Server bleibt.','warn');}
-  window.__orgAddSiteQuick=addSite;
-  ['newHouseBtn','newHouseBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('wohnheim');}); ['newDayBtn','newDayBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('tageszentrum');}); ['newOtherBtn','newOtherBtn2'].forEach(id=>{const b=$(id); if(b)b.onclick=()=>addSite('sonstiges');});
-  $('reloadUsersBtn').onclick=()=>loadUsers(true); $('saveUserBtn').onclick=()=>saveUserFromForm(); $('clearUserFormBtn').onclick=()=>clearUserForm(); $('userSite').onchange=renderUserGroupChecks; $('userRole').onchange=renderUserGroupChecks;
-  if($('chooseEmployeeCsvBtn'))$('chooseEmployeeCsvBtn').onclick=()=>$('employeeCsvFile').click();
-  if($('employeeCsvFile'))$('employeeCsvFile').onchange=loadEmployeeCsvFile;
-  if($('applyEmployeeCsvBtn'))$('applyEmployeeCsvBtn').onclick=applyEmployeeCsvImport;
-  if($('downloadEmployeeCsvTemplateBtn'))$('downloadEmployeeCsvTemplateBtn').onclick=downloadEmployeeCsvTemplate;
-  if($('csvImportSite'))$('csvImportSite').onchange=()=>{renderCsvImportOptions(); employeeCsvPreviewRows=[]; renderEmployeeCsvPreview(); csvStatus('Haus geändert. CSV bitte neu wählen oder erneut prüfen.','warn');};
-  if($('csvImportGroup'))$('csvImportGroup').onchange=()=>{employeeCsvPreviewRows=[]; renderEmployeeCsvPreview(); csvStatus('Gruppe geändert. CSV bitte neu wählen oder erneut prüfen.','warn');};
-  $('loadBtn').onclick=()=>load().catch(e=>status('Fehler: '+e.message,'bad')); $('saveBtn').onclick=()=>save().catch(e=>status('Fehler: '+e.message,'bad'));
-  $('orgName').oninput=syncBasics; $('payrollProfile').oninput=syncBasics;
-  render();
-  setSaveEnabled();
-  const loginBtn=$('orgAdminLoginBtn');
-  if(loginBtn) loginBtn.onclick=()=>orgAdminLogin().catch(e=>lockStatus('Fehler: '+e.message,'bad'));
-  const pwInput=$('orgAdminPassword');
-  if(pwInput) pwInput.addEventListener('keydown',e=>{if(e.key==='Enter')orgAdminLogin().catch(err=>lockStatus('Fehler: '+err.message,'bad'));});
-  // v97: Organisationsdaten immer direkt lesen, auch wenn der Admin-Zugriff noch gesperrt ist.
-  // So bleiben Häuser/Gruppen sichtbar; Speichern/Benutzerverwaltung bleibt trotzdem durch Admin-Login geschützt.
-  checkOrgAdmin().then(ok=>{
-    load().catch(e=>status('Fehler: '+e.message,'bad'));
-    if(ok){ loadUsers(false); }
-  });
+const SERVER_DEFAULT_URL='https://ezjufsxacihfdwpyoibs.supabase.co';
+const SERVER_DEFAULT_ANON='sb_publishable_3AsChws4K7YjRusOk4m6Mw_aA6iBmdg';
+const SERVER_TOKEN_KEY='polypoint_server_session_v1';
+const AUTH_KEYS=['ULMIPOINT_ORG_AUTH_V122','ULMIPOINT_ORG_AUTH_V121'];
+const STORE_ID='default';
+let org=defaultOrg(), sessionObj=null, orgBaseRevision='', organisationLoadedOnce=false;
+const $=id=>document.getElementById(id);
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function slug(s){return String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'default';}
+function defaultOrg(){return {version:'1.0',organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',sites:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};}
+function mergeOrg(value){const def=defaultOrg(), incoming=(value&&typeof value==='object')?value:{}; return Object.assign({},def,incoming,{organisation:Object.assign({},def.organisation,incoming.organisation||{}),payrollProfileDefault:incoming.payrollProfileDefault||def.payrollProfileDefault,sites:Array.isArray(incoming.sites)?incoming.sites:[]});}
+function status(t,k=''){const el=$('status'); if(el){el.textContent=t; el.className='notice '+k;}}
+function authMsg(t,k='warn'){const el=$('orgAuthStatus'); if(el){el.textContent=t; el.className='notice '+k;}}
+function sessionFresh(s){return !!(s&&s.access_token&&(!s.expires_at||s.expires_at>Date.now()+30000));}
+function readWindowAuth(){try{const box=JSON.parse(window.name||'{}')||{}; for(const key of AUTH_KEYS){const s=box[key]||{}; if(sessionFresh(s)){localStorage.setItem(SERVER_TOKEN_KEY,JSON.stringify(s)); return s;}}}catch(_){ }return null;}
+function writeWindowAuth(s){if(!sessionFresh(s))return; let box={}; try{box=JSON.parse(window.name||'{}')||{};}catch(_){ } AUTH_KEYS.forEach(k=>box[k]=s); window.name=JSON.stringify(box);}
+function loadSession(){try{const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}')||{}; if(sessionFresh(s))return s;}catch(_){ }return readWindowAuth()||{};}
+function saveSession(data,email){const user=Object.assign({},data.user||{}); if(!user.email)user.email=email; const s={access_token:data.access_token,refresh_token:data.refresh_token,user,expires_at:Date.now()+Math.max(60,(data.expires_in||3600))*1000}; localStorage.setItem(SERVER_TOKEN_KEY,JSON.stringify(s)); writeWindowAuth(s); return s;}
+async function supabase(path,opts={}){const headers=Object.assign({'apikey':SERVER_DEFAULT_ANON},opts.headers||{}); const r=await fetch(SERVER_DEFAULT_URL+path,Object.assign({},opts,{headers})); const t=await r.text(); let d=null; try{d=t?JSON.parse(t):null;}catch(_){d=t;} if(!r.ok)throw new Error((d&&d.message)||(d&&d.msg)||(typeof d==='string'?d:'HTTP '+r.status)); return d;}
+async function row(s){const d=await supabase('/rest/v1/planer_store?id=eq.'+encodeURIComponent(STORE_ID)+'&select=id,data,updated_at',{method:'GET',headers:{Authorization:'Bearer '+s.access_token}}); return Array.isArray(d)?d[0]:null;}
+function normEmail(v){return String(v||'').trim().toLowerCase();}
+function normalizeRole(v){v=String(v||'').trim().toLowerCase(); if(['admin','administrator','leitung','verwaltung'].includes(v))return 'admin'; if(['planner','planer','planung'].includes(v))return 'planner'; return v;}
+function roleInfo(data,s,emailFallback){const email=normEmail(s?.user?.email||emailFallback); const roles=(data&&typeof data==='object'&&(data.accessRoles||data.roles))||{}; const entry=(roles&&typeof roles==='object')?roles[email]:null; const obj=(entry&&typeof entry==='object')?entry:(typeof entry==='string'?{role:entry}:{}); return {email, role:normalizeRole(obj.role), count:Object.keys(roles||{}).length};}
+async function unlock(s,emailFallback){writeWindowAuth(s); authMsg('Login OK. Rolle wird geprüft…','warn'); const storeRow=await row(s).catch(()=>null); const info=roleInfo(storeRow?.data||{},s,emailFallback); if(info.count>0 && info.role!=='admin' && info.role!=='planner')throw new Error('Kein Zugriff für '+(info.email||'diese Anmeldung')+'. Rolle: '+(info.role||'keine Rolle')+'.'); sessionObj=s; document.body.classList.remove('auth-pending'); $('orgAuthLock').style.display='none'; $('userState').textContent='Angemeldet: '+(info.email||s.user?.email||'Benutzer')+' · Zugriff: '+(info.count>0?info.role:'Ersteinrichtung ohne Rollenliste'); await load();}
+async function login(){const email=String($('orgAuthEmail').value||'').trim(); const password=String($('orgAuthPassword').value||''); if(!email||!password){authMsg('Bitte E-Mail und Passwort eingeben.','bad'); return;} try{authMsg('Login wird geprüft…','warn'); const data=await supabase('/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})}); const s=saveSession(data,email); await unlock(s,email);}catch(e){authMsg('Login nicht möglich: '+e.message,'bad');}}
+async function api(body){const headers={'Content-Type':'application/json'}; if(sessionObj?.access_token)headers.Authorization='Bearer '+sessionObj.access_token; const r=await fetch('/api/org-structure',{method:'POST',headers,body:JSON.stringify(body||{})}); const t=await r.text(); let d={}; try{d=t?JSON.parse(t):{};}catch(_){d={message:t};} if(!r.ok||d.ok===false)throw new Error(d.message||('HTTP '+r.status)); return d;}
+function syncBasics(){org.organisation=org.organisation||{}; org.organisation.name=$('orgName').value||'LIV – Leben in Vielfalt'; org.payrollProfileDefault=$('payrollProfile').value||'CH_BS_PERSONALRECHT_DEFAULT'; org.updatedAt=new Date().toISOString();}
+function syncFromInputs(){syncBasics(); document.querySelectorAll('[data-site-field]').forEach(el=>{const i=+el.dataset.site, f=el.dataset.siteField; if(org.sites[i])org.sites[i][f]=el.type==='checkbox'?el.checked:el.value;}); document.querySelectorAll('[data-unit-field]').forEach(el=>{const i=+el.dataset.site, u=+el.dataset.unit, f=el.dataset.unitField; if(org.sites[i]?.units?.[u])org.sites[i].units[u][f]=el.type==='checkbox'?el.checked:el.value;});}
+function defaultSite(type='wohnheim'){const n=(org.sites||[]).filter(s=>s.type===type).length+1; const base=type==='tageszentrum'?'Tageszentrum':'Haus'; return {id:slug(base+' '+n),name:base+' '+n,type,canton:'BS',active:true,automaticFunctions:type==='wohnheim'?{nachtwache:true,pikett:true,hausdienstplan:true}:{nachtwache:false,pikett:false,hausdienstplan:false},units:type==='wohnheim'?[defaultUnit('Gruppe 1')]:[]};}
+function defaultUnit(name){return {id:slug(name),name,type:'wohngruppe',plannerKey:slug(name),active:true};}
+function realUnits(site){return (site.units||[]).filter(u=>!['pikett','hausdienstplan','nachtwache'].includes(String(u.type||'')));}
+function render(){org=mergeOrg(org); $('orgName').value=org.organisation?.name||'LIV – Leben in Vielfalt'; $('payrollProfile').value=org.payrollProfileDefault||'CH_BS_PERSONALRECHT_DEFAULT'; $('countPill').textContent=(org.sites||[]).length+' Standorte'; const html=(org.sites||[]).map((site,i)=>{const units=realUnits(site); return '<article class="site"><div class="site-head"><div><h3>'+esc(site.name||site.id)+'</h3><div><span class="pill">'+esc(site.id||'')+'</span> <span class="pill '+(site.active!==false?'ok':'warn')+'">'+(site.active!==false?'aktiv':'inaktiv')+'</span></div></div><div class="actions"><button type="button" onclick="__addUnit('+i+')">+ Gruppe</button><button type="button" class="bad" onclick="__removeSite('+i+')">Löschen</button></div></div><div class="field-grid"><label><span class="mini">Name</span><input data-site="'+i+'" data-site-field="name" value="'+esc(site.name||'')+'"></label><label><span class="mini">Typ</span><select data-site="'+i+'" data-site-field="type"><option value="wohnheim" '+(site.type==='wohnheim'?'selected':'')+'>Haus</option><option value="tageszentrum" '+(site.type==='tageszentrum'?'selected':'')+'>Tageszentrum</option><option value="sonstiges" '+(site.type==='sonstiges'?'selected':'')+'>Sonstiges</option></select></label><label><span class="mini">Kanton</span><input data-site="'+i+'" data-site-field="canton" value="'+esc(site.canton||'BS')+'"></label></div><div class="mini">Gruppen / Bereiche</div>'+ (units.length?units.map((u,ui)=>'<div class="unit-row"><input data-site="'+i+'" data-unit="'+ui+'" data-unit-field="name" value="'+esc(u.name||'')+'"><input data-site="'+i+'" data-unit="'+ui+'" data-unit-field="type" value="'+esc(u.type||'wohngruppe')+'"><input data-site="'+i+'" data-unit="'+ui+'" data-unit-field="plannerKey" value="'+esc(u.plannerKey||u.id||'')+'"><button type="button" class="bad" onclick="__removeUnit('+i+','+ui+')">Entfernen</button></div>').join(''):'<div class="notice warn">Noch keine Gruppen.</div>')+'</article>';}).join('')||'<div class="notice warn">Noch keine Standorte geladen.</div>'; $('sites').innerHTML=html;}
+async function load(){status('Organisation wird geladen …','warn'); try{const d=await api({mode:'load'}); organisationLoadedOnce=true; orgBaseRevision=String(d.orgRevision||d.updatedAt||''); org=mergeOrg(d.organisationStructure||{}); render(); status('Organisation geladen. Serverstand: '+(orgBaseRevision||'ohne Revision')+'.','ok');}catch(e){status('Server konnte nicht laden: '+e.message,'bad');}}
+async function save(){syncFromInputs(); if(!organisationLoadedOnce){status('Nicht gespeichert: bitte zuerst laden.','bad'); return;} status('Organisation wird gespeichert …','warn'); try{const d=await api({mode:'save',organisationStructure:mergeOrg(org),baseOrgRevision:orgBaseRevision}); org=mergeOrg(d.organisationStructure||org); orgBaseRevision=String(d.orgRevision||d.updatedAt||orgBaseRevision||''); render(); status('Organisation gespeichert.','ok');}catch(e){status('Speichern fehlgeschlagen: '+e.message,'bad');}}
+window.__addUnit=i=>{syncFromInputs(); const s=org.sites[i]; if(!s)return; s.units=s.units||[]; s.units.push(defaultUnit('Gruppe '+(realUnits(s).length+1))); render();};
+window.__removeUnit=(i,u)=>{syncFromInputs(); if(org.sites[i]?.units)org.sites[i].units.splice(u,1); render();};
+window.__removeSite=i=>{syncFromInputs(); if(confirm('Standort wirklich löschen?')){org.sites.splice(i,1); render();}};
+$('loadBtn').onclick=load; $('saveBtn').onclick=save; $('newHouseBtn').onclick=()=>{syncFromInputs(); org.sites.push(defaultSite('wohnheim')); render(); status('Haus erstellt. Zum Speichern auf Speichern klicken.','warn');}; $('newDayBtn').onclick=()=>{syncFromInputs(); org.sites.push(defaultSite('tageszentrum')); render(); status('Tageszentrum erstellt. Zum Speichern auf Speichern klicken.','warn');}; $('orgAuthLoginBtn').onclick=login; $('orgAuthPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+render(); const existing=loadSession(); if(sessionFresh(existing)){unlock(existing,existing.user?.email||'').catch(e=>authMsg('Sitzung nicht freigegeben: '+e.message+' Bitte neu einloggen.','bad'));}
 })();
 </script>
 </body>
