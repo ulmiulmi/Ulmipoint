@@ -91,6 +91,14 @@ module.exports=async function handler(req,res){
       return send(res,200,result);
     }
 
+    if(mode==='kiStatus'){
+      const result=kiPlaner.status();
+      result.siteId=ids.siteId;
+      result.groupKey=ids.groupKey;
+      result.updatedAt=row.updated_at||'';
+      return send(res,200,result);
+    }
+
     if(['kiDienstplanPruefen','kiPlaner','aiReview'].includes(mode)){
       const result=await kiPlaner.pruefeDienstplan({data,siteId:ids.siteId,groupKey:ids.groupKey,body,row});
       result.updatedAt=row.updated_at||'';

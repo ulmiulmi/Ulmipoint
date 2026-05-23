@@ -228,7 +228,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
 <main class="app">
   <section class="hero no-print">
     <div><div class="eyebrow" id="dynEyebrow">ULMIPOINT Adapter · Bereich</div><h1 id="dynTitle">Bereich</h1></div>
-    <div class="toolbar"><button class="primary" onclick="saveState(true)">Gruppe speichern</button><button onclick="loadGroupStateFromServer(true)">Gruppe neu laden</button><button onclick="makePlan(true)">Monat planen</button><button onclick="fixCurrentMonth()">Monat sperren</button><button onclick="unfixCurrentMonth()">Monat freigeben</button></div>
+    <div class="toolbar"><button class="primary" onclick="saveState(true)">Gruppe speichern</button><button onclick="loadGroupStateFromServer(true)">Gruppe neu laden</button><button onclick="makePlan(true)">Monat planen</button><button onclick="fixCurrentMonth()">Monat sperren</button><button onclick="unfixCurrentMonth()">Monat freigeben</button><span class="pill" id="aiStatus">KI: prüft…</span></div>
   </section>
   <nav class="tabs no-print">
     <button class="tab active" onclick="showView('plan',this)">📅 Plan</button>
@@ -2417,6 +2417,7 @@ function init(){
   loadState(false,{allowFallback:false});
   makeDates();
   renderAll();
+  checkKIStatus(false);
   if(state._orphanRepair?.fixed){saveState(false);toast('Plan-Einträge wurden wieder den Mitarbeitenden zugeordnet','ok');}
   else if(!state.employees.length)toast('Noch keine Mitarbeitenden geladen – oben Mitarbeiter laden nutzen','warn');
 }
@@ -4546,6 +4547,45 @@ function runStructuredPlanningPhases(show=true){
   runPlanningPhase('Endkontrolle und Glättung',()=>{const res=runFinalPlanningSmoothing();if(isRuleOn('pikett'))assignDailyPikett();cleanupMonth();return res;});
   saveState(false);renderPlan();renderPlanningPhaseLog();
   if(show)toast('Monat in Planungsphasen neu berechnet','ok');
+}
+
+
+function setKIStatus(text,type=''){
+  const el=q('aiStatus');
+  if(!el)return;
+  el.textContent=text;
+  el.className='pill '+(type||'');
+}
+async function checkKIStatus(showToast=false){
+  setKIStatus('KI: prüft…','blue');
+  try{
+    const session=groupServerSession();
+    const headers={'Content-Type':'application/json'};
+    if(session&&session.access_token)headers.Authorization='Bearer '+session.access_token;
+    const res=await fetch('/api/group',{method:'POST',headers,body:JSON.stringify({
+      mode:'kiStatus',
+      siteId:ULMI_DYNAMIC_CONTEXT.siteId||'',
+      siteName:ULMI_DYNAMIC_CONTEXT.siteName||'',
+      unitId:ULMI_DYNAMIC_CONTEXT.unitId||'',
+      unitName:ULMI_DYNAMIC_CONTEXT.unitName||PLANER_GROUP_NAME,
+      groupKey:ULMI_DYNAMIC_CONTEXT.plannerKey||ULMI_DYNAMIC_CONTEXT.unitId||PLANER_GROUP_ID,
+      groupId:PLANER_GROUP_ID
+    })});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||!data.ok)throw new Error(data.message||('KI-Statusfehler '+res.status));
+    if(data.connected||data.configured){
+      setKIStatus('KI: verbunden','green');
+      if(showToast)toast('KI ist verbunden','ok');
+    }else{
+      setKIStatus('KI: nicht eingerichtet','yellow');
+      if(showToast)toast(data.message||'OPENAI_API_KEY fehlt in Vercel','warn');
+    }
+    return data;
+  }catch(e){
+    setKIStatus('KI: nicht erreichbar','yellow');
+    if(showToast)toast((e&&e.message)||'KI-Status nicht erreichbar','warn');
+    return {ok:false,message:(e&&e.message)||String(e)};
+  }
 }
 
 function shouldRunKIOnPlan(show){
