@@ -34,35 +34,19 @@
       __load(items, replace){ if(replace) this.clear(); Object.entries(items||{}).forEach(([k,v])=>{mem[String(k)]=String(v ?? '');}); changed('*'); }
     };
   }
-  const __ULMIPOINT_AUTH_PERSIST_KEYS__ = [
-    'polypoint_server_session_v1',
-    'polypoint_server_config_v2',
-    'ULMIPOINT_ORG_AUTH_V121'
-  ];
-  const __ULMIPOINT_PRESERVED_AUTH__ = Object.create(null);
-
   function shouldRemovePersistedKey(key){
     key=String(key||'');
-    // Organisation-/Server-Anmeldung darf NICHT gelöscht werden.
-    // Sonst sieht der Planer die Anmeldung aus Organisation nicht und zeigt wieder eine eigene Loginmaske.
-    if(__ULMIPOINT_AUTH_PERSIST_KEYS__.includes(key)) return false;
     return /^(polypoint_|ulmipoint_|POLYPOINT_|ULMIPOINT_|sb-|supabase\.)/.test(key) || key.indexOf('supabase.auth.token')>=0;
   }
   try{
     const real = window.localStorage;
     if(real && !window.__ULMIPOINT_REAL_LOCAL_STORAGE__){ window.__ULMIPOINT_REAL_LOCAL_STORAGE__ = real; }
-    if(real){
-      __ULMIPOINT_AUTH_PERSIST_KEYS__.forEach(k=>{ try{ const v=real.getItem(k); if(v!=null) __ULMIPOINT_PRESERVED_AUTH__[k]=v; }catch(_){ } });
-    }
     const doomed=[];
     if(real){ for(let i=0;i<real.length;i++){ const k=real.key(i); if(shouldRemovePersistedKey(k)) doomed.push(k); } }
     doomed.forEach(k=>{ try{ real.removeItem(k); }catch(_){ } });
   }catch(_){ }
   const parentStore = safeParentStore();
   const appStore = parentStore || window.__ULMIPOINT_MEMORY_STORAGE__ || makeVolatileStorage('ulmipoint-app');
-  try{
-    Object.entries(__ULMIPOINT_PRESERVED_AUTH__).forEach(([k,v])=>appStore.setItem(k,v));
-  }catch(_){ }
   const sessionStore = (function(){
     try{ if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__) return window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__; }catch(_){ }
     return window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ || makeVolatileStorage('ulmipoint-session');
@@ -235,25 +219,18 @@
 
 <div id="adminRoleGate" class="role-gate" aria-hidden="false">
   <div class="role-card" role="dialog" aria-modal="true" aria-labelledby="adminRoleGateTitle">
-    <h2 id="adminRoleGateTitle">Organisation-Login erforderlich</h2>
-    <div class="mini">Der Planer ist geschützt. Die Anmeldung ist dieselbe Organisation-Anmeldung wie bei Organisation verwalten. Admin darf überall hinein.</div>
-    <div id="adminRoleGateStatus" class="notice">Organisation-Anmeldung wird geprüft…</div>
+    <div class="eyebrow">ULMIPOINT Organisation</div>
+    <h2 id="adminRoleGateTitle" style="font-size:clamp(34px,8vw,56px);line-height:.95;letter-spacing:-.06em;margin:0 0 8px">Login</h2>
+    <div class="mini">Organisation, System &amp; Speicher und die Speicherprüfungen sind geschützt. Bitte mit E-Mail und Passwort anmelden.</div>
     <div class="role-form">
-      <div>
-        <label for="adminGateEmailInput">E-Mail</label>
-        <input id="adminGateEmailInput" type="email" autocomplete="username" placeholder="name@example.ch">
-      </div>
-      <div>
-        <label for="adminGatePasswordInput">Passwort</label>
-        <input id="adminGatePasswordInput" type="password" autocomplete="current-password" placeholder="Passwort">
-      </div>
+      <label><span class="mini">E-Mail</span><input id="adminGateEmail" type="email" autocomplete="username" placeholder="name@example.ch"></label>
+      <label><span class="mini">Passwort</span><input id="adminGatePassword" type="password" autocomplete="current-password" placeholder="Passwort"></label>
     </div>
     <div class="role-actions">
       <button type="button" class="primary" id="adminGateLoginBtn">Einloggen</button>
-      <button type="button" id="adminGatePortalBtn">Zum Wunschportal</button>
-      <button type="button" id="adminGateRetryBtn">Anmeldung erneut prüfen</button>
+      <button type="button" id="adminGateBackBtn">Zurück</button>
     </div>
-    <div class="mini" style="margin-top:10px">Keine zusätzliche Rollen-Sperre im Planer. Die Sitzung wird als Organisation-Sitzung gespeichert und automatisch weiterverwendet.</div>
+    <div id="adminRoleGateStatus" class="notice warn">Bitte einloggen. Zugriff ist nur für Admin/Planer freigegeben. Wenn noch keine Rollenliste besteht, reicht ein gültiges Supabase-Login zur Ersteinrichtung.</div>
   </div>
 </div>
 
@@ -283,11 +260,11 @@
   </main>
 </div>
 
-<div id="serverSyncModal" class="emp-modal-backdrop" aria-hidden="true" style="display:none!important">
+<div id="serverSyncModal" class="emp-modal-backdrop" aria-hidden="true">
   <div class="emp-modal" role="dialog" aria-modal="true" aria-labelledby="serverSyncTitle">
-    <h2 id="serverSyncTitle">Gruppen-Speicher</h2>
-    <div class="mini">Dieser alte globale Dialog ist deaktiviert. Speichern und Laden läuft nur noch in der aktuell geöffneten Gruppe über den Reiter Speicher.</div>
-    <div class="emp-note">Es wird keine ganze Organisation und kein globaler Browserstand gespeichert oder geladen.</div>
+    <h2 id="serverSyncTitle">Server-Speicher</h2>
+    <div class="mini">Der Server ist der Hauptspeicher. Der lokale Speicher dient als Arbeitskopie und Notfall-Backup.</div>
+    <div class="emp-note">Supabase ist fest verbunden. Nach dem Einloggen kann der Serverstand geladen und gespeichert werden. Vor dem Überschreiben wird lokal eine Notfallkopie angelegt.</div>
     <div class="server-grid">
       <div class="emp-box">
         <h3>Supabase Verbindung</h3>
@@ -431,39 +408,6 @@
   const ORG_DRAFT_KEY = "ulmipoint_org_structure_draft_v1";
   const PLANNER_LAST_TARGET_KEY = "ulmipoint_planner_last_target_v1";
   const SERVER_TOKEN_KEY = "polypoint_server_session_v1";
-  const ORG_AUTH_HANDOFF_KEY = "ULMIPOINT_ORG_AUTH_V121";
-
-  function orgSessionFresh(s){
-    return !!(s && s.access_token && (!s.expires_at || s.expires_at > Date.now() + 30000));
-  }
-  function readOrgAuthHandoff(){
-    try{
-      const box = JSON.parse(window.name || '{}') || {};
-      const session = box[ORG_AUTH_HANDOFF_KEY] || null;
-      if(orgSessionFresh(session)){
-        localStorage.setItem(SERVER_TOKEN_KEY, JSON.stringify(session));
-        return session;
-      }
-    }catch(_){ }
-    return null;
-  }
-  function writeOrgAuthHandoff(session){
-    if(!orgSessionFresh(session)) return;
-    try{
-      const box = JSON.parse(window.name || '{}') || {};
-      box[ORG_AUTH_HANDOFF_KEY] = session;
-      window.name = JSON.stringify(box);
-    }catch(_){
-      try{ window.name = JSON.stringify({[ORG_AUTH_HANDOFF_KEY]:session}); }catch(__){ }
-    }
-  }
-  function clearOrgAuthHandoff(){
-    try{
-      const box = JSON.parse(window.name || '{}') || {};
-      delete box[ORG_AUTH_HANDOFF_KEY];
-      window.name = JSON.stringify(box);
-    }catch(_){ }
-  }
 
   function safeJsonParse(value){
     try{ return JSON.parse(value || "null"); }catch(_){ return null; }
@@ -915,9 +859,9 @@
   function serverSession(){
     try{
       const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}');
-      if(orgSessionFresh(s)) return s;
+      if(s && s.access_token && (!s.expires_at || s.expires_at > Date.now()+30000)) return s;
     }catch(_){}
-    return readOrgAuthHandoff();
+    return null;
   }
   function saveOrgDraft(org, updatedAt){ return !!(org && Array.isArray(org.sites)); }
   async function ensureHouseContextFromServer(){
@@ -997,8 +941,8 @@
     if(!btn) return;
     btn.classList.remove('server-connected','server-ready','server-error','server-dirty');
     if(state) btn.classList.add('server-' + state);
-    btn.textContent = state === 'connected' ? '☁️ Server ✓' : state === 'dirty' ? '☁️ Server •' : state === 'error' ? '☁️ Server !' : '☁️ Server';
-    btn.title = label || (state === 'connected' ? 'Server verbunden' : state === 'dirty' ? 'Lokale Änderungen noch nicht auf Server gespeichert' : state === 'error' ? 'Server-Verbindung prüfen' : 'Server bereit, bitte einloggen');
+    btn.textContent = '🛟 Gruppen-Speicher';
+    btn.title = label || 'Speicher-Reiter der aktuell geöffneten Gruppe öffnen';
     btn.setAttribute('aria-label', btn.title);
   }
   function normalizeServerUrl(url){ return String(url || '').trim().replace(/\/+$/, ''); }
@@ -1088,11 +1032,8 @@
   function localStorageSnapshot(){ const items = collectUlmipointStorage(); return {items, hash: stableHashFromItems(items), count: Object.keys(items).length}; }
   function isServerSessionFresh(s){ return !!(s && s.access_token && (!s.expires_at || s.expires_at > Date.now() + 30000)); }
   function loadServerSession(){
-    try {
-      const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY) || '{}');
-      if(s && (s.access_token || s.refresh_token)) return s;
-    } catch(e){ console.warn(e); }
-    return readOrgAuthHandoff();
+    try { const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY) || '{}'); if(s && (s.access_token || s.refresh_token)) return s; } catch(e){ console.warn(e); }
+    return null;
   }
   function refreshServerLocalInfo(){
     const info = document.getElementById('serverLocalInfo');
@@ -1140,15 +1081,12 @@
       if(anonEl) anonEl.value = SERVER_DEFAULT_ANON || cfg.anon || '';
       if(storeEl) storeEl.value = cfg.store || 'default';
       if(emailEl && cfg.email) emailEl.value = cfg.email;
-      const gateEmailEl = document.getElementById('adminGateEmailInput');
-      if(gateEmailEl && cfg.email) gateEmailEl.value = cfg.email;
       const autosaveEl = document.getElementById('serverAutosaveToggle');
       if(autosaveEl) autosaveEl.checked = localStorage.getItem(SERVER_AUTOSAVE_KEY) !== '0';
     } catch(e){ console.warn(e); }
   }
   function forgetServerConfig(){
     localStorage.removeItem(SERVER_TOKEN_KEY);
-    clearOrgAuthHandoff();
     localStorage.removeItem(SERVER_META_KEY);
     ['serverEmailInput','serverPasswordInput'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     const urlEl = document.getElementById('serverUrlInput'); if(urlEl) urlEl.value = SERVER_DEFAULT_URL || '';
@@ -1163,7 +1101,6 @@
     if(!userWithFallback.email && cfg?.email) userWithFallback.email = cfg.email;
     const session = {access_token:data.access_token, refresh_token:data.refresh_token, user:userWithFallback, expires_at:Date.now() + Math.max(60, (data.expires_in || 3600)) * 1000};
     localStorage.setItem(SERVER_TOKEN_KEY, JSON.stringify(session));
-    writeOrgAuthHandoff(session);
     if(cfg) localStorage.setItem(SERVER_CONFIG_KEY, JSON.stringify({url:cfg.url, anon:cfg.anon, store:cfg.store, email:cfg.email, savedAt:new Date().toISOString()}));
     setServerButtonState('connected','Server verbunden' + (session.user?.email ? ' · ' + session.user.email : ''));
     refreshServerSyncInfo();
@@ -1215,7 +1152,7 @@
       serverStatus(data?.user ? 'Registriert. Falls E-Mail-Bestätigung aktiv ist, bitte Mail bestätigen. Danach einloggen.' : 'Registrierung gesendet.', 'ok');
     } catch(e){ serverStatus('Registrierung nicht möglich: ' + e.message, 'bad'); }
   }
-  function serverLogout(){ localStorage.removeItem(SERVER_TOKEN_KEY); clearOrgAuthHandoff(); setServerButtonState('ready','Organisation-Login erforderlich'); serverStatus('Abgemeldet.', 'ok'); refreshServerSyncInfo(); setAdminGate(true, 'Abgemeldet. Bitte über Organisation-Login erneut anmelden.', 'warn'); }
+  function serverLogout(){ localStorage.removeItem(SERVER_TOKEN_KEY); setServerButtonState('ready','Server bereit, bitte einloggen'); serverStatus('Abgemeldet.', 'ok'); refreshServerSyncInfo(); setAdminGate(true, 'Abgemeldet. Bitte als Admin/Planer einloggen.', 'warn'); }
   function countLocalEmergencyBackups(){
     let n = 0;
     for(let i=0;i<localStorage.length;i++){ if(/^polypoint_sicherung__/i.test(localStorage.key(i) || '')) n++; }
@@ -1399,14 +1336,7 @@
     const el=document.getElementById('firstPasswordStatus');
     if(el){ el.textContent=msg||''; el.className='notice '+(kind||''); }
   }
-  function setPasswordChangeBox(show, msg=''){
-    PASSWORD_CHANGE_ACTIVE=false;
-    const box=document.getElementById('firstPasswordBox');
-    if(box) box.classList.add('hidden');
-    if(show){
-      setAdminGate(true, (msg || 'Bitte über Organisation einloggen oder Passwort dort ändern.') + '\nOrganisation-Login öffnen und danach den Planer erneut öffnen.', 'warn');
-    }
-  }
+  function setPasswordChangeBox(show, msg=''){ PASSWORD_CHANGE_ACTIVE=false; }
   async function submitFirstPasswordChange(){
     const p1=String(document.getElementById('firstPasswordNew1')?.value||'');
     const p2=String(document.getElementById('firstPasswordNew2')?.value||'');
@@ -1432,46 +1362,56 @@
     el.classList.toggle('ok', kind === 'ok');
     el.classList.toggle('bad', kind === 'bad');
   }
+  async function verifyOrganisationPlannerAccess(session){
+    if(!session || !session.access_token) throw new Error('Keine gültige Organisation-Anmeldung.');
+    const resp = await fetch('/api/org-structure', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer ' + session.access_token},
+      body:JSON.stringify({mode:'load'}),
+      cache:'no-store'
+    });
+    const txt = await resp.text();
+    let data = {};
+    try{ data = txt ? JSON.parse(txt) : {}; }catch(_){ data = {message:txt}; }
+    if(!resp.ok || data.ok===false) throw new Error(data.message || ('HTTP ' + resp.status));
+    return data;
+  }
+
   async function evaluateAdminAccess(showStatus=false){
-    // v140: Der Planer verwendet die zentrale Organisation-Anmeldung.
-    // Keine eigene Rollenprüfung im Planer; Admin-/Zugriffslogik wird zentral über Organisation geführt.
     loadServerConfig();
     const session = await getActiveServerSession();
     if(!session){
+      const email = storedServerEmail();
+      const ge = document.getElementById('adminGateEmail'); if(ge && email) ge.value = email;
       setAccessContext(null);
-      setPasswordChangeBox(false);
-      setAdminGate(true, 'Keine gültige Organisation-Anmeldung gefunden. Bitte über Organisation einloggen. Danach wird der Planer automatisch geöffnet.', 'warn');
+      setAdminGate(true, 'Bitte einloggen. Der Planer verwendet dieselbe Organisation-Anmeldung wie Organisation verwalten.', 'warn');
       if(showStatus) setServerRoleInfo('Nicht eingeloggt. Planerbereich gesperrt.', 'bad');
       return false;
     }
-    const label = normEmail(session?.user?.email || storedServerEmail()) || serverUserLabel(serverUserFromSession(session));
-    setPasswordChangeBox(false);
-    setAccessContext({
-      email: label,
-      role: ROLE_ADMIN,
-      configuredCount: 0,
-      entry: {},
-      allowed: true,
-      organisationSession: true
-    });
-    setAdminGate(false);
-    if(showStatus) setServerRoleInfo('Organisation-Anmeldung aktiv · Benutzer: ' + label, 'ok');
-    return true;
-  }
-  function organisationLoginUrl(){
-    try{ return 'organisation.html?return=' + encodeURIComponent(location.pathname + location.search + location.hash); }catch(_){ return 'organisation.html'; }
-  }
-  function adminGateStatus(msg, kind=''){
-    const el = document.getElementById('adminRoleGateStatus');
-    if(el){ el.textContent = msg || ''; el.className = 'notice ' + (kind || ''); }
+    try{
+      const verified = await verifyOrganisationPlannerAccess(session);
+      const access = verified.access || {};
+      const label = access.email || normEmail(session?.user?.email || storedServerEmail()) || serverUserLabel(serverUserFromSession(session));
+      const role = normalizeRoleValue(access.role || 'admin') || ROLE_ADMIN;
+      const info = {email:label, entry:{}, role:role, configuredCount:Number(access.configured||0), employee:false, allowed:true, organisationSession:true};
+      setAccessContext(info);
+      setAdminGate(false);
+      if(showStatus) setServerRoleInfo('Organisation-Anmeldung aktiv · Benutzer: ' + label, 'ok');
+      return true;
+    }catch(e){
+      setAccessContext(null);
+      setAdminGate(true, 'Login nicht freigegeben: ' + (e.message || e) + '\nBitte mit einem Admin-/Planer-Login anmelden.', 'bad');
+      if(showStatus) setServerRoleInfo('Planerbereich gesperrt: ' + (e.message || e), 'bad');
+      return false;
+    }
   }
   async function adminGateLogin(){
-    const email = String(document.getElementById('adminGateEmailInput')?.value || '').trim();
-    const password = String(document.getElementById('adminGatePasswordInput')?.value || '');
-    if(!email || !password){ adminGateStatus('Bitte E-Mail und Passwort eingeben.', 'bad'); return; }
+    const email = String(document.getElementById('adminGateEmail')?.value || '').trim();
+    const password = String(document.getElementById('adminGatePassword')?.value || '');
+    if(!email || !password){ setAdminGate(true, 'Bitte E-Mail und Passwort eingeben.', 'bad'); return; }
     const cfg = {url:SERVER_DEFAULT_URL, anon:SERVER_DEFAULT_ANON, store:'default', email, password};
     try{
-      adminGateStatus('Einloggen …', 'warn');
+      setAdminGate(true, 'Login wird geprüft…', 'warn');
       const res = await fetch(cfg.url + '/auth/v1/token?grant_type=password', {
         method:'POST',
         headers:{'Content-Type':'application/json','apikey':cfg.anon},
@@ -1479,20 +1419,13 @@
       });
       const txt = await res.text();
       let data = null;
-      try{ data = txt ? JSON.parse(txt) : null; }catch(_){ data = txt; }
-      if(!res.ok || !data || !data.access_token){
-        const msg = (data && (data.message || data.msg)) || 'Login nicht möglich.';
-        throw new Error(msg);
-      }
+      try{ data = txt ? JSON.parse(txt) : null; }catch(_){ data = {message:txt}; }
+      if(!res.ok || !data || !data.access_token){ throw new Error((data && (data.message || data.msg)) || ('HTTP ' + res.status)); }
       storeServerSession(data, cfg);
-      const serverEmail = document.getElementById('serverEmailInput');
-      const serverPassword = document.getElementById('serverPasswordInput');
-      if(serverEmail) serverEmail.value = email;
-      if(serverPassword) serverPassword.value = '';
-      adminGateStatus('Eingeloggt als ' + (data.user?.email || email) + '.', 'ok');
+      const passInput = document.getElementById('adminGatePassword'); if(passInput) passInput.value = '';
       await evaluateAdminAccess(true);
     }catch(e){
-      adminGateStatus('Login nicht möglich: ' + (e.message || e), 'bad');
+      setAdminGate(true, 'Login nicht möglich: ' + (e.message || e), 'bad');
       setServerButtonState('error','Login nicht möglich');
     }
   }
@@ -1938,87 +1871,67 @@
   }
 
   async function serverUpload(opts={}){
-    serverStatus('Globales Speichern ist deaktiviert. Bitte die Gruppe öffnen und im Reiter „Speicher“ „Gruppe auf Server speichern“ verwenden.', 'bad');
-    setServerButtonState('ready','Globales Speichern deaktiviert · nur Gruppen-Speicher');
+    serverStatus('Globales Speichern ist im Planer deaktiviert. Bitte im Reiter „Speicher“ der geöffneten Gruppe speichern.', 'warn');
+    setServerButtonState('connected','Gruppen-Speicher verwenden');
     return false;
-  }){
-    const cfg = saveServerConfig(); if(!cfg) return false;
-    const session = await getActiveServerSession();
-    if(!session){ if(!opts.auto) serverStatus('Bitte zuerst einloggen.', 'bad'); return false; }
-    if(serverAutosaveBusy) return false;
-    serverAutosaveBusy = true;
-    const snap = localStorageSnapshot();
-    try{
-      const meta = loadServerMeta();
-      let row = null;
-      try { row = await fetchServerRow(cfg, session); } catch(e){ if(!opts.auto) console.warn(e); }
-      const serverHash = row?.data?.hash || stableHashFromItems(row?.data?.items || {});
-      const conflict = renderServerConflict(row, meta, session, false);
-      const protectedConflict = row && conflict && (conflict.serverChanged || conflict.neverSyncedHere);
-      if(protectedConflict && !opts.force){
-        const who = row?.data ? serverUserLabel(row.data.savedBy || loadServerMeta().user || serverUserFromSession(loadServerSession())) : 'unbekannt';
-        const when = row ? formatHistoryDate(serverRowTime(row)) : 'unbekannt';
-        if(opts.auto){
-          serverStatus('Auto-Speichern pausiert: Serverstand ist geschützt. Letzter Serverstand von ' + who + ' · ' + when + '. Bitte ☁️ Server öffnen und Konflikt prüfen.', 'bad');
-          setServerButtonState('error','Konflikt-Schutz: Auto-Speichern pausiert');
-          return false;
-        }
-        const msg = conflict.neverSyncedHere
-          ? 'Dieser Browser hat den vorhandenen Serverstand noch nie geladen.\nLetzter Serverstand: ' + who + ' · ' + when + '\n\nTrotzdem mit diesem lokalen Stand überschreiben?'
-          : 'Der Serverstand wurde seit deinem letzten Sync geändert.\nLetzter Serverstand: ' + who + ' · ' + when + '\n\nLokalen Stand trotzdem auf den Server schreiben?';
-        if(!confirm(msg)){
-          serverStatus('Speichern abgebrochen. Bitte zuerst Serverstand laden oder Sicherung machen.', 'bad');
-          return false;
-        }
-      }
-      if(!opts.auto) makeFullLocalBackup('before_server_upload', false);
-      const action = opts.auto ? 'Auto-Speicherung' : (opts.manual ? 'manuell gespeichert' : 'gespeichert');
-      const payload = buildServerPayload(snap, action, session, row?.data || null);
-      cacheServerWishesFromData(payload);
-      await supabaseRequest('/rest/v1/planer_store', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer ' + session.access_token,'Prefer':'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({id:cfg.store, data:payload, updated_at:new Date().toISOString()})});
-      saveServerMeta({store:cfg.store, lastHash:snap.hash, lastSyncAt:new Date().toISOString(), serverUpdatedAt:payload.savedAt, count:snap.count, origin:location.href, user:payload.savedBy});
-      lastObservedServerHash = snap.hash;
-      setServerButtonState('connected', opts.auto ? 'Server verbunden · automatisch gespeichert' : 'Server verbunden · zuletzt gespeichert');
-      serverStatus((opts.auto ? 'Automatisch auf Server gespeichert: ' : 'Auf Server gespeichert: ') + snap.count + ' Planungs-Einträge · Benutzer: ' + serverUserLabel(payload.savedBy) + ' · Speicherstände: ' + (1 + payload.history.length), 'ok');
-      renderServerHistory({data:payload, updated_at:payload.savedAt});
-      renderServerActivity({data:payload, updated_at:payload.savedAt});
-      renderServerConflict({data:payload, updated_at:payload.savedAt}, loadServerMeta(), session, true);
-      refreshServerLocalInfo(); refreshServerSyncInfo();
-      return true;
-    } catch(e){ setServerButtonState('error','Server speichern nicht möglich'); serverStatus('Server speichern nicht möglich: ' + e.message, 'bad'); return false; }
-    finally { serverAutosaveBusy = false; }
   }
 
   async function serverDownload(){
-    serverStatus('Globales Laden ist deaktiviert. Bitte die Gruppe öffnen und im Reiter „Speicher“ „Daten dieser Gruppe neu laden“ verwenden.', 'bad');
-    setServerButtonState('ready','Globales Laden deaktiviert · nur Gruppen-Speicher');
+    serverStatus('Globales Laden ist im Planer deaktiviert. Bitte im Reiter „Speicher“ der geöffneten Gruppe nur diese Gruppe neu laden.', 'warn');
+    setServerButtonState('connected','Gruppen-Speicher verwenden');
     return false;
   }
   async function serverBackupDownload(){
-    serverStatus('Globale Server-Sicherung ist hier deaktiviert. In der Gruppe gibt es „Gruppen-Sicherung herunterladen“.', 'bad');
-    return false;
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      if(!row) throw new Error('Keine Serverdaten gefunden.');
+      const blob = new Blob([JSON.stringify(row, null, 2)], {type:'application/json;charset=utf-8'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'polypoint_server_sicherung_' + cfg.store + '_' + new Date().toISOString().slice(0,10) + '.json';
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      serverStatus('Server-Sicherung heruntergeladen.', 'ok');
+    } catch(e){ serverStatus('Server-Sicherung nicht möglich: ' + e.message, 'bad'); }
   }
   async function serverCheckStatus(showStatus=true){
-    if(showStatus) serverStatus('Globaler Serverstatus ist im Gruppenplaner deaktiviert. Der Gruppenstatus liegt im Reiter „Speicher“ der geöffneten Gruppe.', '');
-    setServerButtonState('ready','Gruppenbezogener Speicher aktiv');
-    return null;
+    const cfg = saveServerConfig(); if(!cfg) return;
+    const session = await getActiveServerSession();
+    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
+    try{
+      const row = await fetchServerRow(cfg, session);
+      const snap = localStorageSnapshot(); const meta = loadServerMeta();
+      const serverHash = row?.data?.hash || stableHashFromItems(row?.data?.items || {});
+      let msg = 'Lokal: ' + snap.count + ' Einträge · ' + snap.hash + '\n';
+      msg += 'Server: ' + (row ? ((row.data?.count || Object.keys(row.data?.items || {}).length) + ' Einträge · ' + serverHash + ' · ' + new Date(row.updated_at).toLocaleString('de-CH')) : 'noch leer') + '\n';
+      msg += 'Letzter Sync-Merker: ' + (meta.lastSyncAt ? new Date(meta.lastSyncAt).toLocaleString('de-CH') : 'nie');
+      if(row && row.data){ msg += '\nBenutzer letzter Serverstand: ' + serverUserLabel(row.data.savedBy) + ' · Speicherstände: ' + (1 + serverHistoryFromData(row.data).length); }
+      const conflict = renderServerConflict(row, meta, session, showStatus);
+      if(conflict && conflict.neverSyncedHere){ setServerButtonState('error','Konflikt-Schutz: Server zuerst laden'); serverStatus(msg + '\n\nKonflikt-Schutz: Dieser Browser hat den vorhandenen Serverstand noch nie geladen. Erst Serverstand laden.', 'bad'); }
+      else if(conflict && conflict.serverChanged){ setServerButtonState('error','Server wurde seit dem letzten Sync verändert'); serverStatus(msg + '\n\nAchtung: Server wurde seit dem letzten Sync verändert. Erst laden oder bewusst überschreiben.', 'bad'); }
+      else if(meta.lastHash && snap.hash !== meta.lastHash){ setServerButtonState('dirty','Temporäre Änderungen noch nicht gespeichert'); serverStatus(msg + '\n\nTemporäre Änderungen sind noch nicht auf dem Server gespeichert.', ''); }
+      else { setServerButtonState('connected','Server und lokaler Stand passen zum Sync-Merker'); if(showStatus) serverStatus(msg + '\n\nAlles synchron.', 'ok'); }
+      refreshServerSyncInfo();
+    } catch(e){ setServerButtonState('error','Serverstatus nicht möglich'); serverStatus('Serverstatus nicht möglich: ' + e.message, 'bad'); }
   }
-  function isAutosaveEnabled(){ return localStorage.getItem(SERVER_AUTOSAVE_KEY) !== '0'; }
-  function setAutosaveEnabled(on){ localStorage.setItem(SERVER_AUTOSAVE_KEY, on ? '1' : '0'); refreshServerSyncInfo(); }
-  function scheduleServerAutosave(reason='change'){
-    // v136: globales Auto-Speichern ist deaktiviert. Gruppen speichern sich nur über /api/group-state.
-    return;
+  function isAutosaveEnabled(){ return false; }
+  function setAutosaveEnabled(on){
+    localStorage.setItem(SERVER_AUTOSAVE_KEY, '0');
+    refreshServerSyncInfo();
   }
+  function scheduleServerAutosave(reason='change'){ return; }
   function startServerAutosaveWatcher(){
-    // v136: kein globaler Watcher mehr, damit nie alle Gruppen/Browserdaten überschrieben werden.
-    setServerButtonState('ready','Gruppen-Speicher bereit');
+    localStorage.setItem(SERVER_AUTOSAVE_KEY, '0');
+    lastObservedServerHash = localStorageSnapshot().hash;
   }
   async function serverLoadPrimaryOnStart(){
-    // v136: Startseite/Planer lädt keinen globalen Server-Hauptspeicher mehr.
-    // Häuser/Gruppen kommen aus /api/org-structure; Gruppendaten aus /api/group-*. 
-    setServerButtonState('ready','Globaler Hauptspeicher deaktiviert · Gruppen-Speicher verwenden');
-    return null;
+    // Globaler Server-Hauptspeicher ist im Planer deaktiviert. Gruppen laden/speichern sich selbst.
+    setServerButtonState('connected','Gruppen-Speicher');
+    return false;
   }
+
+
+  // V13.0.226jf:
 
 
   // V13.0.226jf: Wunsch-Erfüllung gegen aktuellen Server-Dienstplan prüfen. Nur Anzeige, kein Server-Schreibzugriff.
@@ -2462,35 +2375,38 @@
   }
 
   async function openServerSync(){
-    const id = activeId || 'overview';
-    if(id === 'overview'){
-      alert('Bitte zuerst eine Gruppe / einen Bereich öffnen. Der Speicher ist gruppenbezogen.');
-      setServerButtonState('ready','Zuerst Gruppe öffnen');
+    loadServerConfig(); refreshServerLocalInfo(); refreshServerSyncInfo();
+    serverStatus('Verbindung wird geprüft…', '');
+    serverModal().classList.add('show'); serverModal().setAttribute('aria-hidden','false');
+    const cfg = getServerInputs();
+    if(!cfg.anon){ serverStatus('Server-Verbindung ist unvollständig.', 'bad'); return; }
+    const s = await getActiveServerSession();
+    setServerButtonState(s ? 'connected' : 'ready', s ? 'Server verbunden' : 'Server bereit, bitte einloggen');
+    serverStatus(s ? 'Server-Hauptspeicher verbunden.' : 'Server erreichbar. Bitte einloggen, damit der Serverstand geladen wird.', s ? 'ok' : '');
+    if(s){ serverCheckStatus(false); serverHistoryLoad(false); serverActivityLoad(false); serverConflictCheck(false); serverWishReportLoad(false); loadWishSettings(false); serverAccessOverviewLoad(false); }
+  }
+  function openGroupStorage(){
+    const id = normalize(activeId || 'overview');
+    const frame = frames && frames.get ? frames.get(id) : null;
+    if(!frame || id === 'overview'){
+      alert('Bitte zuerst eine Gruppe öffnen. Der Speicher ist gruppenbezogen.');
       return;
     }
-    const frame = frames && frames.get ? frames.get(id) : null;
     try{
-      if(frame && frame.contentWindow){
-        frame.contentWindow.postMessage({type:'ulmiOpenGroupStorage'}, '*');
-        setServerButtonState('connected','Gruppen-Speicher geöffnet');
+      const win = frame.contentWindow;
+      const doc = frame.contentDocument || win.document;
+      const btn = doc && doc.querySelector ? doc.querySelector('.tab[onclick*="system"]') : null;
+      if(win && typeof win.showView === 'function'){
+        win.showView('system', btn || null);
+        if(typeof win.renderSystem === 'function') win.renderSystem();
+        frame.scrollIntoView({block:'start'});
         return;
       }
-    }catch(_){ }
-    try{
-      const ctx = (typeof UNIT_CONTEXT_BY_PLANNER !== 'undefined' && UNIT_CONTEXT_BY_PLANNER[normalize(id)]) ? UNIT_CONTEXT_BY_PLANNER[normalize(id)] : {};
-      const p = new URLSearchParams();
-      p.set('siteId', HOUSE_ID || HOUSE_CONTEXT?.id || ctx.siteId || 'haus_1');
-      p.set('siteName', HOUSE_CONTEXT?.name || ctx.siteName || '');
-      p.set('unitId', ctx.id || id);
-      p.set('unitName', ctx.name || labels[normalize(id)] || id);
-      p.set('groupKey', ctx.plannerKey || ctx.groupKey || id);
-      location.href = 'gruppen-speicher.html?' + p.toString();
-    }catch(_){
-      alert('Gruppen-Speicher konnte nicht geöffnet werden. Bitte zuerst eine Gruppe öffnen.');
-    }
+    }catch(e){ console.warn(e); }
+    alert('Gruppen-Speicher konnte nicht geöffnet werden. Bitte in der Gruppe den Reiter „Speicher“ öffnen.');
   }
-  function closeServerSync(){ serverModal()?.classList?.remove('show'); serverModal()?.setAttribute('aria-hidden','true'); }
-  document.getElementById('serverSyncBtn')?.addEventListener('click', openServerSync);
+  function closeServerSync(){ serverModal().classList.remove('show'); serverModal().setAttribute('aria-hidden','true'); }
+  document.getElementById('serverSyncBtn')?.addEventListener('click', openGroupStorage);
   document.getElementById('serverSyncCloseBtn')?.addEventListener('click', closeServerSync);
   document.getElementById('serverSyncModal')?.addEventListener('click', ev => { if(ev.target === serverModal()) closeServerSync(); });
   document.getElementById('serverSaveConfigBtn')?.addEventListener('click', saveServerConfig);
@@ -2520,12 +2436,8 @@
   document.getElementById('serverRestoreBackupBtn')?.addEventListener('click', restoreLatestLocalEmergencyBackup);
   document.getElementById('serverAutosaveToggle')?.addEventListener('change', ev => { setAutosaveEnabled(!!ev.target.checked); serverStatus(ev.target.checked ? 'Auto-Speichern aktiv.' : 'Auto-Speichern ausgeschaltet.', 'ok'); });
   document.getElementById('adminGateLoginBtn')?.addEventListener('click', adminGateLogin);
-  ['adminGateEmailInput','adminGatePasswordInput'].forEach(id=>{
-    document.getElementById(id)?.addEventListener('keydown', ev=>{ if(ev.key==='Enter') adminGateLogin(); });
-  });
-  document.getElementById('firstPasswordSaveBtn')?.addEventListener('click', submitFirstPasswordChange);
-  document.getElementById('adminGatePortalBtn')?.addEventListener('click', () => { location.href = 'wunschportal.html'; });
-  document.getElementById('adminGateRetryBtn')?.addEventListener('click', () => evaluateAdminAccess(true));
+  document.getElementById('adminGatePassword')?.addEventListener('keydown', ev => { if(ev.key === 'Enter') adminGateLogin(); });
+  document.getElementById('adminGateBackBtn')?.addEventListener('click', () => { location.href = 'index.html'; });
   document.getElementById('serverRoleCheckBtn')?.addEventListener('click', () => evaluateAdminAccess(true));
   document.getElementById('serverRoleMarkAdminBtn')?.addEventListener('click', serverRoleMarkAdmin);
   loadServerConfig();
@@ -2533,7 +2445,7 @@
   refreshServerButtonFromSession();
   startServerAutosaveWatcher();
   startWishAutoSyncWatcher();
-  evaluateAdminAccess(false).then(ok => { refreshServerButtonFromSession(); if(ok){ serverLoadPrimaryOnStart(); scheduleWishAutoRefresh(); } }).catch(() => setServerButtonState('error','Server-Verbindung prüfen'));
+  evaluateAdminAccess(false).then(ok => { refreshServerButtonFromSession(); if(ok){ scheduleWishAutoRefresh(); } }).catch(() => setServerButtonState('error','Server-Verbindung prüfen'));
 
 })();
 </script>
