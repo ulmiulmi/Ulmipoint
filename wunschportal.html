@@ -250,23 +250,7 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
   <div class="grid">
     <article class="card" id="loginCard">
       <h2>Mitarbeiter-Login</h2>
-      <div class="notice">Für Mitarbeitende: Name oder E-Mail und persönlicher Wunsch-Code. Kein Supabase-Benutzer nötig. Definitive Dienste werden nicht verändert.</div>
-      <div class="formgrid" style="margin-top:10px">
-        <label><span class="mini">E-Mail</span><input id="email" type="email" autocomplete="username" placeholder="name@example.ch"></label>
-        <label><span class="mini">Passwort</span><input id="password" type="password" autocomplete="current-password" placeholder="Start- oder eigenes Passwort"></label>
-      </div>
-      <div class="toolbar" style="margin-top:10px"><button type="button" class="ok" id="loginBtn">Mit Passwort öffnen</button></div>
-      <div id="portalPasswordChangeBox" class="password-change-box hidden">
-        <b>Start-Passwort ändern</b>
-        <div class="mini">Dieses Konto wurde mit einem voreingestellten Passwort erstellt. Bitte jetzt ein eigenes Passwort setzen.</div>
-        <div id="portalPasswordChangeStatus" class="notice warn" style="margin-top:8px">Neues Passwort eingeben.</div>
-        <div class="formgrid" style="margin-top:10px">
-          <label><span class="mini">Neues Passwort</span><input id="portalNewPassword1" type="password" autocomplete="new-password" placeholder="mindestens 8 Zeichen"></label>
-          <label><span class="mini">Wiederholen</span><input id="portalNewPassword2" type="password" autocomplete="new-password" placeholder="nochmals eingeben"></label>
-        </div>
-        <div class="toolbar" style="margin-top:10px"><button type="button" class="ok" id="portalPasswordChangeBtn">Passwort setzen</button></div>
-      </div>
-      <div class="notice" style="margin-top:10px">Alternativ: Name/E-Mail und persönlicher Wunsch-Code.</div>
+      <div class="notice">Für Mitarbeitende: Name oder E-Mail und persönlicher Wunsch-Code. Kein Supabase-Login nötig. Definitive Dienste werden nicht verändert.</div>
       <div class="formgrid" style="margin-top:10px">
         <label><span class="mini">Name oder E-Mail</span><input id="codeIdentity" type="text" autocomplete="username" placeholder="Name oder E-Mail"></label>
         <label><span class="mini">Wunsch-Code</span><input id="codePin" type="password" autocomplete="current-password" placeholder="Code"></label>
@@ -406,23 +390,23 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
   function loadSession(){
     try{
       const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'{}');
-      if(s && ((s.mode==='code' && s.wishCode && (s.identity || s.user?.email || s.employeeName)) || s.access_token)){
+      if(s && s.mode==='code' && s.wishCode && (s.identity || s.user?.email || s.employeeName)){
         if(!s.expires_at || s.expires_at>Date.now()+30000){
           session=s;
-          if(s.mode==='code'){
-            const id=s.identity || s.user?.email || s.employeeName || '';
-            if(q('codeIdentity') && id) q('codeIdentity').value=id;
-            if(q('codePin') && s.wishCode) q('codePin').value=s.wishCode;
-            status('loginStatus','Du bist auf diesem Gerät noch angemeldet. Dienstplan wird geladen …','ok');
-          }
+          const id=s.identity || s.user?.email || s.employeeName || '';
+          if(q('codeIdentity') && id) q('codeIdentity').value=id;
+          if(q('codePin') && s.wishCode) q('codePin').value=s.wishCode;
+          status('loginStatus','Du bist auf diesem Gerät noch mit Wunsch-Code angemeldet. Dienstplan wird geladen …','ok');
         }else{
           localStorage.removeItem(SESSION_KEY);
         }
+      }else if(s && s.access_token){
+        localStorage.removeItem(SESSION_KEY);
       }
     }catch(_){}
     setLoginPill();
   }
-  function isFresh(){ return !!(session&&((session.mode==='code')||session.access_token)&&(!session.expires_at||session.expires_at>Date.now()+30000)); }
+  function isFresh(){ return !!(session&&session.mode==='code'&&session.wishCode&&(!session.expires_at||session.expires_at>Date.now()+30000)); }
   async function supa(path,opt={}){ const headers=Object.assign({'apikey':SERVER_ANON},opt.headers||{}); const res=await fetch(SERVER_URL+path,Object.assign({},opt,{headers})); const txt=await res.text(); let data=null; try{data=txt?JSON.parse(txt):null}catch(_){data=txt} if(!res.ok){throw new Error((data&&data.message)||(data&&data.msg)||String(data||('HTTP '+res.status)))} return data; }
   async function wishApi(path,payload={}){
     const res=await fetch(WUNSCH_API_BASE+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -853,17 +837,7 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
         status('loginStatus','Wunschportal verbunden. Wunschliste geladen: '+dutyCount,'ok');
         return;
       }
-      serverRow=await fetchRow(); if(!serverRow?.data)throw new Error('Kein Serverstand gefunden.');
-      if(portalMustChangePassword(serverRow.data)){
-        setPortalPasswordChangeBox(true,'Dieses Konto muss beim ersten Login ein eigenes Passwort setzen.');
-        status('loginStatus','Bitte zuerst Start-Passwort ändern. Danach öffnet sich das Wunschportal.','warn');
-        return;
-      }
-      setPortalPasswordChangeBox(false);
-      applyWishSettings(serverRow.data);
-      dutyOptionGroups=buildDutyOptionGroups(serverRow.data); wishOptions=dutyOptionGroups.__all || baseWishOptions.concat([otherWishOption]);
-      employees=extractEmployees(serverRow.data); applyPortalRoleFilter(); renderEmployeeSelect();
-      const dutyCount=Math.max(0,(wishOptions.length-baseWishOptions.length-1)); status('loginStatus','Server verbunden. Wunschliste aus Standardwoche geladen: '+dutyCount,'ok');
+      throw new Error('Bitte mit Name/E-Mail und persönlichem Wunsch-Code öffnen.');
     }catch(e){status('portalStatus','Serverdaten konnten nicht geladen werden: '+e.message,'bad');}
   }
   function serverUser(){ const u=session?.user||{}; if(session?.mode==='code')return {id:u.id||'',email:u.email||'',name:session.employeeName||u.name||'Wunsch-Code'}; return {id:u.id||'',email:u.email||'',name:(u.user_metadata?.full_name||u.user_metadata?.name||u.email||u.id||'unbekannt')}; }
@@ -889,38 +863,7 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
         status('portalStatus',(auto?'Automatisch gespeichert: ':'Wünsche gespeichert: ')+Object.keys(days).length+' Tage · '+emp.name+' · '+emp.group+' · '+saveMonthKey,'ok');
         return;
       }
-      const s=await refreshSession(); if(!s)throw new Error('Bitte zuerst einloggen oder mit Wunsch-Code öffnen.');
-      serverRow=await fetchRow(); if(!serverRow?.data)throw new Error('Kein Serverstand gefunden.');
-      if(portalMustChangePassword(serverRow.data)){
-        setPortalPasswordChangeBox(true,'Dieses Konto muss beim ersten Login ein eigenes Passwort setzen.');
-        status('loginStatus','Bitte zuerst Start-Passwort ändern. Danach öffnet sich das Wunschportal.','warn');
-        return;
-      }
-      setPortalPasswordChangeBox(false);
-      applyWishSettings(serverRow.data);
-      const roleInfoNow=portalRoleInfo(serverRow?.data||{});
-      if(currentAssignment?.mode==='blocked' && !roleInfoNow.isAdmin)throw new Error('Dieser Login ist noch nicht freigeschaltet. Bitte Admin/Planer kontaktieren.');
-      const emp=opts.empOverride || selectedEmployee(); if(!emp)throw new Error('Bitte Mitarbeiter auswählen.');
-      const saveMonthKey=opts.monthKeyOverride || monthKey();
-      const ym=String(saveMonthKey).split('-'); const y=Number(ym[0])||0, m=Number(ym[1])||0;
-      if(!isWishMonthOpen(y,m))throw new Error('Dieser Monat ist nicht mehr für Wünsche freigegeben. '+wishDeadlineText());
-      const roleInfoBefore=portalRoleInfo(serverRow.data);
-      if(roleInfoBefore.restricted && roleInfoBefore.entry){ const allowed=findEmployeeByRoleEntry(roleInfoBefore.entry); const ok=allowed.some(e=>e.id===emp.id&&e.name===emp.name&&e.group===emp.group); if(!ok)throw new Error('Dieser Login ist bereits einem anderen Mitarbeiter zugeordnet.'); }
-      const days=opts.daysOverride || collectDays(); const data=serverRow.data; const ws=wishStore(data); const key=employeeKey(emp);
-      if(!ws.people[key])ws.people[key]={employeeId:emp.id,employeeName:emp.name,email:session.user.email||'',group:emp.group,months:{}};
-      ws.people[key].employeeId=emp.id; ws.people[key].employeeName=emp.name; ws.people[key].email=session.user.email||''; ws.people[key].group=emp.group; ws.people[key].groupKey=emp.groupKey; ws.people[key].updatedAt=new Date().toISOString(); ws.people[key].keyMode='employee';
-      ws.people[key].months[saveMonthKey]={year:y,month:m,days,group:emp.group,updatedAt:new Date().toISOString(),savedBy:serverUser()};
-      ws.version='13.0.226c'; ws.updatedAt=new Date().toISOString();
-      const email=normEmail(session.user.email||''); const roles=Object.assign({},roleStore(data));
-      if(email && session.mode!=='code'){ const oldRole=roles[email]; const oldRoleName=String(typeof oldRole==='string'?oldRole:oldRole?.role||'').toLowerCase(); if(oldRoleName!=='admin'&&oldRoleName!=='planner'){ roles[email]={role:'employee',email,employeeId:emp.id,employeeName:emp.name,name:emp.name,group:emp.group,groupKey:emp.groupKey,updatedAt:new Date().toISOString(),source:'wunschportal-auto-gruppe'}; data.accessRoles=roles; data.roleVersion='13.0.226d'; }}
-      const count=Object.keys(days).length; data.activity=[makeActivity(auto?(opts.action||'Wünsche automatisch gespeichert'):'Wünsche gespeichert',count,emp)].concat(activityFromData(data)).slice(0,50);
-      const postHeaders={'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'}; if(s.access_token)postHeaders.Authorization='Bearer '+s.access_token;
-      await supa('/rest/v1/planer_store',{method:'POST',headers:postHeaders,body:JSON.stringify({id:STORE_ID,data,updated_at:new Date().toISOString()})});
-      if(!opts.empOverride || (q('employeeSelect').value===activeEmployeeValue && saveMonthKey===monthKey())){ currentWishes=days; lastLoadedDaysJson=JSON.stringify(days); activeMonthKey=monthKey(); }
-      serverRow={id:STORE_ID,data,updated_at:new Date().toISOString()};
-      currentAssignment=currentAssignment?.mode==='admin'?currentAssignment:{mode:'role',employee:emp,email};
-      if(!auto) portalRoleMessage='Gruppe gespeichert: '+emp.name+' · '+emp.group+'. Ab jetzt wird dieser Login automatisch dieser Gruppe zugeordnet.';
-      status('portalStatus',(auto?'Automatisch gespeichert: ':'Wünsche gespeichert: ')+count+' Tage · '+emp.name+' · '+emp.group+' · '+saveMonthKey,'ok');
+      throw new Error('Bitte zuerst mit Wunsch-Code öffnen.');
     }catch(e){status('portalStatus',(auto?'Automatisches Speichern fehlgeschlagen: ':'Wünsche konnten nicht gespeichert werden: ')+e.message,'bad')}
     finally{ wishAutosaveBusy=false; }
   }
@@ -935,7 +878,7 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
     if(oldEmp && JSON.stringify(days)!==lastLoadedDaysJson){ await saveWishes({auto:true,empOverride:oldEmp,monthKeyOverride:oldMonth,daysOverride:days,action:reason||'Auto-Speicherung vor Wechsel'}); }
   }
   function clearMonth(){ if(!confirm('Wünsche für diesen Monat in der Ansicht leeren?'))return; currentWishes={}; renderDays(); scheduleWishAutosave('Monat geleert'); }
-  q('loginBtn').addEventListener('click',login); q('portalPasswordChangeBtn')?.addEventListener('click',changePortalPassword); q('codeLoginBtn').addEventListener('click',codeLogin); q('logoutBtn').addEventListener('click',logout); q('loadServerBtn').addEventListener('click',loadServer); q('refreshPersonalPlanBtn').addEventListener('click',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Dienstplan-Aktualisierung'); await loadServer(); renderPersonalPlan(); }); q('saveWishBtn').addEventListener('click',()=>saveWishes()); q('clearMonthBtn').addEventListener('click',clearMonth); q('month').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Monatswechsel'); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('year').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Jahreswechsel'); updateMonthOptions(true); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('employeeSelect').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Mitarbeiterwechsel'); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('days').addEventListener('change',e=>{ if(e.target&&e.target.matches('[data-wish]'))scheduleWishAutosave('Wunsch geändert'); }); q('days').addEventListener('input',e=>{ if(e.target&&e.target.matches('[data-comment]'))scheduleWishAutosave('Kommentar geändert'); });
+  q('loginBtn')?.addEventListener('click',login); q('portalPasswordChangeBtn')?.addEventListener('click',changePortalPassword); q('codeLoginBtn').addEventListener('click',codeLogin); q('logoutBtn').addEventListener('click',logout); q('loadServerBtn').addEventListener('click',loadServer); q('refreshPersonalPlanBtn').addEventListener('click',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Dienstplan-Aktualisierung'); await loadServer(); renderPersonalPlan(); }); q('saveWishBtn').addEventListener('click',()=>saveWishes()); q('clearMonthBtn').addEventListener('click',clearMonth); q('month').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Monatswechsel'); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('year').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Jahreswechsel'); updateMonthOptions(true); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('employeeSelect').addEventListener('change',async()=>{ await saveCurrentIfDirty('Auto-Speicherung vor Mitarbeiterwechsel'); if(session?.mode==='code') await loadServer(); else loadExistingWishes(); }); q('days').addEventListener('change',e=>{ if(e.target&&e.target.matches('[data-wish]'))scheduleWishAutosave('Wunsch geändert'); }); q('days').addEventListener('input',e=>{ if(e.target&&e.target.matches('[data-comment]'))scheduleWishAutosave('Kommentar geändert'); });
   loadSession(); initControls(); applyInviteParams(); if(isFresh())loadServer();
 })();
 </script>
