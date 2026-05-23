@@ -83,6 +83,7 @@ main{max-width:1360px;margin:auto;padding:18px}.hero,.card,.panel{background:rgb
       <h2>Speicherregel</h2>
       <div class="notice ok">Planer / Dienstplan speichert group-plan.
 Mitarbeitende speichern group-employees.
+Gruppen-Dienste speichern group-duties.
 Wünsche speichern group-wishes.
 Status speichert group-state.
 Diese Seite liest und sichert nur.</div>
@@ -108,8 +109,8 @@ Diese Seite liest und sichert nur.</div>
 <script>
 (function(){
 'use strict';
-const SECTIONS=['state','employees','plan','wishes'];
-const sectionLabels={state:'Status',employees:'Mitarbeitende',plan:'Dienstplan',wishes:'Wünsche'};
+const SECTIONS=['state','employees','plan','duties','wishes'];
+const sectionLabels={state:'Status',employees:'Mitarbeitende',plan:'Dienstplan',duties:'Gruppen-Dienste',wishes:'Wünsche'};
 let lastBundle=null;
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function slug(v){return String(v||'').trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'gruppe';}

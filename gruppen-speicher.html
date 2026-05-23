@@ -152,12 +152,12 @@ main{max-width:1320px;margin:auto;padding:18px}
 </script>
 
 <script>
-const SECTIONS=['state','employees','plan','wishes'];
+const SECTIONS=['state','employees','plan','duties','wishes'];
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function slug(v){return String(v||'').trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'';}
 function fmtDate(v){if(!v)return 'noch nie';try{return new Date(v).toLocaleString('de-CH');}catch(_){return String(v)}}
 function who(u){u=u||{};return u.email||u.name||u.id||u.source||'unbekannt'}
-function secLabel(s){return s==='state'?'Status':s==='employees'?'Mitarbeitende':s==='plan'?'Dienstplan':s==='wishes'?'Wünsche':s}
+function secLabel(s){return s==='state'?'Status':s==='employees'?'Mitarbeitende':s==='plan'?'Dienstplan':s==='duties'?'Gruppen-Dienste':s==='wishes'?'Wünsche':s}
 function withTs(url){return url+(url.includes('?')?'&':'?')+'ts='+Date.now()}
 async function fetchJson(url,opts){let r=await fetch(url,Object.assign({cache:'no-store'},opts||{}));let t=await r.text();let d={};try{d=t?JSON.parse(t):{}}catch(_){d={message:t}}if(!r.ok||d.ok===false)throw new Error(d.message||('HTTP '+r.status));return d}
 function readStoredContext(){

@@ -268,7 +268,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
   </article></section>
 
   <section id="rules" class="view"><article class="card"><div class="section"><h2>Dienste</h2><span class="pill blue">Dienste</span></div>
-    <details open style="margin-top:12px"><summary><b>Dienstkatalog</b></summary><div class="mini" style="margin:8px 0">Der Dienstkatalog ist direkt bearbeitbar. Wenn bei Arbeit / Gruppe / Auto versehentlich keine Haken gesetzt sind, kann <b>Diensthaken reparieren</b> die Gruppendienste wieder korrekt setzen. Nach Änderungen unten <b>Dienstkatalog übernehmen</b> klicken. Für geteilte Dienste kann bei Intervalle zum Beispiel <span class="kbd">07:00-09:15 / 12:00-19:00</span> eingetragen werden. VD, WB, KGL und KF behalten ihre Schutzlogik.</div><div class="toolbar" style="margin:8px 0"><button class="primary" onclick="saveDutyCatalogFromUI(false)">Dienstkatalog übernehmen</button><button onclick="saveDutyCatalogFromUI(true)">übernehmen & neu berechnen</button><button class="okbtn" onclick="addDutyRow()">+ Dienst ergänzen</button><button onclick="normalizeDutyCatalog(); saveState(false); renderDutyTable(); renderStandardNeeds(); toast('Standarddienste ergänzt und gespeichert','ok')">Standarddienste ergänzen</button><button class="okbtn" onclick="repairDutyCatalogChecksFromUI()">Diensthaken reparieren</button></div><div class="table-wrap duty-catalog-wrap" style="max-height:none;overflow-x:auto;overflow-y:visible"><table id="dutyTable" class="duty-table"><thead><tr><th><span class="duty-col-help" tabindex="0">Kurz <span class="info-dot">i</span><span class="duty-col-pop">Kurzcode des Dienstes, zum Beispiel F9, M2, S6 oder WB. Dieser Code erscheint im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Name <span class="info-dot">i</span><span class="duty-col-pop">Lesbarer Name des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Typ <span class="info-dot">i</span><span class="duty-col-pop">Art des Dienstes, zum Beispiel Gruppendienst, frei, Weiterbildung, Büro oder geteilter Dienst.</span></span></th><th><span class="duty-col-help" tabindex="0">Start <span class="info-dot">i</span><span class="duty-col-pop">Beginn des Dienstes. Bei geteilten Diensten können zusätzlich Intervalle verwendet werden.</span></span></th><th><span class="duty-col-help" tabindex="0">Ende <span class="info-dot">i</span><span class="duty-col-pop">Ende des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Intervalle <span class="info-dot">i</span><span class="duty-col-pop">Für geteilte Dienste, zum Beispiel 07:00-09:15 / 12:00-19:00.</span></span></th><th><span class="duty-col-help" tabindex="0">h <span class="info-dot">i</span><span class="duty-col-pop">Stunden, die der Dienst zählt. 0 bedeutet: keine Soll-/Ist-Stunden.</span></span></th><th><span class="duty-col-help" tabindex="0">Arbeit <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Der Dienst zählt als Arbeitszeit bzw. Abwesenheitszeit für Soll/Ist. Beispiel Ferien oder Weiterbildung zählen, frei zählt nicht.</span></span></th><th><span class="duty-col-help" tabindex="0">Gruppe <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Der Dienst deckt die Gruppengrundbesetzung ab. Diese Dienste zählen für die benötigte Abdeckung im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Auto <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Die KI darf diesen Dienst automatisch einplanen. Ohne Haken wird er nicht automatisch gesetzt.</span></span></th><th><span class="duty-col-help" tabindex="0">manuell <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Dieser Dienst wird nur von Hand gesetzt und nicht automatisch geplant.</span></span></th><th><span class="duty-col-help" tabindex="0">Bedeutung <span class="info-dot">i</span><span class="duty-col-pop">Erklärung, wofür der Dienst gedacht ist. Das hilft beim Prüfen und späteren Anpassen.</span></span></th><th></th></tr></thead><tbody></tbody></table></div></details>
+    <details open style="margin-top:12px"><summary><b>Dienste dieser Gruppe</b></summary><div class="mini" style="margin:8px 0">Diese Tabelle bleibt der Arbeitsbereich der aktuellen Gruppe. Der zentrale Dienst wird in der Organisation erstellt. Hier speichert die Gruppe ihre eigene Verwendung: <b>Arbeit</b>, <b>Gruppe</b>, <b>Auto</b> und <b>manuell</b>. Andere Gruppen werden dadurch nicht verändert. Für geteilte Dienste kann bei Intervalle zum Beispiel <span class="kbd">07:00-09:15 / 12:00-19:00</span> eingetragen werden. VD, WB, KGL und KF behalten ihre Schutzlogik.</div><div class="toolbar" style="margin:8px 0"><button class="primary" onclick="saveDutyCatalogFromUI(false)">lokal übernehmen</button><button onclick="saveDutyCatalogFromUI(true)">lokal übernehmen & neu berechnen</button><button class="okbtn" onclick="saveGroupDutiesFromUI(true)">Gruppen-Dienste auf Server speichern</button><button onclick="openGroupDutiesPage()">Aus zentralem Katalog wählen</button><button class="okbtn" onclick="addDutyRow()">+ Dienst ergänzen</button><button onclick="normalizeDutyCatalog(); saveState(false); renderDutyTable(); renderStandardNeeds(); toast('Standarddienste ergänzt und gespeichert','ok')">Standarddienste ergänzen</button><button class="okbtn" onclick="repairDutyCatalogChecksFromUI()">Diensthaken reparieren</button></div><div class="table-wrap duty-catalog-wrap" style="max-height:none;overflow-x:auto;overflow-y:visible"><table id="dutyTable" class="duty-table"><thead><tr><th><span class="duty-col-help" tabindex="0">Kurz <span class="info-dot">i</span><span class="duty-col-pop">Kurzcode des Dienstes, zum Beispiel F9, M2, S6 oder WB. Dieser Code erscheint im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Name <span class="info-dot">i</span><span class="duty-col-pop">Lesbarer Name des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Typ <span class="info-dot">i</span><span class="duty-col-pop">Art des Dienstes, zum Beispiel Gruppendienst, frei, Weiterbildung, Büro oder geteilter Dienst.</span></span></th><th><span class="duty-col-help" tabindex="0">Start <span class="info-dot">i</span><span class="duty-col-pop">Beginn des Dienstes. Bei geteilten Diensten können zusätzlich Intervalle verwendet werden.</span></span></th><th><span class="duty-col-help" tabindex="0">Ende <span class="info-dot">i</span><span class="duty-col-pop">Ende des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Intervalle <span class="info-dot">i</span><span class="duty-col-pop">Für geteilte Dienste, zum Beispiel 07:00-09:15 / 12:00-19:00.</span></span></th><th><span class="duty-col-help" tabindex="0">h <span class="info-dot">i</span><span class="duty-col-pop">Stunden, die der Dienst zählt. 0 bedeutet: keine Soll-/Ist-Stunden.</span></span></th><th><span class="duty-col-help" tabindex="0">Arbeit <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Der Dienst zählt als Arbeitszeit bzw. Abwesenheitszeit für Soll/Ist. Beispiel Ferien oder Weiterbildung zählen, frei zählt nicht.</span></span></th><th><span class="duty-col-help" tabindex="0">Gruppe <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Der Dienst deckt die Gruppengrundbesetzung ab. Diese Dienste zählen für die benötigte Abdeckung im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Auto <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Die KI darf diesen Dienst automatisch einplanen. Ohne Haken wird er nicht automatisch gesetzt.</span></span></th><th><span class="duty-col-help" tabindex="0">manuell <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Dieser Dienst wird nur von Hand gesetzt und nicht automatisch geplant.</span></span></th><th><span class="duty-col-help" tabindex="0">Bedeutung <span class="info-dot">i</span><span class="duty-col-pop">Erklärung, wofür der Dienst gedacht ist. Das hilft beim Prüfen und späteren Anpassen.</span></span></th><th></th></tr></thead><tbody></tbody></table></div></details>
     <details style="margin-top:12px"><summary><b>Standardbedarf Woche / Wochenende normal</b></summary><div class="mini" style="margin:8px 0">Pro Wochentag Dienste direkt anhaken. Bei Bedarf Anzahl erhöhen, zum Beispiel F9 zweimal. Samstag und Sonntag werden jetzt direkt aus dieser Eingabe für <b>Wochenende normal</b> übernommen. Feiertage nutzen weiterhin die Wochenendregel, wenn kein Tagesstatus gesetzt ist.</div><div id="stdNeeds"></div><div class="toolbar"><button class="primary" onclick="saveStandardNeedsFromUI(); makePlan(true)">Standardwoche übernehmen</button></div></details>
     <details style="margin-top:12px"><summary><b>Schulferien / Feiertage Basel-Stadt lokal</b></summary><div class="mini" style="margin:8px 0">Bearbeitbare lokale Liste. Format Ferien: YYYY-MM-DD bis YYYY-MM-DD pro Zeile. Feiertage: YYYY-MM-DD Name. Zusätzliche arbeitsfreie Halbtage werden automatisch als ½FT markiert: Fasnachtsmontag-Nachmittag, Fasnachtsmittwoch-Nachmittag, 31. Juli-Nachmittag, Heiligabend-Nachmittag und Silvester-Nachmittag, sofern diese Tage nicht auf Samstag/Sonntag fallen. Fasnacht wird nicht als ganzer Feiertag geführt.</div><div class="formgrid"><div><label>Schulferien</label><textarea id="schoolHolidayText"></textarea></div><div><label>Feiertage</label><textarea id="holidayText"></textarea></div></div><button class="primary" onclick="saveCalendarLists(); renderAll()">Kalenderlisten übernehmen</button></details>
   </article></section>
@@ -3369,8 +3369,9 @@ function installEditorAutosave(){
       if(syncDutyCatalogFromUI({quiet:true})){
         fillDutySelect();
         saveState(false);
+        saveGroupDutiesFromUI(false);
         renderStandardNeeds();
-        editorAutosaveMessage('Dienstkatalog automatisch gespeichert');
+        editorAutosaveMessage('Gruppen-Dienste automatisch gespeichert');
       }else{
         editorAutosaveMessage('Dienstkatalog prüfen');
       }
@@ -3436,14 +3437,76 @@ function repairDutyCatalogChecksFromUI(){
   toast(changed?('Diensthaken repariert: '+changed+' Anpassungen'):'Diensthaken waren bereits korrekt','ok');
 }
 
+function groupDutiesUrl(){
+  const p=new URLSearchParams();
+  p.set('siteId',ULMI_DYNAMIC_CONTEXT.siteId||'');
+  p.set('siteName',ULMI_DYNAMIC_CONTEXT.siteName||'');
+  p.set('groupKey',ULMI_DYNAMIC_CONTEXT.plannerKey||ULMI_DYNAMIC_CONTEXT.unitId||PLANER_GROUP_ID);
+  p.set('unitId',ULMI_DYNAMIC_CONTEXT.unitId||'');
+  p.set('unitName',ULMI_DYNAMIC_CONTEXT.unitName||PLANER_GROUP_NAME);
+  return 'gruppen-dienste.html?'+p.toString();
+}
+function openGroupDutiesPage(){
+  try{ window.open(groupDutiesUrl(),'_blank'); }
+  catch(_){ location.href=groupDutiesUrl(); }
+}
+function groupDutySelectionPayloadFromState(){
+  if(!Array.isArray(state.duties))state.duties=[];
+  return {
+    version:'1.0',
+    source:'bereich-dyn',
+    siteId:ULMI_DYNAMIC_CONTEXT.siteId||'',
+    siteName:ULMI_DYNAMIC_CONTEXT.siteName||'',
+    groupKey:ULMI_DYNAMIC_CONTEXT.plannerKey||ULMI_DYNAMIC_CONTEXT.unitId||PLANER_GROUP_ID,
+    groupName:PLANER_GROUP_NAME,
+    updatedAt:new Date().toISOString(),
+    duties:state.duties.filter(d=>d&&d.code).map((d,i)=>({
+      dutyId:String(d.id||d.code||'').toLowerCase().replace(/[^a-z0-9]+/g,'_')||('d_'+i),
+      code:d.code||'',
+      short:d.code||'',
+      name:d.name||d.code||'',
+      active:d.active!==false,
+      countsAsWork:!!d.countsAsWork,
+      countsForCoverage:!!d.countsForCoverage,
+      autoPlan:!!d.autoPlan,
+      manualOnly:!!d.manualOnly,
+      sort:(i+1)*10
+    }))
+  };
+}
+async function saveGroupDutiesFromUI(show=true){
+  if(!syncDutyCatalogFromUI({quiet:false}))return false;
+  const session=groupServerSession();
+  const headers={'Content-Type':'application/json'};
+  if(session&&session.access_token)headers.Authorization='Bearer '+session.access_token;
+  const payload=groupDutySelectionPayloadFromState();
+  try{
+    const resp=await fetch('/api/group-duties',{method:'POST',headers,body:JSON.stringify({
+      mode:'save',
+      siteId:ULMI_DYNAMIC_CONTEXT.siteId||'',
+      groupKey:ULMI_DYNAMIC_CONTEXT.plannerKey||ULMI_DYNAMIC_CONTEXT.unitId||PLANER_GROUP_ID,
+      duties:payload,
+      userEmail:session?.user?.email||'',
+      source:'bereich-dyn-duties'
+    })});
+    let data={}; try{data=await resp.json();}catch(_){data={message:'Ungültige Serverantwort'};}
+    if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
+    if(show)toast('Gruppen-Dienste auf Server gespeichert','ok');
+    return true;
+  }catch(e){
+    if(show)toast('Gruppen-Dienste nicht servergespeichert: '+((e&&e.message)||e),'bad');
+    return false;
+  }
+}
 function saveDutyCatalogFromUI(recalc=false){
   if(!syncDutyCatalogFromUI({quiet:false}))return;
   fillDutySelect();
   saveState(false);
+  saveGroupDutiesFromUI(false);
   renderDutyTable();
   renderStandardNeeds();
   renderRuleCards();
-  if(recalc)makePlan(true); else {renderPlan();toast('Dienstkatalog übernommen und gespeichert','ok');}
+  if(recalc)makePlan(true); else {renderPlan();toast('Dienste übernommen und gespeichert','ok');}
 }
 function standardDutyOptions(){
   if(!Array.isArray(state.duties))state.duties=[];
@@ -6576,7 +6639,7 @@ function openPrintPDFPage(){
     td.innerHTML='<b>'+esc(name)+'</b>'+(role?'<div class="print-role">'+esc(role)+'</div>':'');
   });
   clone.classList.add('print-plan-table');
-  const html=`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${printPageCSS()}</style><link rel="stylesheet" href="assets/ulmipoint-ui.css?v=69">
+  const html=`<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${printPageCSS()}</style><link rel="stylesheet" href="assets/ulmipoint-ui.css?v=129">
 </head><body>
   <div class="screenbar"><div><b>${esc(title)}</b><div class="mini">A4 quer · kompakte Druckansicht ohne lange Saldo-Zeilen. Im Druckdialog „Als PDF speichern“ wählen.</div></div><div><button onclick="window.close()">Schliessen</button><button class="primary" onclick="window.print()">PDF speichern / Drucken</button></div></div>
   <main class="paper"><header class="print-head"><div><h1>${esc(title)}</h1><div class="meta" style="text-align:left">Plan passt kompakt auf eine A4-Seite quer. Namen bleiben kurz lesbar.</div></div><div class="meta">Erstellt: ${esc(generated)}<br><span id="scaleInfo">Skalierung wird berechnet…</span></div></header><section class="fitbox"><div class="fitcontent" id="fitcontent">${clone.outerHTML}</div></section><div class="print-note">Bei Bedarf im Druckdialog: Layout Querformat, Skalierung Standard/100%, Ränder Standard oder Keine.</div></main>

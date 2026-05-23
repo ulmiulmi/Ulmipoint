@@ -13,10 +13,40 @@ function sectionFromReq(req,body){
   const url=String(req.url||'');
   if(url.includes('group-employees')) return 'employees';
   if(url.includes('group-plan')) return 'plan';
+  if(url.includes('group-duties')) return 'duties';
   if(url.includes('group-wishes')) return 'wishes';
   if(url.includes('group-state')) return 'state';
   return group.sectionName(body?.section||'state');
 }
+
+function decorateSectionResult(result,section){
+  if(!result || typeof result!=='object') return result;
+  section=group.sectionName(section);
+  if(section==='state'){
+    result.groupRevision=result.revision||0;
+    result.groupState={
+      payload:result.value||{},
+      revisionId:result.revision||0,
+      hash:result.hash||'',
+      updatedAt:result.updatedAt||'',
+      updatedBy:result.updatedBy||{}
+    };
+  }
+  if(section==='duties'){
+    const value=result.value&&typeof result.value==='object'?result.value:{version:'1.0',duties:[]};
+    result.groupDutyRevision=result.revision||0;
+    result.groupDuties={
+      value,
+      duties:Array.isArray(value.duties)?value.duties:[],
+      revisionId:result.revision||0,
+      hash:result.hash||'',
+      updatedAt:result.updatedAt||'',
+      updatedBy:result.updatedBy||{}
+    };
+  }
+  return result;
+}
+
 function idsFrom(req,body){
   const qs=parseQuery(req);
   return {
@@ -34,7 +64,7 @@ module.exports=async function handler(req,res){
     if(req.method==='GET'){
       const section=sectionFromReq(req,{});
       const ids=idsFrom(req,{});
-      const result=group.publicSection(data,ids.siteId,ids.groupKey,section);
+      const result=decorateSectionResult(group.publicSection(data,ids.siteId,ids.groupKey,section),section);
       result.legacy=group.legacyPreview(data,ids.siteId,ids.groupKey);
       result.updatedAt=row.updated_at||'';
       return send(res,200,result);
@@ -48,7 +78,7 @@ module.exports=async function handler(req,res){
     const ids=idsFrom(req,body);
 
     if(mode==='load'){
-      const result=group.publicSection(data,ids.siteId,ids.groupKey,section);
+      const result=decorateSectionResult(group.publicSection(data,ids.siteId,ids.groupKey,section),section);
       result.legacy=group.legacyPreview(data,ids.siteId,ids.groupKey);
       result.updatedAt=row.updated_at||'';
       return send(res,200,result);
@@ -68,7 +98,7 @@ module.exports=async function handler(req,res){
 
     const saved=await saveStore(data);
     updated.updatedAt=saved.updated_at||updated.updatedAt;
-    return send(res,200,updated);
+    return send(res,200,decorateSectionResult(updated,section));
   }catch(err){
     return send(res,400,{ok:false,message:err.message||String(err)});
   }
