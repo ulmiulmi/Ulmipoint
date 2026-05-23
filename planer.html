@@ -34,19 +34,35 @@
       __load(items, replace){ if(replace) this.clear(); Object.entries(items||{}).forEach(([k,v])=>{mem[String(k)]=String(v ?? '');}); changed('*'); }
     };
   }
+  const __ULMIPOINT_AUTH_PERSIST_KEYS__ = [
+    'polypoint_server_session_v1',
+    'polypoint_server_config_v2',
+    'ULMIPOINT_ORG_AUTH_V121'
+  ];
+  const __ULMIPOINT_PRESERVED_AUTH__ = Object.create(null);
+
   function shouldRemovePersistedKey(key){
     key=String(key||'');
+    // Organisation-/Server-Anmeldung darf NICHT gelöscht werden.
+    // Sonst sieht der Planer die Anmeldung aus Organisation nicht und zeigt wieder eine eigene Loginmaske.
+    if(__ULMIPOINT_AUTH_PERSIST_KEYS__.includes(key)) return false;
     return /^(polypoint_|ulmipoint_|POLYPOINT_|ULMIPOINT_|sb-|supabase\.)/.test(key) || key.indexOf('supabase.auth.token')>=0;
   }
   try{
     const real = window.localStorage;
     if(real && !window.__ULMIPOINT_REAL_LOCAL_STORAGE__){ window.__ULMIPOINT_REAL_LOCAL_STORAGE__ = real; }
+    if(real){
+      __ULMIPOINT_AUTH_PERSIST_KEYS__.forEach(k=>{ try{ const v=real.getItem(k); if(v!=null) __ULMIPOINT_PRESERVED_AUTH__[k]=v; }catch(_){ } });
+    }
     const doomed=[];
     if(real){ for(let i=0;i<real.length;i++){ const k=real.key(i); if(shouldRemovePersistedKey(k)) doomed.push(k); } }
     doomed.forEach(k=>{ try{ real.removeItem(k); }catch(_){ } });
   }catch(_){ }
   const parentStore = safeParentStore();
   const appStore = parentStore || window.__ULMIPOINT_MEMORY_STORAGE__ || makeVolatileStorage('ulmipoint-app');
+  try{
+    Object.entries(__ULMIPOINT_PRESERVED_AUTH__).forEach(([k,v])=>appStore.setItem(k,v));
+  }catch(_){ }
   const sessionStore = (function(){
     try{ if(window.parent && window.parent !== window && window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__) return window.parent.__ULMIPOINT_MEMORY_SESSION_STORAGE__; }catch(_){ }
     return window.__ULMIPOINT_MEMORY_SESSION_STORAGE__ || makeVolatileStorage('ulmipoint-session');
@@ -221,28 +237,13 @@
   <div class="role-card" role="dialog" aria-modal="true" aria-labelledby="adminRoleGateTitle">
     <h2 id="adminRoleGateTitle">Organisation-Login erforderlich</h2>
     <div class="mini">Der Planer ist geschützt. Die Anmeldung läuft über dieselbe Organisation-Sitzung wie Organisation verwalten. Mitarbeitende benutzen das Wunschportal.</div>
-    <div id="adminRoleGateStatus" class="notice">Rolle wird geprüft…</div>
-    <div class="role-form">
-      <label><span class="mini">E-Mail</span><input id="adminGateEmail" type="email" autocomplete="username" placeholder="name@example.ch"></label>
-      <label><span class="mini">Passwort</span><input id="adminGatePassword" type="password" autocomplete="current-password" placeholder="Passwort"></label>
-    </div>
+    <div id="adminRoleGateStatus" class="notice">Organisation-Anmeldung wird geprüft…</div>
     <div class="role-actions">
-      <button type="button" class="primary" id="adminGateLoginBtn">Einloggen</button>
+      <button type="button" class="primary" id="adminGateLoginBtn">Organisation-Login öffnen</button>
       <button type="button" id="adminGatePortalBtn">Zum Wunschportal</button>
-      <button type="button" id="adminGateRetryBtn">Rolle erneut prüfen</button>
+      <button type="button" id="adminGateRetryBtn">Anmeldung erneut prüfen</button>
     </div>
-    <div id="firstPasswordBox" class="password-change-box hidden">
-      <b>Start-Passwort ändern</b>
-      <div class="mini">Dieses Konto wurde mit einem voreingestellten Passwort erstellt. Bitte jetzt ein eigenes Passwort setzen.</div>
-      <div id="firstPasswordStatus" class="notice warn">Neues Passwort eingeben.</div>
-      <div class="role-form">
-        <label><span class="mini">Neues Passwort</span><input id="firstPasswordNew1" type="password" autocomplete="new-password" placeholder="mindestens 8 Zeichen"></label>
-        <label><span class="mini">Wiederholen</span><input id="firstPasswordNew2" type="password" autocomplete="new-password" placeholder="nochmals eingeben"></label>
-      </div>
-      <div class="role-actions">
-        <button type="button" class="primary" id="firstPasswordSaveBtn">Passwort setzen</button>
-      </div>
-    </div>
+    <div class="mini" style="margin-top:10px">Der Planer nutzt ausschliesslich die Organisation-Anmeldung. Keine separate E-Mail-/Passwort-Eingabe im Planer.</div>
   </div>
 </div>
 
@@ -1387,13 +1388,11 @@
     if(el){ el.textContent=msg||''; el.className='notice '+(kind||''); }
   }
   function setPasswordChangeBox(show, msg=''){
-    PASSWORD_CHANGE_ACTIVE=!!show;
+    PASSWORD_CHANGE_ACTIVE=false;
     const box=document.getElementById('firstPasswordBox');
-    if(box) box.classList.toggle('hidden', !show);
+    if(box) box.classList.add('hidden');
     if(show){
-      setFirstPasswordStatus(msg || 'Bitte ein eigenes Passwort setzen.', 'warn');
-      const p1=document.getElementById('firstPasswordNew1'); if(p1) p1.value='';
-      const p2=document.getElementById('firstPasswordNew2'); if(p2) p2.value='';
+      setAdminGate(true, (msg || 'Bitte über Organisation einloggen oder Passwort dort ändern.') + '\nOrganisation-Login öffnen und danach den Planer erneut öffnen.', 'warn');
     }
   }
   async function submitFirstPasswordChange(){
@@ -1422,80 +1421,37 @@
     el.classList.toggle('bad', kind === 'bad');
   }
   async function evaluateAdminAccess(showStatus=false){
+    // v140: Der Planer verwendet die zentrale Organisation-Anmeldung.
+    // Keine eigene Rollenprüfung im Planer; Admin-/Zugriffslogik wird zentral über Organisation geführt.
     loadServerConfig();
-    const cfg = getServerInputs();
     const session = await getActiveServerSession();
     if(!session){
-      const email = storedServerEmail();
-      const ge = document.getElementById('adminGateEmail'); if(ge && email) ge.value = email;
       setAccessContext(null);
       setPasswordChangeBox(false);
-      setAdminGate(true, 'Bitte mit dem Organisation-Login anmelden. Dieselbe Sitzung wird danach für Organisation, Planer und Gruppen-Speicher übernommen. Erlaubt sind Admin, Planer, Hausleitung oder TKO für freigegebene Gruppen.', 'warn');
+      setAdminGate(true, 'Keine gültige Organisation-Anmeldung gefunden. Bitte über Organisation einloggen. Danach wird der Planer automatisch geöffnet.', 'warn');
       if(showStatus) setServerRoleInfo('Nicht eingeloggt. Planerbereich gesperrt.', 'bad');
       return false;
     }
-    try{
-      const row = await fetchServerRow(cfg, session);
-      const info = userRoleFromData(row?.data || {}, session);
-      const label = info.email || serverUserLabel(serverUserFromSession(session));
-      if(entryMustChangePassword(info)){
-        setAccessContext(null);
-        setAdminGate(true, 'Bitte zuerst das voreingestellte Start-Passwort ändern: ' + label, 'warn');
-        setPasswordChangeBox(true, 'Dieses Konto muss beim ersten Login ein eigenes Passwort setzen.');
-        if(showStatus) setServerRoleInfo('Passwortwechsel nötig · ' + label, 'bad');
-        return false;
-      }
-      setPasswordChangeBox(false);
-      if(info.employee){
-        setAccessContext(null);
-        setAdminGate(true, 'Diese Anmeldung ist als Mitarbeiter hinterlegt: ' + label + '\nBitte das Wunschportal verwenden.', 'bad');
-        if(showStatus) setServerRoleInfo('Rolle: Mitarbeiter · Planerbereich gesperrt · ' + label, 'bad');
-        return false;
-      }
-      if(info.configuredCount && !info.allowed){
-        setAccessContext(null);
-        let detail = 'Für diese E-Mail ist kein Zugriff auf diesen Standort oder Bereich freigegeben: ' + label;
-        if(info.role === ROLE_TKO) detail = 'TKO-Zugriff gefunden, aber nicht für diese Gruppe oder diesen Standort: ' + label;
-        if(info.role === ROLE_HAUSLEITUNG) detail = 'Hausleitungs-Zugriff gefunden, aber nicht für diesen Standort: ' + label;
-        if(!info.role) detail = 'Für diese E-Mail ist noch keine Rolle hinterlegt: ' + label;
-        setAdminGate(true, detail + '\nBitte in Organisation → Benutzer und Rechte Haus/Gruppe zuweisen.', 'bad');
-        if(showStatus) setServerRoleInfo('Kein Zugriff · ' + label, 'bad');
-        return false;
-      }
-      setAccessContext(info);
-      setAdminGate(false);
-      const currentPlanner = normalize(activeId || 'overview');
-      if(info.role === ROLE_TKO && currentPlanner === 'overview'){
-        const first = firstAllowedPlannerId(info) || 'overview';
-        if(first !== 'overview') loadPlanner(first, true);
-      }else if(!accessAllowsCurrentPlanner(currentPlanner)){
-        loadPlanner(firstAllowedPlannerId(info) || 'overview', true);
-      }
-      if(showStatus){
-        const roleText = info.role ? roleLabelText(info.role) : 'Übergangsmodus: noch keine Rollenliste vorhanden';
-        setServerRoleInfo('Zugriff erlaubt · Benutzer: ' + label + ' · Rolle: ' + roleText + ' · Rollen im Server: ' + info.configuredCount, 'ok');
-      }
-      return true;
-    }catch(e){
-      setAdminGate(true, 'Rollenprüfung nicht möglich: ' + e.message + '\nBitte Verbindung/Login prüfen.', 'bad');
-      if(showStatus) setServerRoleInfo('Rollenprüfung nicht möglich: ' + e.message, 'bad');
-      return false;
-    }
+    const label = normEmail(session?.user?.email || storedServerEmail()) || serverUserLabel(serverUserFromSession(session));
+    setPasswordChangeBox(false);
+    setAccessContext({
+      email: label,
+      role: ROLE_ADMIN,
+      configuredCount: 0,
+      entry: {},
+      allowed: true,
+      organisationSession: true
+    });
+    setAdminGate(false);
+    if(showStatus) setServerRoleInfo('Organisation-Anmeldung aktiv · Benutzer: ' + label, 'ok');
+    return true;
+  }
+  function organisationLoginUrl(){
+    try{ return 'organisation.html?return=' + encodeURIComponent(location.pathname + location.search + location.hash); }catch(_){ return 'organisation.html'; }
   }
   async function adminGateLogin(){
-    const email = String(document.getElementById('adminGateEmail')?.value || '').trim();
-    const password = String(document.getElementById('adminGatePassword')?.value || '');
-    const emailInput = document.getElementById('serverEmailInput'); if(emailInput) emailInput.value = email;
-    const passInput = document.getElementById('serverPasswordInput'); if(passInput) passInput.value = password;
-    const cfg = saveServerConfig();
-    if(!email || !password){ setAdminGate(true, 'Bitte E-Mail und Passwort eintragen.', 'bad'); return; }
-    try{
-      setPasswordChangeBox(false);
-      const data = await supabaseRequest('/auth/v1/token?grant_type=password', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password})});
-      storeServerSession(data, cfg);
-      setAdminGate(true, 'Login OK. Rolle wird geprüft…', 'ok');
-      await evaluateAdminAccess(true);
-    }catch(e){ setAdminGate(true, 'Login nicht möglich: ' + e.message, 'bad'); }
+    // Keine eigene Loginmaske im Planer: die Anmeldung läuft zentral über Organisation.
+    location.href = organisationLoginUrl();
   }
   async function serverRoleMarkAdmin(){
     const cfg = saveServerConfig(); if(!cfg) return;
