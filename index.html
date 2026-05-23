@@ -32,26 +32,59 @@
 
   <section class="grid">
     <article class="card"><h2>Mitarbeitende</h2><div class="mini">Dienstplan und Wünsche öffnen.</div><div class="actions"><a class="btn primary" href="wunschportal.html" target="_blank" rel="noopener">Wunschportal öffnen</a></div></article>
-    <article class="card"><h2>Planung</h2><div class="mini">Für berechtigte Planerinnen und Planer.</div><div class="actions"><button class="btn warn" id="plannerChooseBtn" type="button">Haus auswählen</button></div><div class="planner-picker" id="plannerPicker"><label><span class="field-label">Haus / Standort</span><select id="plannerSelect"></select></label><div class="actions" style="margin-top:10px"><button class="btn warn" id="plannerOpenBtn" type="button">Startseite öffnen</button></div></div></article>
+    <article class="card"><h2>Planung</h2><div class="mini">Für berechtigte Planerinnen und Planer.</div><div class="actions"><button class="btn warn" id="plannerChooseBtn" type="button">Haus auswählen</button></div><div class="planner-picker" id="plannerPicker"><label><span class="field-label">Haus / Standort</span><select id="plannerSelect"></select></label><div id="plannerServerStatus" class="mini" style="margin-top:8px">Serverstand wird geladen …</div><div class="actions" style="margin-top:10px"><button class="btn warn" id="plannerOpenBtn" type="button">Startseite öffnen</button><button class="btn" id="plannerReloadBtn" type="button">Server neu laden</button></div></div></article>
     <article class="card"><h2>Organisation</h2><div class="mini">Organisation öffnen: Login mit E-Mail und Passwort. Danach fachliche Verwaltung sowie System & Speicher.</div><div class="actions"><a class="btn ok" href="organisation.html">Organisation öffnen</a></div></article>
   </section>
 
-  <div class="notice">Organisation ist dauerhaft verbunden. Normale Arbeitsseiten speichern ihre Bereiche. Verwaltung liegt unter <b>Organisation</b> und ist per Login geschützt.</div>
+  <div class="notice">Organisation ist dauerhaft verbunden. Diese Startseite lädt Häuser/Gruppen nur vom Server. Verwaltung liegt unter <b>Organisation</b> und ist per Login geschützt.</div>
 </div>
 <script>
 (function(){
-  let currentOrg=null; const SERVER_TOKEN_KEY='polypoint_server_session_v1'; const $=id=>document.getElementById(id);
-  function defaultOrg(){return {version:'1.0',organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',sites:[]};}
-  function ensureOrg(org){if(!org||typeof org!=='object')return defaultOrg(); if(!Array.isArray(org.sites))org.sites=[]; return org;}
+  let currentOrg=null;
+  let lastServerStatus='not-loaded';
+  const SERVER_TOKEN_KEY='polypoint_server_session_v1';
+  const $=id=>document.getElementById(id);
+  function emptyOrg(){return {version:'1.0',organisation:{id:'liv',name:'LIV – Leben in Vielfalt'},payrollProfileDefault:'CH_BS_PERSONALRECHT_DEFAULT',sites:[]};}
+  function ensureOrg(org){if(!org||typeof org!=='object')return emptyOrg(); if(!Array.isArray(org.sites))org.sites=[]; return org;}
   function option(label,href,site,target){return {label,href,site,target};}
   function getOrg(){return ensureOrg(currentOrg);}
+  function setServerStatus(text,kind){const el=$('plannerServerStatus'); if(el){el.textContent=text; el.style.color=kind==='bad'?'#c73636':(kind==='ok'?'#0f8a5f':'#667085');}}
+  function countUnits(org){return (Array.isArray(org.sites)?org.sites:[]).reduce((n,site)=>n+(Array.isArray(site.units)?site.units.filter(u=>u&&u.active!==false).length:0),0);}
   function serverSession(){try{const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}'); if(s&&s.access_token&&(!s.expires_at||s.expires_at>Date.now()+30000))return s;}catch(_){ } return null;}
-  async function loadOrgFromServerIfPossible(){const s=serverSession();try{const headers={'Content-Type':'application/json'}; if(s&&s.access_token)headers.Authorization='Bearer '+s.access_token; const resp=await fetch('/api/org-structure?ts='+Date.now(),{method:'GET',headers,cache:'no-store'}); const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};} if(!resp.ok||data.ok===false||!data.organisationStructure)return false; currentOrg=ensureOrg(data.organisationStructure); fillSelect(); return true;}catch(_){return false;}}
-  function buildOptions(){const options=[]; const sites=Array.isArray(getOrg().sites)?getOrg().sites:[]; sites.forEach(site=>{if(!site||!site.id)return; options.push(option((site.name||site.id)+' · Startseite','planer.html?site='+encodeURIComponent(site.id)+'#overview',site,'overview'));}); return options;}
-  function fillSelect(){const select=$('plannerSelect'); if(!select)return; const options=buildOptions(); if(!options.length){select.innerHTML='<option value="">Noch kein Haus auf dem Server gespeichert</option>';select.__options=[]; const open=$('plannerOpenBtn'); if(open)open.textContent='Organisation öffnen'; return;} select.innerHTML=options.map((o,i)=>'<option value="'+i+'">'+o.label+'</option>').join(''); select.__options=options; const open=$('plannerOpenBtn'); if(open)open.textContent='Startseite öffnen';}
-  function openSelected(){const select=$('plannerSelect'); const options=select.__options||buildOptions(); const choice=options[Number(select.value)]||options[0]; if(choice&&choice.href)location.href=choice.href; else location.href='organisation-admin.html';}
-  $('plannerChooseBtn').onclick=()=>{fillSelect();$('plannerPicker').classList.toggle('show');}; $('plannerOpenBtn').onclick=openSelected;
-  currentOrg=defaultOrg(); fillSelect(); loadOrgFromServerIfPossible();
+  async function loadOrgFromServer(){
+    const s=serverSession();
+    lastServerStatus='loading';
+    currentOrg=null;
+    fillSelect('loading');
+    setServerStatus('Serverstand wird geladen …','warn');
+    try{
+      const headers={'Content-Type':'application/json'}; if(s&&s.access_token)headers.Authorization='Bearer '+s.access_token;
+      const resp=await fetch('/api/org-structure?ts='+Date.now(),{method:'GET',headers,cache:'no-store'});
+      const txt=await resp.text(); let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+      if(!resp.ok||data.ok===false||!data.organisationStructure){throw new Error(data.message||('HTTP '+resp.status));}
+      currentOrg=ensureOrg(data.organisationStructure);
+      lastServerStatus='loaded';
+      const siteCount=(currentOrg.sites||[]).length, unitCount=countUnits(currentOrg);
+      const rev=data.orgRevision||data.updatedAt||currentOrg.revisionId||currentOrg.updatedAt||'ohne Revision';
+      setServerStatus('Serverstand geladen: '+siteCount+' Standorte · '+unitCount+' Gruppen/Bereiche · '+rev,'ok');
+      fillSelect('loaded');
+      return true;
+    }catch(err){
+      lastServerStatus='error';
+      currentOrg=null;
+      setServerStatus('Serverstand konnte nicht geladen werden: '+(err.message||err),'bad');
+      fillSelect('error');
+      return false;
+    }
+  }
+  function buildOptions(){const options=[]; const sites=Array.isArray(getOrg().sites)?getOrg().sites:[]; sites.forEach(site=>{if(!site||!site.id||site.active===false)return; options.push(option((site.name||site.id)+' · Startseite','planer.html?site='+encodeURIComponent(site.id)+'#overview',site,'overview'));}); return options;}
+  function fillSelect(state){const select=$('plannerSelect'); if(!select)return; if(state==='loading'){select.innerHTML='<option value="">Serverstand wird geladen …</option>'; select.__options=[]; const open=$('plannerOpenBtn'); if(open)open.textContent='Bitte warten'; return;} if(state==='error'){select.innerHTML='<option value="">Serverstand konnte nicht geladen werden</option>'; select.__options=[]; const open=$('plannerOpenBtn'); if(open)open.textContent='Organisation öffnen'; return;} const options=buildOptions(); if(!options.length){select.innerHTML='<option value="">Serverstand geladen, aber 0 Häuser/Gruppen gespeichert</option>';select.__options=[]; const open=$('plannerOpenBtn'); if(open)open.textContent='Organisation öffnen'; return;} select.innerHTML=options.map((o,i)=>'<option value="'+i+'">'+o.label+'</option>').join(''); select.__options=options; const open=$('plannerOpenBtn'); if(open)open.textContent='Startseite öffnen';}
+  function openSelected(){const select=$('plannerSelect'); const options=select.__options||buildOptions(); const choice=options[Number(select.value)]||options[0]; if(choice&&choice.href)location.href=choice.href; else location.href='organisation.html';}
+  $('plannerChooseBtn').onclick=()=>{if(lastServerStatus==='not-loaded')loadOrgFromServer();$('plannerPicker').classList.toggle('show');};
+  $('plannerOpenBtn').onclick=openSelected;
+  const reload=$('plannerReloadBtn'); if(reload)reload.onclick=()=>loadOrgFromServer();
+  fillSelect('loading');
+  loadOrgFromServer();
 })();
 </script>
 </body>

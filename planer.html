@@ -260,7 +260,7 @@
         <span class="pill brown">aufgeteilt</span>
         <button type="button" class="overview-duplicate-action" onclick="window.open('wunschportal.html','_blank')">👤 Wunschportal</button>
         <button type="button" class="overview-duplicate-action" onclick="location.href='organisation-admin.html'">🏢 Organisation verwalten</button>
-        <button id="serverSyncBtn" class="server-btn" type="button">☁️ Server</button>
+        <button id="serverSyncBtn" class="server-btn" type="button">🛟 Gruppen-Speicher</button>
       </div>
     </div>
     <nav class="tabs" aria-label="Navigation">
@@ -272,11 +272,11 @@
   </main>
 </div>
 
-<div id="serverSyncModal" class="emp-modal-backdrop" aria-hidden="true">
+<div id="serverSyncModal" class="emp-modal-backdrop" aria-hidden="true" style="display:none!important">
   <div class="emp-modal" role="dialog" aria-modal="true" aria-labelledby="serverSyncTitle">
-    <h2 id="serverSyncTitle">Server-Speicher</h2>
-    <div class="mini">Der Server ist der Hauptspeicher. Der lokale Speicher dient als Arbeitskopie und Notfall-Backup.</div>
-    <div class="emp-note">Supabase ist fest verbunden. Nach dem Einloggen kann der Serverstand geladen und gespeichert werden. Vor dem Überschreiben wird lokal eine Notfallkopie angelegt.</div>
+    <h2 id="serverSyncTitle">Gruppen-Speicher</h2>
+    <div class="mini">Dieser alte globale Dialog ist deaktiviert. Speichern und Laden läuft nur noch in der aktuell geöffneten Gruppe über den Reiter Speicher.</div>
+    <div class="emp-note">Es wird keine ganze Organisation und kein globaler Browserstand gespeichert oder geladen.</div>
     <div class="server-grid">
       <div class="emp-box">
         <h3>Supabase Verbindung</h3>
@@ -1457,7 +1457,6 @@
       storeServerSession(data, cfg);
       setAdminGate(true, 'Login OK. Rolle wird geprüft…', 'ok');
       await evaluateAdminAccess(true);
-      serverLoadPrimaryOnStart();
     }catch(e){ setAdminGate(true, 'Login nicht möglich: ' + e.message, 'bad'); }
   }
   async function serverRoleMarkAdmin(){
@@ -1902,6 +1901,10 @@
   }
 
   async function serverUpload(opts={}){
+    serverStatus('Globales Speichern ist deaktiviert. Bitte die Gruppe öffnen und im Reiter „Speicher“ „Gruppe auf Server speichern“ verwenden.', 'bad');
+    setServerButtonState('ready','Globales Speichern deaktiviert · nur Gruppen-Speicher');
+    return false;
+  }){
     const cfg = saveServerConfig(); if(!cfg) return false;
     const session = await getActiveServerSession();
     if(!session){ if(!opts.auto) serverStatus('Bitte zuerst einloggen.', 'bad'); return false; }
@@ -1950,120 +1953,34 @@
   }
 
   async function serverDownload(){
-    const cfg = saveServerConfig(); if(!cfg) return;
-    const session = await getActiveServerSession();
-    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
-    try{
-      const row = await fetchServerRow(cfg, session);
-      if(!row || !row.data || !row.data.items) throw new Error('Keine Serverdaten für Speicher-ID ' + cfg.store + ' gefunden.');
-      const snap = localStorageSnapshot(); const meta = loadServerMeta();
-      if(meta.lastHash && snap.hash !== meta.lastHash){
-        if(!confirm('Temporäre Änderungen sind noch nicht auf dem Server gespeichert. Trotzdem Serverstand laden?')){ serverStatus('Server laden abgebrochen.', 'bad'); return; }
-      }
-      const backupKey = makeFullLocalBackup('before_server_download', false);
-      cacheServerWishesFromData(row.data);
-      const incoming = row.data.items || {};
-      Object.keys(collectUlmipointStorage()).forEach(key => { if(!(key in incoming) && relevantStorageKey(key)) localStorage.removeItem(key); });
-      Object.entries(incoming).forEach(([key,val]) => { if(relevantStorageKey(key)) localStorage.setItem(key, String(val ?? '')); });
-      reloadSplitFrames();
-      const newHash = row.data.hash || stableHashFromItems(incoming);
-      saveServerMeta({store:cfg.store, lastHash:newHash, lastSyncAt:new Date().toISOString(), serverUpdatedAt:row.updated_at, count:Object.keys(incoming).length, origin:row.data.origin || ''});
-      lastObservedServerHash = newHash;
-      refreshServerLocalInfo(); refreshServerSyncInfo();
-      setServerButtonState('connected','Server verbunden · zuletzt geladen');
-      renderServerHistory(row);
-      renderServerActivity(row);
-      renderServerConflict(row, loadServerMeta(), session, true);
-      serverStatus('Server-Hauptspeicher geladen: ' + Object.keys(incoming).length + ' Einträge. Vorherige Arbeitskopie als Notfallkopie: ' + backupKey, 'ok');
-    } catch(e){ setServerButtonState('error','Server laden nicht möglich'); serverStatus('Server laden nicht möglich: ' + e.message, 'bad'); }
+    serverStatus('Globales Laden ist deaktiviert. Bitte die Gruppe öffnen und im Reiter „Speicher“ „Daten dieser Gruppe neu laden“ verwenden.', 'bad');
+    setServerButtonState('ready','Globales Laden deaktiviert · nur Gruppen-Speicher');
+    return false;
   }
   async function serverBackupDownload(){
-    const cfg = saveServerConfig(); if(!cfg) return;
-    const session = await getActiveServerSession();
-    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
-    try{
-      const row = await fetchServerRow(cfg, session);
-      if(!row) throw new Error('Keine Serverdaten gefunden.');
-      const blob = new Blob([JSON.stringify(row, null, 2)], {type:'application/json;charset=utf-8'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'polypoint_server_sicherung_' + cfg.store + '_' + new Date().toISOString().slice(0,10) + '.json';
-      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-      serverStatus('Server-Sicherung heruntergeladen.', 'ok');
-    } catch(e){ serverStatus('Server-Sicherung nicht möglich: ' + e.message, 'bad'); }
+    serverStatus('Globale Server-Sicherung ist hier deaktiviert. In der Gruppe gibt es „Gruppen-Sicherung herunterladen“.', 'bad');
+    return false;
   }
   async function serverCheckStatus(showStatus=true){
-    const cfg = saveServerConfig(); if(!cfg) return;
-    const session = await getActiveServerSession();
-    if(!session){ serverStatus('Bitte zuerst einloggen.', 'bad'); return; }
-    try{
-      const row = await fetchServerRow(cfg, session);
-      const snap = localStorageSnapshot(); const meta = loadServerMeta();
-      const serverHash = row?.data?.hash || stableHashFromItems(row?.data?.items || {});
-      let msg = 'Lokal: ' + snap.count + ' Einträge · ' + snap.hash + '\n';
-      msg += 'Server: ' + (row ? ((row.data?.count || Object.keys(row.data?.items || {}).length) + ' Einträge · ' + serverHash + ' · ' + new Date(row.updated_at).toLocaleString('de-CH')) : 'noch leer') + '\n';
-      msg += 'Letzter Sync-Merker: ' + (meta.lastSyncAt ? new Date(meta.lastSyncAt).toLocaleString('de-CH') : 'nie');
-      if(row && row.data){ msg += '\nBenutzer letzter Serverstand: ' + serverUserLabel(row.data.savedBy) + ' · Speicherstände: ' + (1 + serverHistoryFromData(row.data).length); }
-      const conflict = renderServerConflict(row, meta, session, showStatus);
-      if(conflict && conflict.neverSyncedHere){ setServerButtonState('error','Konflikt-Schutz: Server zuerst laden'); serverStatus(msg + '\n\nKonflikt-Schutz: Dieser Browser hat den vorhandenen Serverstand noch nie geladen. Erst Serverstand laden.', 'bad'); }
-      else if(conflict && conflict.serverChanged){ setServerButtonState('error','Server wurde seit dem letzten Sync verändert'); serverStatus(msg + '\n\nAchtung: Server wurde seit dem letzten Sync verändert. Erst laden oder bewusst überschreiben.', 'bad'); }
-      else if(meta.lastHash && snap.hash !== meta.lastHash){ setServerButtonState('dirty','Temporäre Änderungen noch nicht gespeichert'); serverStatus(msg + '\n\nTemporäre Änderungen sind noch nicht auf dem Server gespeichert.', ''); }
-      else { setServerButtonState('connected','Server und lokaler Stand passen zum Sync-Merker'); if(showStatus) serverStatus(msg + '\n\nAlles synchron.', 'ok'); }
-      refreshServerSyncInfo();
-    } catch(e){ setServerButtonState('error','Serverstatus nicht möglich'); serverStatus('Serverstatus nicht möglich: ' + e.message, 'bad'); }
+    if(showStatus) serverStatus('Globaler Serverstatus ist im Gruppenplaner deaktiviert. Der Gruppenstatus liegt im Reiter „Speicher“ der geöffneten Gruppe.', '');
+    setServerButtonState('ready','Gruppenbezogener Speicher aktiv');
+    return null;
   }
   function isAutosaveEnabled(){ return localStorage.getItem(SERVER_AUTOSAVE_KEY) !== '0'; }
   function setAutosaveEnabled(on){ localStorage.setItem(SERVER_AUTOSAVE_KEY, on ? '1' : '0'); refreshServerSyncInfo(); }
   function scheduleServerAutosave(reason='change'){
-    if(!isAutosaveEnabled()) return;
-    const session = loadServerSession();
-    if(!isServerSessionFresh(session)) return;
-    const snap = localStorageSnapshot(); const meta = loadServerMeta();
-    if(meta.lastHash && snap.hash === meta.lastHash){ setServerButtonState('connected','Server verbunden'); return; }
-    setServerButtonState('dirty','Arbeitskopie geändert · Server-Speichern geplant');
-    clearTimeout(serverAutosaveTimer);
-    serverAutosaveTimer = setTimeout(() => serverUpload({auto:true}), 9000);
+    // v136: globales Auto-Speichern ist deaktiviert. Gruppen speichern sich nur über /api/group-state.
+    return;
   }
   function startServerAutosaveWatcher(){
-    lastObservedServerHash = localStorageSnapshot().hash;
-    setInterval(() => {
-      const snap = localStorageSnapshot();
-      if(snap.hash !== lastObservedServerHash){ lastObservedServerHash = snap.hash; scheduleServerAutosave('poll'); refreshServerLocalInfo(); refreshServerSyncInfo(); }
-    }, 12000);
-    window.addEventListener('storage', ev => { if(relevantStorageKey(ev.key)){ lastObservedServerHash = localStorageSnapshot().hash; scheduleServerAutosave('storage'); refreshServerLocalInfo(); refreshServerSyncInfo(); } });
+    // v136: kein globaler Watcher mehr, damit nie alle Gruppen/Browserdaten überschrieben werden.
+    setServerButtonState('ready','Gruppen-Speicher bereit');
   }
   async function serverLoadPrimaryOnStart(){
-    const cfg = saveServerConfig(); if(!cfg) return;
-    const session = await getActiveServerSession();
-    if(!session){ serverStatus('Server ist Hauptspeicher. Bitte einloggen; bis dahin wird nur eine temporäre Arbeitskopie im Arbeitsspeicher angezeigt.', ''); return; }
-    try{
-      const row = await fetchServerRow(cfg, session);
-      const localSnap = localStorageSnapshot();
-      if(!row || !row.data || !row.data.items){
-        if(localSnap.count > 0){ serverStatus('Server ist noch leer. Lokale Arbeitskopie wird als erster Serverstand gespeichert…', ''); await serverUpload({auto:true, force:true}); }
-        else { saveServerMeta({store:cfg.store, lastHash:localSnap.hash, lastSyncAt:new Date().toISOString(), serverUpdatedAt:'', count:0, origin:location.href}); setServerButtonState('connected','Server verbunden · noch leer'); }
-        return;
-      }
-      cacheServerWishesFromData(row.data);
-      const incoming = row.data.items || {};
-      const serverHash = row.data.hash || stableHashFromItems(incoming);
-      if(localSnap.hash !== serverHash){
-        const backupKey = makeFullLocalBackup('before_auto_server_primary_load', false);
-        Object.keys(collectUlmipointStorage()).forEach(key => { if(!(key in incoming) && relevantStorageKey(key)) localStorage.removeItem(key); });
-        Object.entries(incoming).forEach(([key,val]) => { if(relevantStorageKey(key)) localStorage.setItem(key, String(val ?? '')); });
-        reloadSplitFrames();
-        serverStatus('Server-Hauptspeicher automatisch geladen. Vorherige temporäre Arbeitskopie wurde nur im Arbeitsspeicher gesichert: ' + backupKey, 'ok');
-      } else {
-        serverStatus('Server-Hauptspeicher verbunden. Arbeitskopie ist aktuell.', 'ok');
-      }
-      saveServerMeta({store:cfg.store, lastHash:serverHash, lastSyncAt:new Date().toISOString(), serverUpdatedAt:row.updated_at, count:Object.keys(incoming).length, origin:row.data.origin || ''});
-      lastObservedServerHash = localStorageSnapshot().hash;
-      setServerButtonState('connected','Server-Hauptspeicher aktiv');
-      renderServerHistory(row);
-      renderServerActivity(row);
-      refreshServerLocalInfo(); refreshServerSyncInfo();
-    } catch(e){
-      setServerButtonState('error','Server-Hauptspeicher nicht erreichbar');
-      serverStatus('Server-Hauptspeicher nicht erreichbar. Temporäre Arbeitskopie bleibt sichtbar: ' + e.message, 'bad');
-    }
+    // v136: Startseite/Planer lädt keinen globalen Server-Hauptspeicher mehr.
+    // Häuser/Gruppen kommen aus /api/org-structure; Gruppendaten aus /api/group-*. 
+    setServerButtonState('ready','Globaler Hauptspeicher deaktiviert · Gruppen-Speicher verwenden');
+    return null;
   }
 
 
@@ -2508,17 +2425,34 @@
   }
 
   async function openServerSync(){
-    loadServerConfig(); refreshServerLocalInfo(); refreshServerSyncInfo();
-    serverStatus('Verbindung wird geprüft…', '');
-    serverModal().classList.add('show'); serverModal().setAttribute('aria-hidden','false');
-    const cfg = getServerInputs();
-    if(!cfg.anon){ serverStatus('Server-Verbindung ist unvollständig.', 'bad'); return; }
-    const s = await getActiveServerSession();
-    setServerButtonState(s ? 'connected' : 'ready', s ? 'Server verbunden' : 'Server bereit, bitte einloggen');
-    serverStatus(s ? 'Server-Hauptspeicher verbunden.' : 'Server erreichbar. Bitte einloggen, damit der Serverstand geladen wird.', s ? 'ok' : '');
-    if(s){ serverCheckStatus(false); serverHistoryLoad(false); serverActivityLoad(false); serverConflictCheck(false); serverWishReportLoad(false); loadWishSettings(false); serverAccessOverviewLoad(false); }
+    const id = activeId || 'overview';
+    if(id === 'overview'){
+      alert('Bitte zuerst eine Gruppe / einen Bereich öffnen. Der Speicher ist gruppenbezogen.');
+      setServerButtonState('ready','Zuerst Gruppe öffnen');
+      return;
+    }
+    const frame = frames && frames.get ? frames.get(id) : null;
+    try{
+      if(frame && frame.contentWindow){
+        frame.contentWindow.postMessage({type:'ulmiOpenGroupStorage'}, '*');
+        setServerButtonState('connected','Gruppen-Speicher geöffnet');
+        return;
+      }
+    }catch(_){ }
+    try{
+      const ctx = (typeof UNIT_CONTEXT_BY_PLANNER !== 'undefined' && UNIT_CONTEXT_BY_PLANNER[normalize(id)]) ? UNIT_CONTEXT_BY_PLANNER[normalize(id)] : {};
+      const p = new URLSearchParams();
+      p.set('siteId', HOUSE_ID || HOUSE_CONTEXT?.id || ctx.siteId || 'haus_1');
+      p.set('siteName', HOUSE_CONTEXT?.name || ctx.siteName || '');
+      p.set('unitId', ctx.id || id);
+      p.set('unitName', ctx.name || labels[normalize(id)] || id);
+      p.set('groupKey', ctx.plannerKey || ctx.groupKey || id);
+      location.href = 'gruppen-speicher.html?' + p.toString();
+    }catch(_){
+      alert('Gruppen-Speicher konnte nicht geöffnet werden. Bitte zuerst eine Gruppe öffnen.');
+    }
   }
-  function closeServerSync(){ serverModal().classList.remove('show'); serverModal().setAttribute('aria-hidden','true'); }
+  function closeServerSync(){ serverModal()?.classList?.remove('show'); serverModal()?.setAttribute('aria-hidden','true'); }
   document.getElementById('serverSyncBtn')?.addEventListener('click', openServerSync);
   document.getElementById('serverSyncCloseBtn')?.addEventListener('click', closeServerSync);
   document.getElementById('serverSyncModal')?.addEventListener('click', ev => { if(ev.target === serverModal()) closeServerSync(); });

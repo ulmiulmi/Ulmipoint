@@ -49,10 +49,16 @@ function decorateSectionResult(result,section){
 
 function idsFrom(req,body){
   const qs=parseQuery(req);
-  return {
-    siteId:group.slug(qs.get('siteId') || body?.siteId || body?.site || 'haus_1'),
-    groupKey:group.slug(qs.get('groupKey') || qs.get('plannerKey') || body?.groupKey || body?.plannerKey || body?.unitId || 'gruppe')
-  };
+  const rawSite=qs.get('siteId') || body?.siteId || body?.site || '';
+  const rawGroup=qs.get('groupKey') || qs.get('plannerKey') || body?.groupKey || body?.plannerKey || body?.unitId || '';
+  const siteId=group.slug(rawSite);
+  const groupKey=group.slug(rawGroup);
+  if(!String(rawSite||'').trim() || !String(rawGroup||'').trim() || groupKey==='overview' || groupKey==='startseite'){
+    const err=new Error('Gruppen-Speicher braucht eine eindeutige Gruppe. Es wurde nichts gespeichert oder geladen.');
+    err.code='MISSING_GROUP_CONTEXT';
+    throw err;
+  }
+  return {siteId,groupKey};
 }
 
 module.exports=async function handler(req,res){

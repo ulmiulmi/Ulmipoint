@@ -138,6 +138,24 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
   max-height:calc(100vh - 58px)!important;
 }
 
+
+/* v133: Gruppen-Dienste direkt im Gruppen-Reiter auswählen */
+.inline-duty-picker{border:1px solid var(--line);border-radius:18px;background:#fbfcfe;padding:12px;margin:10px 0 12px;display:none}
+.inline-duty-picker.show{display:block}
+.inline-duty-picker-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.inline-duty-nav{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.inline-duty-chip{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:950;color:#475467;text-decoration:none}
+.inline-duty-chip:hover{background:#eaf2ff;border-color:#c9dcff;color:#2563eb}
+.inline-duty-category{border:1px solid var(--line);border-radius:16px;background:#fff;margin:8px 0;overflow:hidden}
+.inline-duty-cat-head{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#f8fafc;border-bottom:1px solid var(--line);padding:9px 10px;font-weight:950}
+.inline-duty-row{display:grid;grid-template-columns:minmax(210px,1fr) 110px 90px repeat(5,92px);gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid #edf1f6;font-size:12px}
+.inline-duty-row:last-child{border-bottom:0}.inline-duty-row.off{opacity:.62;background:#fbfcfe}
+.inline-duty-main{min-width:0}.inline-duty-main b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.inline-duty-meta{font-size:11px;color:var(--muted);font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inline-duty-code{display:inline-flex;align-items:center;justify-content:center;min-width:42px;border:1px solid #c9dcff;background:#eaf2ff;color:#2563eb;border-radius:10px;padding:4px 7px;font-weight:950}
+.inline-duty-check{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:5px 8px;font-size:11px;font-weight:950;background:#fff;color:#475467;justify-content:center;white-space:nowrap}
+.inline-duty-check.on{border-color:#9cc3ff;background:#eaf2ff;color:#2563eb}.inline-duty-check input{width:17px;height:17px;margin:0;accent-color:#2563eb}
+@media(max-width:900px){.inline-duty-row{grid-template-columns:1fr 86px 76px;align-items:start}.inline-duty-row .inline-duty-check{justify-content:flex-start}.inline-duty-row .inline-duty-check:nth-of-type(n){min-width:0}}
+
 </style>
 </head>
 <body>
@@ -207,7 +225,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
 <main class="app">
   <section class="hero no-print">
     <div><div class="eyebrow" id="dynEyebrow">ULMIPOINT Adapter · Bereich</div><h1 id="dynTitle">Bereich</h1></div>
-    <div class="toolbar"><button class="primary" onclick="saveState(true)">Speichern</button><button onclick="loadState(true,{allowFallback:false})">Laden</button><button class="okbtn" onclick="rescueBestStoredState(true)">Daten retten</button><button onclick="makePlan(true)">Monat planen</button><button onclick="fixCurrentMonth()">Monat sperren</button><button onclick="unfixCurrentMonth()">Monat freigeben</button></div>
+    <div class="toolbar"><button class="primary" onclick="saveState(true)">Gruppe speichern</button><button onclick="loadGroupStateFromServer(true)">Gruppe neu laden</button><button onclick="makePlan(true)">Monat planen</button><button onclick="fixCurrentMonth()">Monat sperren</button><button onclick="unfixCurrentMonth()">Monat freigeben</button></div>
   </section>
   <nav class="tabs no-print">
     <button class="tab active" onclick="showView('plan',this)">📅 Plan</button>
@@ -268,7 +286,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
   </article></section>
 
   <section id="rules" class="view"><article class="card"><div class="section"><h2>Dienste</h2><span class="pill blue">Dienste</span></div>
-    <details open style="margin-top:12px"><summary><b>Dienste dieser Gruppe</b></summary><div class="mini" style="margin:8px 0">Diese Tabelle bleibt der Arbeitsbereich der aktuellen Gruppe. Der zentrale Dienst wird in der Organisation erstellt. Hier speichert die Gruppe ihre eigene Verwendung: <b>Arbeit</b>, <b>Gruppe</b>, <b>Auto</b> und <b>manuell</b>. Andere Gruppen werden dadurch nicht verändert. Für geteilte Dienste kann bei Intervalle zum Beispiel <span class="kbd">07:00-09:15 / 12:00-19:00</span> eingetragen werden. VD, WB, KGL und KF behalten ihre Schutzlogik.</div><div class="toolbar" style="margin:8px 0"><button class="primary" onclick="saveDutyCatalogFromUI(false)">lokal übernehmen</button><button onclick="saveDutyCatalogFromUI(true)">lokal übernehmen & neu berechnen</button><button class="okbtn" onclick="saveGroupDutiesFromUI(true)">Gruppen-Dienste auf Server speichern</button><button onclick="openGroupDutiesPage()">Aus zentralem Katalog wählen</button><button class="okbtn" onclick="addDutyRow()">+ Dienst ergänzen</button><button onclick="normalizeDutyCatalog(); saveState(false); renderDutyTable(); renderStandardNeeds(); toast('Standarddienste ergänzt und gespeichert','ok')">Standarddienste ergänzen</button><button class="okbtn" onclick="repairDutyCatalogChecksFromUI()">Diensthaken reparieren</button></div><div class="table-wrap duty-catalog-wrap" style="max-height:none;overflow-x:auto;overflow-y:visible"><table id="dutyTable" class="duty-table"><thead><tr><th><span class="duty-col-help" tabindex="0">Kurz <span class="info-dot">i</span><span class="duty-col-pop">Kurzcode des Dienstes, zum Beispiel F9, M2, S6 oder WB. Dieser Code erscheint im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Name <span class="info-dot">i</span><span class="duty-col-pop">Lesbarer Name des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Typ <span class="info-dot">i</span><span class="duty-col-pop">Art des Dienstes, zum Beispiel Gruppendienst, frei, Weiterbildung, Büro oder geteilter Dienst.</span></span></th><th><span class="duty-col-help" tabindex="0">Start <span class="info-dot">i</span><span class="duty-col-pop">Beginn des Dienstes. Bei geteilten Diensten können zusätzlich Intervalle verwendet werden.</span></span></th><th><span class="duty-col-help" tabindex="0">Ende <span class="info-dot">i</span><span class="duty-col-pop">Ende des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Intervalle <span class="info-dot">i</span><span class="duty-col-pop">Für geteilte Dienste, zum Beispiel 07:00-09:15 / 12:00-19:00.</span></span></th><th><span class="duty-col-help" tabindex="0">h <span class="info-dot">i</span><span class="duty-col-pop">Stunden, die der Dienst zählt. 0 bedeutet: keine Soll-/Ist-Stunden.</span></span></th><th><span class="duty-col-help" tabindex="0">Arbeit <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Der Dienst zählt als Arbeitszeit bzw. Abwesenheitszeit für Soll/Ist. Beispiel Ferien oder Weiterbildung zählen, frei zählt nicht.</span></span></th><th><span class="duty-col-help" tabindex="0">Gruppe <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Der Dienst deckt die Gruppengrundbesetzung ab. Diese Dienste zählen für die benötigte Abdeckung im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Auto <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Die KI darf diesen Dienst automatisch einplanen. Ohne Haken wird er nicht automatisch gesetzt.</span></span></th><th><span class="duty-col-help" tabindex="0">manuell <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Dieser Dienst wird nur von Hand gesetzt und nicht automatisch geplant.</span></span></th><th><span class="duty-col-help" tabindex="0">Bedeutung <span class="info-dot">i</span><span class="duty-col-pop">Erklärung, wofür der Dienst gedacht ist. Das hilft beim Prüfen und späteren Anpassen.</span></span></th><th></th></tr></thead><tbody></tbody></table></div></details>
+    <details open style="margin-top:12px"><summary><b>Dienste dieser Gruppe</b></summary><div class="mini" style="margin:8px 0">Diese Tabelle bleibt der Arbeitsbereich der aktuellen Gruppe. Der zentrale Dienst wird in der Organisation erstellt. Hier speichert die Gruppe ihre eigene Verwendung: <b>Arbeit</b>, <b>Gruppe</b>, <b>Auto</b> und <b>manuell</b>. Andere Gruppen werden dadurch nicht verändert. Für geteilte Dienste kann bei Intervalle zum Beispiel <span class="kbd">07:00-09:15 / 12:00-19:00</span> eingetragen werden. VD, WB, KGL und KF behalten ihre Schutzlogik.</div><div class="toolbar" style="margin:8px 0"><button class="primary" onclick="saveDutyCatalogFromUI(false)">lokal übernehmen</button><button onclick="saveDutyCatalogFromUI(true)">lokal übernehmen & neu berechnen</button><button class="okbtn" onclick="saveGroupDutiesFromUI(true)">Gruppen-Dienste auf Server speichern</button><button class="okbtn" onclick="showCentralDutyPicker()">Dienste aus zentralem Katalog auswählen</button><button class="okbtn" onclick="addDutyRow()">+ lokaler Sonderdienst</button><button onclick="normalizeDutyCatalog(); saveState(false); renderDutyTable(); renderStandardNeeds(); toast('Standarddienste ergänzt und gespeichert','ok')">Standarddienste ergänzen</button><button class="okbtn" onclick="repairDutyCatalogChecksFromUI()">Diensthaken reparieren</button></div><div id="centralDutyPicker" class="inline-duty-picker"><div class="inline-duty-picker-head"><div><h3 style="margin:0">Dienste für diese Gruppe auswählen</h3><div class="mini">Die Dienste kommen aus dem zentralen Organisationskatalog. Hier wird nur für diese Gruppe angeklickt, ob und wie der Dienst verwendet wird. Andere Gruppen werden nicht verändert.</div></div><div class="toolbar" style="margin:0"><button class="primary" onclick="applyCentralDutyPicker()">Auswahl in diese Gruppe übernehmen</button><button onclick="hideCentralDutyPicker()">Schliessen</button></div></div><div id="centralDutyPickerStatus" class="mini">Noch nicht geladen.</div><div id="centralDutyPickerNav" class="inline-duty-nav"></div><div id="centralDutyPickerList"></div></div><div class="table-wrap duty-catalog-wrap" style="max-height:none;overflow-x:auto;overflow-y:visible"><table id="dutyTable" class="duty-table"><thead><tr><th><span class="duty-col-help" tabindex="0">Kurz <span class="info-dot">i</span><span class="duty-col-pop">Kurzcode des Dienstes, zum Beispiel F9, M2, S6 oder WB. Dieser Code erscheint im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Name <span class="info-dot">i</span><span class="duty-col-pop">Lesbarer Name des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Typ <span class="info-dot">i</span><span class="duty-col-pop">Art des Dienstes, zum Beispiel Gruppendienst, frei, Weiterbildung, Büro oder geteilter Dienst.</span></span></th><th><span class="duty-col-help" tabindex="0">Start <span class="info-dot">i</span><span class="duty-col-pop">Beginn des Dienstes. Bei geteilten Diensten können zusätzlich Intervalle verwendet werden.</span></span></th><th><span class="duty-col-help" tabindex="0">Ende <span class="info-dot">i</span><span class="duty-col-pop">Ende des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Intervalle <span class="info-dot">i</span><span class="duty-col-pop">Für geteilte Dienste, zum Beispiel 07:00-09:15 / 12:00-19:00.</span></span></th><th><span class="duty-col-help" tabindex="0">h <span class="info-dot">i</span><span class="duty-col-pop">Stunden, die der Dienst zählt. 0 bedeutet: keine Soll-/Ist-Stunden.</span></span></th><th><span class="duty-col-help" tabindex="0">Arbeit <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Der Dienst zählt als Arbeitszeit bzw. Abwesenheitszeit für Soll/Ist. Beispiel Ferien oder Weiterbildung zählen, frei zählt nicht.</span></span></th><th><span class="duty-col-help" tabindex="0">Gruppe <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Der Dienst deckt die Gruppengrundbesetzung ab. Diese Dienste zählen für die benötigte Abdeckung im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Auto <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Die KI darf diesen Dienst automatisch einplanen. Ohne Haken wird er nicht automatisch gesetzt.</span></span></th><th><span class="duty-col-help" tabindex="0">manuell <span class="info-dot">i</span><span class="duty-col-pop">Haken bedeutet: Dieser Dienst wird nur von Hand gesetzt und nicht automatisch geplant.</span></span></th><th><span class="duty-col-help" tabindex="0">Bedeutung <span class="info-dot">i</span><span class="duty-col-pop">Erklärung, wofür der Dienst gedacht ist. Das hilft beim Prüfen und späteren Anpassen.</span></span></th><th></th></tr></thead><tbody></tbody></table></div></details>
     <details style="margin-top:12px"><summary><b>Standardbedarf Woche / Wochenende normal</b></summary><div class="mini" style="margin:8px 0">Pro Wochentag Dienste direkt anhaken. Bei Bedarf Anzahl erhöhen, zum Beispiel F9 zweimal. Samstag und Sonntag werden jetzt direkt aus dieser Eingabe für <b>Wochenende normal</b> übernommen. Feiertage nutzen weiterhin die Wochenendregel, wenn kein Tagesstatus gesetzt ist.</div><div id="stdNeeds"></div><div class="toolbar"><button class="primary" onclick="saveStandardNeedsFromUI(); makePlan(true)">Standardwoche übernehmen</button></div></details>
     <details style="margin-top:12px"><summary><b>Schulferien / Feiertage Basel-Stadt lokal</b></summary><div class="mini" style="margin:8px 0">Bearbeitbare lokale Liste. Format Ferien: YYYY-MM-DD bis YYYY-MM-DD pro Zeile. Feiertage: YYYY-MM-DD Name. Zusätzliche arbeitsfreie Halbtage werden automatisch als ½FT markiert: Fasnachtsmontag-Nachmittag, Fasnachtsmittwoch-Nachmittag, 31. Juli-Nachmittag, Heiligabend-Nachmittag und Silvester-Nachmittag, sofern diese Tage nicht auf Samstag/Sonntag fallen. Fasnacht wird nicht als ganzer Feiertag geführt.</div><div class="formgrid"><div><label>Schulferien</label><textarea id="schoolHolidayText"></textarea></div><div><label>Feiertage</label><textarea id="holidayText"></textarea></div></div><button class="primary" onclick="saveCalendarLists(); renderAll()">Kalenderlisten übernehmen</button></details>
   </article></section>
@@ -297,17 +315,42 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
     <details class="control-accordion"><summary>Klare Befehle an die KI</summary><div class="cmd-box">Diese Befehle sind die Planungsanweisung. Planung, Kontrolle und Korrektur sollen dieselben Befehle verwenden.</div><div id="aiCommandList" class="commandgrid"></div></details>
     <div class="toolbar control-actions"><button class="primary" onclick="renderRules(); renderChecks()">Kontrolle aktualisieren</button><button onclick="makePlan(true); renderRules(); renderChecks()">Neu berechnen & kontrollieren</button></div><div id="planningPhaseLog" class="issue green" style="display:none;margin-top:10px"></div><div class="control-results-title"><span>Prüfung & Konflikte</span><span class="mini">Ergebnis der aktuellen Kontrolle</span></div><div id="issueList" style="margin-top:12px"></div></article></section>
 
-  <section id="system" class="view"><article class="card"><div class="section"><h2>Speicher & System</h2><span class="pill blue">Azoren · V13.0.203</span></div><div class="toolbar"><button onclick="tryMigrateV12()">alte Daten suchen</button><button class="okbtn" onclick="rescueBestStoredState(true)">Daten retten</button><button class="danger" onclick="clearV13Storage()">Speicher dieses Geräts löschen</button></div><div id="systemInfo" class="issue green" style="margin-top:12px"></div>
-    <details open style="margin-top:12px"><summary><b>OpenAI API direkt ohne Server</b></summary>
-      <div class="issue yellow" style="margin-top:10px"><b>Hinweis</b><div>Der API-Key wird lokal im Browser gespeichert und im Sicherung mit exportiert. Diese Datei und Sicherungs deshalb privat halten.</div></div>
-      <div class="formgrid">
-        <div><label>OpenAI API-Key</label><input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" onchange="saveAPISettings(true)" onblur="saveAPISettings(false)"></div>
-        <div><label>Modell</label><input id="apiModel" value="gpt-5.2" onchange="saveAPISettings(true)" onblur="saveAPISettings(false)"></div>
+  <section id="system" class="view"><article class="card group-storage-card">
+    <div class="section"><h2>Gruppen-Speicher</h2><span class="pill blue" id="groupStorageContext">Gruppe</span></div>
+    <div class="mini" style="margin-bottom:10px">Diese Seite betrifft nur diese Gruppe / diesen Bereich. Es wird keine ganze Organisation gespeichert, geladen oder wiederhergestellt.</div>
+    <div class="toolbar">
+      <button class="primary" onclick="saveState(true)">Gruppe auf Server speichern</button>
+      <button onclick="loadGroupStateFromServer(true)">Daten dieser Gruppe neu laden</button>
+      <button onclick="groupStorageRefresh(true)">Gruppenstatus prüfen</button>
+      <button onclick="downloadGroupBackup()">Gruppen-Sicherung herunterladen</button>
+      <button class="okbtn" onclick="rescueBestStoredState(true)">lokale Notfallkopie suchen</button>
+    </div>
+    <div id="systemInfo" class="issue green" style="margin-top:12px">Gruppen-Speicher wird geprüft…</div>
+    <div class="side" style="margin-top:12px">
+      <div class="panel">
+        <div class="section"><h2 style="font-size:18px">Speicherstände dieser Gruppe</h2><span class="pill blue">nur Gruppe</span></div>
+        <div class="mini">Gezeigt werden nur Status, Revision und Hash für diese Gruppe.</div>
+        <div id="groupStorageSections" class="server-history-list" style="margin-top:8px">Noch nicht geladen.</div>
       </div>
-      <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input id="apiRememberSession" type="checkbox" checked onchange="saveAPISettings(true)"> API-Key nicht speichern</label>
-      <div class="toolbar" style="margin-top:10px"><button class="primary" onclick="saveAPISettings(true)">API-Daten speichern</button><button class="primary" onclick="askOpenAIDirect()">Externe KI kontrollieren lassen</button><button onclick="forgetApiKey()">API-Key vergessen</button><button onclick="copyAIPayload()">gesendete Daten kopieren</button></div>
-      <div id="apiResult" class="issue" style="margin-top:10px"><b>Bereit</b><div>Die externe KI bekommt nur den aktuell gewählten Monat, Regeln, Dienstkatalog, Mitarbeiter und Konflikte. Sie ändert den Plan nicht automatisch.</div></div>
-    </details>
+      <div class="panel">
+        <div class="section"><h2 style="font-size:18px">Aktivität dieser Gruppe</h2><span class="pill blue">gefiltert</span></div>
+        <div class="toolbar"><button onclick="loadGroupActivity(true)">Aktivität laden</button><button onclick="downloadGroupActivity()">Aktivität herunterladen</button></div>
+        <div id="groupActivityList" class="server-history-list" style="margin-top:8px">Noch nicht geladen.</div>
+      </div>
+    </div>
+    <div class="side" style="margin-top:12px">
+      <div class="panel">
+        <div class="section"><h2 style="font-size:18px">Wünsche dieser Gruppe</h2><span class="pill blue">gruppenbezogen</span></div>
+        <div class="mini">Wunsch-Erfüllung, Wunschfrist und Wunschzugänge werden hier gruppenbezogen vorbereitet. Globale Wunsch-Verwaltung liegt nicht mehr im Planer-Serverfenster.</div>
+        <div class="toolbar"><button onclick="loadGroupWishes(true)">Wünsche laden</button><button onclick="showGroupWishAccess()">Wunschzugänge anzeigen</button></div>
+        <div id="groupWishInfo" class="server-history-list" style="margin-top:8px">Noch nicht geladen.</div>
+      </div>
+      <div class="panel">
+        <div class="section"><h2 style="font-size:18px">Notfall / Sync</h2><span class="pill yellow">Arbeitskopie</span></div>
+        <div class="mini">Die Arbeitskopie bleibt im Browser als Zwischenspeicher. Beim normalen Speichern wird nur diese Gruppe auf den Server geschrieben.</div>
+        <div id="groupSyncInfo" class="issue green" style="margin-top:8px">Bereit.</div>
+      </div>
+    </div>
   </article></section>
 </main>
 <script>
@@ -3437,6 +3480,147 @@ function repairDutyCatalogChecksFromUI(){
   toast(changed?('Diensthaken repariert: '+changed+' Anpassungen'):'Diensthaken waren bereits korrekt','ok');
 }
 
+
+const CENTRAL_DUTY_CATEGORY_ORDER=['Frühdienste','Mitteldienste','Spätdienste','Geteilte Dienste','Sitzungen / Verfügungsdienste','Kurzfristige Einsätze / Mehrarbeit','Frei / Kompensation / Ferien','Krankheit / Unfall / Abwesenheiten','Weiterbildung / Schule','Gleitzeit','Markierungen','Sonstige'];
+const CENTRAL_DUTY_CATEGORY_ICON={'Frühdienste':'🌅','Mitteldienste':'🌤️','Spätdienste':'🌙','Geteilte Dienste':'🔀','Sitzungen / Verfügungsdienste':'🧩','Kurzfristige Einsätze / Mehrarbeit':'⚡','Frei / Kompensation / Ferien':'🏖️','Krankheit / Unfall / Abwesenheiten':'🩺','Weiterbildung / Schule':'🎓','Gleitzeit':'⏱️','Markierungen':'🏷️','Sonstige':'📌'};
+let __centralDutyCatalog=[];
+function centralDutyCategoryRank(cat){const i=CENTRAL_DUTY_CATEGORY_ORDER.indexOf(cat||'Sonstige');return i<0?999:i;}
+function centralDutyNumericCode(v){const m=String(v||'').match(/\d+/);return m?parseInt(m[0],10):999999;}
+function centralDutyCategoryId(cat){return 'grp_duty_cat_'+String(cat||'Sonstige').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');}
+function centralDutyCode(d){return String(d?.short||d?.code||'').trim().toUpperCase();}
+function centralDutyId(d,i=0){return String(d?.id||d?.code||d?.short||d?.name||('d_'+i)).toLowerCase().replace(/[^a-z0-9]+/g,'_')||('d_'+i);}
+function centralDutyHours(v){
+  const raw=String(v??'').trim();
+  if(!raw)return 0;
+  const m=raw.match(/^(\d{1,2}):(\d{2})$/);
+  if(m)return Math.round((parseInt(m[1],10)+parseInt(m[2],10)/60)*100)/100;
+  const n=parseFloat(raw.replace(',','.'));
+  return Number.isFinite(n)?n:0;
+}
+function centralDutyType(d){
+  const cat=String(d?.category||''); const code=centralDutyCode(d);
+  if(cat.includes('Geteilte'))return 'split';
+  if(cat.includes('Frei')||['FR','WF'].includes(code))return 'free';
+  if(['KGL','KF'].includes(code)||cat.includes('Kompensation'))return 'compensationFree';
+  if(cat.includes('Gleitzeit'))return 'office';
+  if(cat.includes('Weiterbildung')||cat.includes('Krankheit')||['FER','KR','KA','WB','WBL','UEK','ÜK','UN','PA','HO','SCH'].includes(code))return code==='SCHF'?'schoolFree':'absenceWork';
+  if(cat.includes('Sitzungen')||cat.includes('Markierungen')||['TV','TVA','DW','S','TS','TSK','VD','P'].includes(code))return code==='VD'?'emergencyGroup':'special';
+  if(cat.includes('Früh')||cat.includes('Mittel')||cat.includes('Spät'))return 'group';
+  return 'group';
+}
+function defaultCentralDutyFlags(d){
+  const cat=String(d?.category||''); const code=centralDutyCode(d); const type=centralDutyType(d);
+  const work=!(cat.includes('Frei')||['FR','WF','KGL','KF','DW'].includes(code));
+  const group=cat.includes('Früh')||cat.includes('Mittel')||cat.includes('Spät')||cat.includes('Geteilte')||code==='VD';
+  const auto=group && !['VD','KE','AM'].includes(code);
+  const manual=!auto || cat.includes('Sitzungen') || cat.includes('Krankheit') || cat.includes('Weiterbildung') || type==='special';
+  return {countsAsWork:work,countsForCoverage:group,autoPlan:auto,manualOnly:manual};
+}
+function currentDutyByCentral(d){
+  const code=centralDutyCode(d); const id=centralDutyId(d);
+  return (state.duties||[]).find(x=>String(x.dutyId||x.id||'').toLowerCase()===id || String(x.code||'').toUpperCase()===code || String(x.short||'').toUpperCase()===code) || null;
+}
+function centralDutyTime(d){
+  if(d?.start&&d?.end)return d.start+'–'+d.end;
+  if(Array.isArray(d?.segments)&&d.segments.length)return d.segments.map(s=>(s.start||'')+'–'+(s.end||'')).join(' / ');
+  return '';
+}
+function sortedCentralDuties(){
+  return (__centralDutyCatalog||[]).filter(d=>d&&d.active!==false).map((d,i)=>({d,i})).sort((a,b)=>centralDutyCategoryRank(a.d.category||'Sonstige')-centralDutyCategoryRank(b.d.category||'Sonstige')||centralDutyNumericCode(a.d.code||a.d.short)-centralDutyNumericCode(b.d.code||b.d.short)||String(a.d.name||'').localeCompare(String(b.d.name||''),'de'));
+}
+async function loadCentralDutyCatalogInline(){
+  const status=q('centralDutyPickerStatus');
+  if(status)status.textContent='Zentraler Dienstkatalog wird geladen …';
+  const resp=await fetch('/api/duty-catalog?ts='+Date.now(),{cache:'no-store'});
+  let data={}; try{data=await resp.json();}catch(_){data={message:'Ungültige Serverantwort'};}
+  if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
+  __centralDutyCatalog=Array.isArray(data.dutyCatalog)?data.dutyCatalog:[];
+  renderCentralDutyPicker();
+  if(status)status.textContent=__centralDutyCatalog.length+' zentrale Dienste geladen. Auswahl betrifft nur '+PLANER_GROUP_NAME+'.';
+}
+function renderCentralDutyPicker(){
+  const list=q('centralDutyPickerList'), nav=q('centralDutyPickerNav');
+  if(!list)return;
+  const entries=sortedCentralDuties();
+  const counts={}; entries.forEach(({d})=>{const c=d.category||'Sonstige'; counts[c]=(counts[c]||0)+1;});
+  const cats=Object.keys(counts).sort((a,b)=>centralDutyCategoryRank(a)-centralDutyCategoryRank(b));
+  if(nav)nav.innerHTML=cats.map(c=>'<a class="inline-duty-chip" href="#'+centralDutyCategoryId(c)+'">'+esc(CENTRAL_DUTY_CATEGORY_ICON[c]||'📌')+' '+esc(c)+' · '+counts[c]+'</a>').join('');
+  const byCat={}; entries.forEach(x=>{const c=x.d.category||'Sonstige'; (byCat[c]||(byCat[c]=[])).push(x);});
+  list.innerHTML=cats.map(cat=>{
+    const rows=(byCat[cat]||[]).map(({d,i})=>{
+      const cur=currentDutyByCentral(d); const def=defaultCentralDutyFlags(d); const f=Object.assign({},def,cur||{}); const active=!!cur && cur.active!==false;
+      const did=centralDutyId(d,i);
+      return '<div class="inline-duty-row '+(active?'':'off')+'" data-central-duty-id="'+esc(did)+'" data-central-duty-index="'+i+'">'
+        + '<div class="inline-duty-main"><span class="inline-duty-code">'+esc(centralDutyCode(d))+'</span> <b>'+esc(d.name||d.short||d.code||'Dienst')+'</b><div class="inline-duty-meta">zentral: '+esc(d.code||'')+' · '+esc(d.category||'')+'</div></div>'
+        + '<div><b>'+esc(centralDutyTime(d)||'')+'</b><div class="inline-duty-meta">Zeit</div></div>'
+        + '<div><b>'+esc(d.duration||'')+'</b><div class="inline-duty-meta">Dauer</div></div>'
+        + centralDutyPickerCheck('active','Aktiv',active)
+        + centralDutyPickerCheck('countsAsWork','Arbeit',!!f.countsAsWork)
+        + centralDutyPickerCheck('countsForCoverage','Gruppe',!!f.countsForCoverage)
+        + centralDutyPickerCheck('autoPlan','Auto',!!f.autoPlan)
+        + centralDutyPickerCheck('manualOnly','Manuell',!!f.manualOnly)
+        + '</div>';
+    }).join('');
+    return '<section class="inline-duty-category" id="'+centralDutyCategoryId(cat)+'"><div class="inline-duty-cat-head"><span>'+esc(CENTRAL_DUTY_CATEGORY_ICON[cat]||'📌')+' '+esc(cat)+'</span><span class="pill">'+(byCat[cat]||[]).length+' Dienste</span></div>'+rows+'</section>';
+  }).join('') || '<div class="issue yellow"><b>Zentraler Dienstkatalog leer</b><div>Bitte zuerst in der Organisation Dienste erstellen.</div></div>';
+}
+function centralDutyPickerCheck(field,label,on){return '<label class="inline-duty-check '+(on?'on':'')+'"><input data-central-field="'+field+'" type="checkbox" '+(on?'checked':'')+'> '+label+'</label>';}
+function showCentralDutyPicker(){
+  const box=q('centralDutyPicker');
+  if(box)box.classList.add('show');
+  if(!__centralDutyCatalog.length)loadCentralDutyCatalogInline().catch(e=>{const s=q('centralDutyPickerStatus'); if(s)s.textContent='Zentraler Katalog konnte nicht geladen werden: '+((e&&e.message)||e); toast('Zentraler Katalog konnte nicht geladen werden','bad');});
+  else renderCentralDutyPicker();
+  try{box?.scrollIntoView({behavior:'smooth',block:'start'});}catch(_){}
+}
+function hideCentralDutyPicker(){const box=q('centralDutyPicker'); if(box)box.classList.remove('show');}
+function centralDutyToLocal(d,row,sort){
+  const code=centralDutyCode(d); const cur=currentDutyByCentral(d)||{};
+  const start=String(d.start||cur.start||''); const end=String(d.end||cur.end||'');
+  const local={
+    id:centralDutyId(d,sort),dutyId:centralDutyId(d,sort),centralDutyId:centralDutyId(d,sort),centralCode:String(d.code||''),
+    code:code,name:String(d.name||cur.name||code),type:centralDutyType(d),start,end,
+    hours:centralDutyHours(d.duration||cur.hours),
+    countsAsWork:!!row.querySelector('[data-central-field="countsAsWork"]')?.checked,
+    countsForCoverage:!!row.querySelector('[data-central-field="countsForCoverage"]')?.checked,
+    autoPlan:!!row.querySelector('[data-central-field="autoPlan"]')?.checked,
+    manualOnly:!!row.querySelector('[data-central-field="manualOnly"]')?.checked,
+    meaning:String(d.note||d.category||cur.meaning||''),active:true
+  };
+  if(cur.intervals)local.intervals=cur.intervals;
+  else if(d.breakStart&&d.breakEnd&&start&&end)local.intervals=[[start,d.breakStart],[d.breakEnd,end]];
+  return {...local,...protectedDutyPatch(code)};
+}
+function applyCentralDutyPicker(){
+  const rows=[...document.querySelectorAll('#centralDutyPickerList [data-central-duty-index]')];
+  if(!rows.length)return toast('Zentraler Katalog ist noch nicht geladen','warn');
+  const next=[]; const selectedCodes=new Set();
+  rows.forEach((row,idx)=>{
+    if(!row.querySelector('[data-central-field="active"]')?.checked)return;
+    const d=__centralDutyCatalog[Number(row.dataset.centralDutyIndex)]; if(!d)return;
+    const local=centralDutyToLocal(d,row,idx+1); selectedCodes.add(String(local.code||'').toUpperCase()); next.push(local);
+  });
+  // Lokale Sonderdienste behalten, die nicht aus dem zentralen Katalog stammen.
+  const centralCodes=new Set((__centralDutyCatalog||[]).map(centralDutyCode).filter(Boolean));
+  (state.duties||[]).forEach(d=>{const code=String(d?.code||'').toUpperCase(); if(code && !centralCodes.has(code) && !selectedCodes.has(code))next.push(d);});
+  if(!next.length)return toast('Bitte mindestens einen Dienst für diese Gruppe aktivieren','warn');
+  state.duties=next;
+  normalizeDutyCatalog();
+  renderDutyTable();
+  fillDutySelect();
+  renderStandardNeeds();
+  saveState(false);
+  saveGroupDutiesFromUI(false);
+  toast('Dienstauswahl für diese Gruppe übernommen','ok');
+}
+
+document.addEventListener('change',e=>{
+  const row=e.target?.closest&&e.target.closest('#centralDutyPickerList [data-central-duty-index]');
+  if(!row)return;
+  const active=!!row.querySelector('[data-central-field="active"]')?.checked;
+  row.classList.toggle('off',!active);
+  e.target.closest('.inline-duty-check')?.classList.toggle('on',!!e.target.checked);
+});
+
 function groupDutiesUrl(){
   const p=new URLSearchParams();
   p.set('siteId',ULMI_DYNAMIC_CONTEXT.siteId||'');
@@ -3446,10 +3630,7 @@ function groupDutiesUrl(){
   p.set('unitName',ULMI_DYNAMIC_CONTEXT.unitName||PLANER_GROUP_NAME);
   return 'gruppen-dienste.html?'+p.toString();
 }
-function openGroupDutiesPage(){
-  try{ window.open(groupDutiesUrl(),'_blank'); }
-  catch(_){ location.href=groupDutiesUrl(); }
-}
+function openGroupDutiesPage(){ showCentralDutyPicker(); }
 function groupDutySelectionPayloadFromState(){
   if(!Array.isArray(state.duties))state.duties=[];
   return {
@@ -6711,8 +6892,119 @@ function exportSicherung(){saveState(false);download(`polypoint_${PLANER_GROUP_I
 function importSicherung(ev){const file=ev.target.files[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(r.result);state={...defaultState(),...obj};normalizeStorageObjects();normalizeRules();normalizeDutyCatalog();normalizeCalendarLists();normalizeMonthTargets();normalizeLearners();saveState(true);renderAll();}catch(e){toast('Sicherung laden nicht möglich','bad');}};r.readAsText(file);}
 function download(name,content,type){const blob=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 function csv(v){return '"'+String(v??'').replace(/"/g,'""')+'"';}
-function renderSystem(){const el=q('systemInfo');if(!el)return;normalizeEmployeeLimits();
-  normalizeAPISettings();const apiStored=!!state.api.key;const infos=storedStates();el.innerHTML=`<b>Speicher</b><div>Bereich: <b>${esc(PLANER_GROUP_NAME)}</b></div><div>Speicher: <b>dieses Gerät</b></div><div>Gespeichert: ${state.savedAt?new Date(state.savedAt).toLocaleString('de-CH'):'noch nicht'}</div><div>Mitarbeiter: ${state.employees.length}</div><div>Plan-Einträge: ${Object.keys(state.plan).length}</div><div>Monats-Sollstunden: ${Object.keys(state.monthTargets||{}).length}</div><div>POLYPOINT-Salden: ${Object.keys(state.balanceCarryovers||{}).length}</div><div>API-Key im Browser/Sicherung: ${apiStored?'gespeichert':'nicht gespeichert'}</div><div>API-Modell: ${esc(state.api.model||'gpt-5.2')}</div><div style="margin-top:8px"><b>Gefundene Speicherstände für ${esc(PLANER_GROUP_NAME)}:</b>${infos.length?infos.map(x=>`<div>${esc(x.label)} · ${esc(x.savedAt?new Date(x.savedAt).toLocaleString('de-CH'):'ohne Datum')} · MA ${x.employees} · Plan ${x.plan}</div>`).join(''):'<div>keine</div>'}</div><div class="mini" style="margin-top:8px">Jeder Bereich nutzt den Server als Hauptspeicher und diesen Browser nur als Zwischenspeicher. Vorhandene Speicherstände werden bei Bedarf automatisch gesucht und können über „Daten retten“ übernommen werden.</div>`;}
+function groupContextParams(){
+  const siteId=ULMI_DYNAMIC_CONTEXT.siteId||state.siteId||'haus_1';
+  const groupKey=ULMI_DYNAMIC_CONTEXT.plannerKey||ULMI_DYNAMIC_CONTEXT.unitId||PLANER_GROUP_ID;
+  return {siteId,groupKey,unitName:ULMI_DYNAMIC_CONTEXT.unitName||PLANER_GROUP_NAME,siteName:ULMI_DYNAMIC_CONTEXT.siteName||state.siteName||''};
+}
+function groupApiPath(section){
+  const map={state:'group-state',employees:'group-employees',plan:'group-plan',duties:'group-duties',wishes:'group-wishes'};
+  return '/api/'+(map[section]||'group-state');
+}
+function groupQuery(){
+  const c=groupContextParams();
+  const p=new URLSearchParams();
+  p.set('siteId',c.siteId);p.set('groupKey',c.groupKey);
+  return p.toString();
+}
+async function fetchGroupSection(section){
+  const resp=await fetch(groupApiPath(section)+'?'+groupQuery(),{method:'GET'});
+  const data=await resp.json().catch(()=>({ok:false,message:'Ungültige Serverantwort'}));
+  if(!resp.ok||!data.ok)throw new Error(data.message||('Serverfehler '+resp.status));
+  return data;
+}
+function groupSectionLabel(section){return ({state:'Gruppenstand',employees:'Mitarbeitende',plan:'Dienstplan',duties:'Dienste',wishes:'Wünsche'}[section]||section);}
+function groupSectionInfo(data,section){
+  const value=data.groupDuties?.value ?? data.groupState?.payload ?? data.value ?? {};
+  let count=0;
+  if(section==='employees')count=Array.isArray(value)?value.length:0;
+  else if(section==='duties')count=Array.isArray(value?.duties)?value.duties.length:(Array.isArray(value)?value.length:0);
+  else if(value&&typeof value==='object')count=Object.keys(value.plan||value.wishes||value).length;
+  else if(Array.isArray(value))count=value.length;
+  return {revision:data.revision||data.groupRevision||data.groupDutyRevision||0,hash:data.hash||data.groupState?.hash||data.groupDuties?.hash||'',updatedAt:data.updatedAt||data.groupState?.updatedAt||data.groupDuties?.updatedAt||'',hasContent:data.hasContent, count};
+}
+function groupStorageRow(section,data){
+  const info=groupSectionInfo(data,section);
+  const when=info.updatedAt?new Date(info.updatedAt).toLocaleString('de-CH'):'noch nie';
+  const cls=info.hasContent?'server-history-current':'';
+  return `<div class="server-history-row ${cls}"><div><div class="server-history-title">${esc(groupSectionLabel(section))}</div><div class="server-history-meta">Revision ${esc(info.revision)} · Hash ${esc(info.hash||'-')} · Einträge ${esc(info.count)} · ${esc(when)}</div></div></div>`;
+}
+async function groupStorageRefresh(show=true){
+  const ctx=groupContextParams();
+  const info=q('systemInfo');
+  const target=q('groupStorageSections');
+  if(q('groupStorageContext'))q('groupStorageContext').textContent=(ctx.siteName?ctx.siteName+' → ':'')+ctx.unitName;
+  if(info)info.innerHTML='Gruppenstatus wird geladen…';
+  try{
+    const sections=['state','employees','plan','duties','wishes'];
+    const rows=[];
+    for(const sec of sections){
+      try{rows.push(groupStorageRow(sec,await fetchGroupSection(sec)));}
+      catch(e){rows.push(`<div class="server-history-row"><div><div class="server-history-title">${esc(groupSectionLabel(sec))}</div><div class="server-history-meta">nicht geladen: ${esc(e.message)}</div></div></div>`);}
+    }
+    if(target)target.innerHTML=rows.join('');
+    if(info)info.innerHTML=`<b>${esc(ctx.unitName)}</b><div>Haus / Standort: ${esc(ctx.siteName||ctx.siteId)}</div><div>Gruppenschlüssel: ${esc(ctx.groupKey)}</div><div>Lokale Arbeitskopie: ${state.savedAt?new Date(state.savedAt).toLocaleString('de-CH'):'noch nicht gespeichert'} · Mitarbeitende ${state.employees.length} · Plan ${Object.keys(state.plan||{}).length}</div><div class="mini" style="margin-top:6px">Speichern und Laden betrifft nur diese Gruppe.</div>`;
+    if(show)toast('Gruppenstatus geladen','ok');
+  }catch(e){
+    if(info)info.innerHTML='<b>Gruppenstatus konnte nicht geladen werden.</b><div>'+esc(e.message)+'</div>';
+    if(show)toast(e.message,'bad');
+  }
+}
+async function loadGroupActivity(show=true){
+  const el=q('groupActivityList');
+  if(el)el.textContent='Aktivität wird geladen…';
+  try{
+    const resp=await fetch('/api/events?'+groupQuery()+'&limit=80',{method:'GET'});
+    const data=await resp.json().catch(()=>({ok:false,message:'Ungültige Serverantwort'}));
+    if(!resp.ok||!data.ok)throw new Error(data.message||('Serverfehler '+resp.status));
+    const events=Array.isArray(data.events)?data.events:[];
+    if(el)el.innerHTML=events.length?events.map(ev=>`<div class="server-history-row"><div><div class="server-history-title">${esc(ev.type||'Änderung')} · ${esc(ev.section||'')}</div><div class="server-history-meta">${esc(ev.createdAt?new Date(ev.createdAt).toLocaleString('de-CH'):'')} · Revision ${esc(ev.revisionVorher||0)} → ${esc(ev.revisionNachher||0)} · Backup ${esc(ev.backupId||'-')} · ${esc(ev.createdBy?.email||'')}</div></div></div>`).join(''):'<div class="server-history-row"><div><div class="server-history-title">Keine Aktivität für diese Gruppe.</div></div></div>';
+    window.__groupActivityCache=data;
+    if(show)toast('Aktivität dieser Gruppe geladen','ok');
+  }catch(e){if(el)el.innerHTML='<div class="server-history-row"><div><div class="server-history-title">Aktivität nicht geladen</div><div class="server-history-meta">'+esc(e.message)+'</div></div></div>';if(show)toast(e.message,'bad');}
+}
+function downloadGroupActivity(){
+  const payload=window.__groupActivityCache||{};
+  download('ulmipoint_'+PLANER_GROUP_ID+'_aktivitaet_gruppe.json',JSON.stringify(payload,null,2),'application/json;charset=utf-8');
+  toast('Aktivität heruntergeladen','ok');
+}
+function downloadGroupBackup(){
+  try{
+    const payload={kind:'ulmipoint-group-backup',version:PLANER_VERSION,createdAt:new Date().toISOString(),context:groupContextParams(),state:groupServerPayload()};
+    download('ulmipoint_'+PLANER_GROUP_ID+'_gruppen_sicherung.json',JSON.stringify(payload,null,2),'application/json;charset=utf-8');
+    toast('Gruppen-Sicherung heruntergeladen','ok');
+  }catch(e){toast('Gruppen-Sicherung nicht möglich','bad');}
+}
+async function loadGroupWishes(show=true){
+  const el=q('groupWishInfo');
+  if(el)el.textContent='Wünsche werden geladen…';
+  try{
+    const data=await fetchGroupSection('wishes');
+    const value=data.value||{};
+    const count=value&&typeof value==='object'?Object.keys(value.wishes||value).length:0;
+    if(el)el.innerHTML=`<div class="server-history-row server-history-current"><div><div class="server-history-title">Wünsche dieser Gruppe</div><div class="server-history-meta">Einträge ${esc(count)} · Revision ${esc(data.revision||0)} · Hash ${esc(data.hash||'-')}</div></div></div>`;
+    if(show)toast('Wünsche dieser Gruppe geladen','ok');
+  }catch(e){if(el)el.innerHTML='<div class="server-history-row"><div><div class="server-history-title">Wünsche nicht geladen</div><div class="server-history-meta">'+esc(e.message)+'</div></div></div>';if(show)toast(e.message,'bad');}
+}
+function showGroupWishAccess(){
+  const el=q('groupWishInfo');
+  const employees=Array.isArray(state.employees)?state.employees:[];
+  const rows=employees.map(emp=>`<div class="server-history-row"><div><div class="server-history-title">${esc(emp.name||emp.id||'Mitarbeiter')}</div><div class="server-history-meta">E-Mail: ${esc(emp.email||emp.loginEmail||'-')} · Wunsch-Code: ${esc(emp.wishCode||emp.code||'-')} · aktiv: ${emp.active!==false?'ja':'nein'}</div></div></div>`);
+  if(el)el.innerHTML=rows.length?rows.join(''):'<div class="server-history-row"><div><div class="server-history-title">Keine Mitarbeitenden in dieser Gruppe.</div></div></div>';
+}
+function renderSystem(){
+  const ctx=groupContextParams();
+  if(q('groupStorageContext'))q('groupStorageContext').textContent=(ctx.siteName?ctx.siteName+' → ':'')+ctx.unitName;
+  const el=q('systemInfo');
+  if(el)el.innerHTML=`<b>${esc(ctx.unitName)}</b><div>Haus / Standort: ${esc(ctx.siteName||ctx.siteId)}</div><div>Gruppenschlüssel: ${esc(ctx.groupKey)}</div><div>Lokale Arbeitskopie: ${state.savedAt?new Date(state.savedAt).toLocaleString('de-CH'):'noch nicht gespeichert'} · Mitarbeitende ${state.employees.length} · Plan ${Object.keys(state.plan||{}).length}</div><div class="mini" style="margin-top:6px">Diese Ansicht ersetzt den alten globalen Server-Hauptspeicher. Supabase/Login/Rollen und Organisationsspeicher liegen nicht mehr hier.</div>`;
+  groupStorageRefresh(false);
+}
+function openGroupStorageView(){
+  const btn=[...document.querySelectorAll('nav.tabs .tab')].find(b=>(b.textContent||'').includes('Speicher'));
+  showView('system',btn||null);
+  renderSystem();
+}
+window.addEventListener('message',ev=>{const d=ev.data||{};if(d&&d.type==='ulmiOpenGroupStorage')openGroupStorageView();});
 function tryMigrateV12(){try{const raw=localStorage.getItem(OLD_KEY);if(!raw){toast('Keine alten Browserdaten gefunden','warn');return;}const old=JSON.parse(raw);if(Array.isArray(old.employees)){state.employees=old.employees.map((e,i)=>({id:String(e.id||e.key||'m'+i),name:e.name||e.n||('MA'+i),role:e.role||'FABE',pct:e.pct||e.percent||80,group:e.group!==false,fp:!!(e.fp||e.isFP),tv:canTakeTV({role:e.role||'FABE'}),split:!!e.split,officePct:e.office||e.officePct||0,apprenticeYear:e.apprenticeYear||e.year||'',schoolDays:e.schoolDays||e.school||[],officeDays:e.officeDays||[],schoolFreeDays:e.schoolFreeDays||[],activeFrom:e.activeFrom||'',activeUntil:e.activeUntil||'',active:e.active!==false}));}
 if(Array.isArray(old.duties)&&old.duties.length){/* Dienstkatalog bewusst nicht blind überschreiben */}
 if(old.clientStatus)state.dayStatus={...state.dayStatus,...old.clientStatus};saveState(true);renderAll();toast('V12-Stammdaten übernommen','ok');}catch(e){console.warn(e);toast('Migration fehlgeschlagen','bad');}}
