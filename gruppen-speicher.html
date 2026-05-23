@@ -82,7 +82,7 @@ main{max-width:1320px;margin:auto;padding:18px}
     <div class="big-actions">
       <button id="reloadBtn" class="primary" onclick="loadGroupOnly()">Daten dieser Gruppe neu laden</button>
       <button onclick="location.href='/'">Zur Startseite</button>
-      <button id="adminBtn" class="admin-link hidden" onclick="location.href='gruppen-speicher.html?admin=1'">Admin-Übersicht</button><button id="dutiesBtn" onclick="openGroupDuties()">Dienste dieser Gruppe</button>
+      <button id="adminBtn" class="admin-link hidden" onclick="location.href='gruppen-speicher.html?admin=1'">Admin-Übersicht</button>
     </div>
   </section>
 
@@ -191,7 +191,6 @@ function renderContext(ctx,siteName,groupName){
     +'<div class="status-card"><b>Haus</b><span>'+esc(siteName||ctx.siteId||'nicht gewählt')+'</span></div>'
     +'<div class="status-card"><b>Gruppe</b><span>'+esc(groupName||ctx.groupKey||'nicht gewählt')+'</span></div>';
   document.getElementById('reloadBtn').disabled=!(ctx.siteId&&ctx.groupKey);
-  const db=document.getElementById('dutiesBtn'); if(db) db.disabled=!(ctx.siteId&&ctx.groupKey);
   document.getElementById('adminBtn').classList.toggle('hidden',!ctx.admin);
 }
 function realUnits(site){return (Array.isArray(site.units)?site.units:[]).filter(u=>u&&!['pikett','hausdienstplan','nachtwache'].includes(String(u.type||'')))}
@@ -255,10 +254,9 @@ async function loadGroupOnly(){
     document.getElementById('groupStatus').textContent='Fehler: '+(e.message||e);
   }
 }
-function openGroupDuties(){ const ctx=readContext(); if(!(ctx.siteId&&ctx.groupKey))return; location.href='gruppen-dienste.html?siteId='+encodeURIComponent(ctx.siteId)+'&groupKey='+encodeURIComponent(ctx.groupKey);}
 function renderAdminSite(site){
   const units=realUnits(site);
-  return '<div class="unit" style="margin-bottom:10px"><div class="unit-title">'+esc(site.name||site.id||'Standort')+'</div><div class="unit-sub">'+units.length+' Gruppen</div><div class="big-actions">'+units.map(u=>'<button onclick="location.href=\'gruppen-speicher.html?siteId='+encodeURIComponent(siteKey(site))+'&groupKey='+encodeURIComponent(unitKey(u))+'\'">'+esc(u.name||u.id||unitKey(u))+'</button><button onclick="location.href=\'gruppen-dienste.html?siteId='+encodeURIComponent(siteKey(site))+'&groupKey='+encodeURIComponent(unitKey(u))+'\'">Dienste</button>').join('')+'</div></div>';
+  return '<div class="unit" style="margin-bottom:10px"><div class="unit-title">'+esc(site.name||site.id||'Standort')+'</div><div class="unit-sub">'+units.length+' Gruppen</div><div class="big-actions">'+units.map(u=>'<button onclick="location.href=\'gruppen-speicher.html?siteId='+encodeURIComponent(siteKey(site))+'&groupKey='+encodeURIComponent(unitKey(u))+'\'">'+esc(u.name||u.id||unitKey(u))+'</button>').join('')+'</div></div>';
 }
 async function loadAdminOverview(ctx){
   document.getElementById('adminSummary').className='notice warn';
