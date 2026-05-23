@@ -236,14 +236,24 @@
 <div id="adminRoleGate" class="role-gate" aria-hidden="false">
   <div class="role-card" role="dialog" aria-modal="true" aria-labelledby="adminRoleGateTitle">
     <h2 id="adminRoleGateTitle">Organisation-Login erforderlich</h2>
-    <div class="mini">Der Planer ist geschützt. Die Anmeldung läuft über dieselbe Organisation-Sitzung wie Organisation verwalten. Mitarbeitende benutzen das Wunschportal.</div>
+    <div class="mini">Der Planer ist geschützt. Die Anmeldung ist dieselbe Organisation-Anmeldung wie bei Organisation verwalten. Admin darf überall hinein.</div>
     <div id="adminRoleGateStatus" class="notice">Organisation-Anmeldung wird geprüft…</div>
+    <div class="role-form">
+      <div>
+        <label for="adminGateEmailInput">E-Mail</label>
+        <input id="adminGateEmailInput" type="email" autocomplete="username" placeholder="name@example.ch">
+      </div>
+      <div>
+        <label for="adminGatePasswordInput">Passwort</label>
+        <input id="adminGatePasswordInput" type="password" autocomplete="current-password" placeholder="Passwort">
+      </div>
+    </div>
     <div class="role-actions">
-      <button type="button" class="primary" id="adminGateLoginBtn">Organisation-Login öffnen</button>
+      <button type="button" class="primary" id="adminGateLoginBtn">Einloggen</button>
       <button type="button" id="adminGatePortalBtn">Zum Wunschportal</button>
       <button type="button" id="adminGateRetryBtn">Anmeldung erneut prüfen</button>
     </div>
-    <div class="mini" style="margin-top:10px">Der Planer nutzt ausschliesslich die Organisation-Anmeldung. Keine separate E-Mail-/Passwort-Eingabe im Planer.</div>
+    <div class="mini" style="margin-top:10px">Keine zusätzliche Rollen-Sperre im Planer. Die Sitzung wird als Organisation-Sitzung gespeichert und automatisch weiterverwendet.</div>
   </div>
 </div>
 
@@ -1130,6 +1140,8 @@
       if(anonEl) anonEl.value = SERVER_DEFAULT_ANON || cfg.anon || '';
       if(storeEl) storeEl.value = cfg.store || 'default';
       if(emailEl && cfg.email) emailEl.value = cfg.email;
+      const gateEmailEl = document.getElementById('adminGateEmailInput');
+      if(gateEmailEl && cfg.email) gateEmailEl.value = cfg.email;
       const autosaveEl = document.getElementById('serverAutosaveToggle');
       if(autosaveEl) autosaveEl.checked = localStorage.getItem(SERVER_AUTOSAVE_KEY) !== '0';
     } catch(e){ console.warn(e); }
@@ -1449,9 +1461,40 @@
   function organisationLoginUrl(){
     try{ return 'organisation.html?return=' + encodeURIComponent(location.pathname + location.search + location.hash); }catch(_){ return 'organisation.html'; }
   }
+  function adminGateStatus(msg, kind=''){
+    const el = document.getElementById('adminRoleGateStatus');
+    if(el){ el.textContent = msg || ''; el.className = 'notice ' + (kind || ''); }
+  }
   async function adminGateLogin(){
-    // Keine eigene Loginmaske im Planer: die Anmeldung läuft zentral über Organisation.
-    location.href = organisationLoginUrl();
+    const email = String(document.getElementById('adminGateEmailInput')?.value || '').trim();
+    const password = String(document.getElementById('adminGatePasswordInput')?.value || '');
+    if(!email || !password){ adminGateStatus('Bitte E-Mail und Passwort eingeben.', 'bad'); return; }
+    const cfg = {url:SERVER_DEFAULT_URL, anon:SERVER_DEFAULT_ANON, store:'default', email, password};
+    try{
+      adminGateStatus('Einloggen …', 'warn');
+      const res = await fetch(cfg.url + '/auth/v1/token?grant_type=password', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':cfg.anon},
+        body:JSON.stringify({email, password})
+      });
+      const txt = await res.text();
+      let data = null;
+      try{ data = txt ? JSON.parse(txt) : null; }catch(_){ data = txt; }
+      if(!res.ok || !data || !data.access_token){
+        const msg = (data && (data.message || data.msg)) || 'Login nicht möglich.';
+        throw new Error(msg);
+      }
+      storeServerSession(data, cfg);
+      const serverEmail = document.getElementById('serverEmailInput');
+      const serverPassword = document.getElementById('serverPasswordInput');
+      if(serverEmail) serverEmail.value = email;
+      if(serverPassword) serverPassword.value = '';
+      adminGateStatus('Eingeloggt als ' + (data.user?.email || email) + '.', 'ok');
+      await evaluateAdminAccess(true);
+    }catch(e){
+      adminGateStatus('Login nicht möglich: ' + (e.message || e), 'bad');
+      setServerButtonState('error','Login nicht möglich');
+    }
   }
   async function serverRoleMarkAdmin(){
     const cfg = saveServerConfig(); if(!cfg) return;
@@ -2477,6 +2520,9 @@
   document.getElementById('serverRestoreBackupBtn')?.addEventListener('click', restoreLatestLocalEmergencyBackup);
   document.getElementById('serverAutosaveToggle')?.addEventListener('change', ev => { setAutosaveEnabled(!!ev.target.checked); serverStatus(ev.target.checked ? 'Auto-Speichern aktiv.' : 'Auto-Speichern ausgeschaltet.', 'ok'); });
   document.getElementById('adminGateLoginBtn')?.addEventListener('click', adminGateLogin);
+  ['adminGateEmailInput','adminGatePasswordInput'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('keydown', ev=>{ if(ev.key==='Enter') adminGateLogin(); });
+  });
   document.getElementById('firstPasswordSaveBtn')?.addEventListener('click', submitFirstPasswordChange);
   document.getElementById('adminGatePortalBtn')?.addEventListener('click', () => { location.href = 'wunschportal.html'; });
   document.getElementById('adminGateRetryBtn')?.addEventListener('click', () => evaluateAdminAccess(true));
