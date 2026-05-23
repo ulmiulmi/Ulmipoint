@@ -217,7 +217,7 @@
 </head>
 <body>
 
-<div id="adminRoleGate" class="role-gate" aria-hidden="false">
+<div id="adminRoleGate" class="role-gate hidden" aria-hidden="true">
   <div class="role-card" role="dialog" aria-modal="true" aria-labelledby="adminRoleGateTitle">
     <h2 id="adminRoleGateTitle">Planerbereich geschützt</h2>
     <div class="mini">Der normale Dienstplaner ist nur für Admin/Planer gedacht. Mitarbeiter benutzen das Wunschportal.</div>
@@ -953,8 +953,8 @@
     if(!btn) return;
     btn.classList.remove('server-connected','server-ready','server-error','server-dirty');
     if(state) btn.classList.add('server-' + state);
-    btn.textContent = state === 'connected' ? '☁️ Server ✓' : state === 'dirty' ? '☁️ Server •' : state === 'error' ? '☁️ Server !' : '☁️ Server';
-    btn.title = label || (state === 'connected' ? 'Server verbunden' : state === 'dirty' ? 'Lokale Änderungen noch nicht auf Server gespeichert' : state === 'error' ? 'Server-Verbindung prüfen' : 'Server bereit, bitte einloggen');
+    btn.textContent = state === 'connected' ? '🛟 Gruppen-Speicher ✓' : state === 'dirty' ? '🛟 Gruppen-Speicher •' : state === 'error' ? '🛟 Gruppen-Speicher !' : '🛟 Gruppen-Speicher';
+    btn.title = label || 'Speichern und Laden betrifft nur die aktuell geöffnete Gruppe.';
     btn.setAttribute('aria-label', btn.title);
   }
   function normalizeServerUrl(url){ return String(url || '').trim().replace(/\/+$/, ''); }
@@ -1164,7 +1164,7 @@
       serverStatus(data?.user ? 'Registriert. Falls E-Mail-Bestätigung aktiv ist, bitte Mail bestätigen. Danach einloggen.' : 'Registrierung gesendet.', 'ok');
     } catch(e){ serverStatus('Registrierung nicht möglich: ' + e.message, 'bad'); }
   }
-  function serverLogout(){ localStorage.removeItem(SERVER_TOKEN_KEY); setServerButtonState('ready','Server bereit, bitte einloggen'); serverStatus('Abgemeldet.', 'ok'); refreshServerSyncInfo(); setAdminGate(true, 'Abgemeldet. Bitte als Admin/Planer einloggen.', 'warn'); }
+  function serverLogout(){ localStorage.removeItem(SERVER_TOKEN_KEY); setServerButtonState('ready','Server bereit'); serverStatus('Abgemeldet.', 'ok'); refreshServerSyncInfo(); setAdminGate(false, '', ''); }
   function countLocalEmergencyBackups(){
     let n = 0;
     for(let i=0;i<localStorage.length;i++){ if(/^polypoint_sicherung__/i.test(localStorage.key(i) || '')) n++; }
@@ -1332,7 +1332,9 @@
     info.allowed = accessAllowsPlanner(info, activeId || 'overview');
     return info;
   }
+  const PLANER_ROLE_GATE_DISABLED = true;
   function setAdminGate(show, msg='', kind=''){
+    if(PLANER_ROLE_GATE_DISABLED) show = false;
     const gate = document.getElementById('adminRoleGate');
     const status = document.getElementById('adminRoleGateStatus');
     if(!gate) return;
@@ -1392,20 +1394,20 @@
       const ge = document.getElementById('adminGateEmail'); if(ge && email) ge.value = email;
       setAccessContext(null);
       setPasswordChangeBox(false);
-      setAdminGate(true, 'Bitte einloggen. Erlaubt sind Admin, Planer, Hausleitung oder TKO für freigegebene Gruppen. Mitarbeitende benutzen das Wunschportal.', 'warn');
-      if(showStatus) setServerRoleInfo('Nicht eingeloggt. Planerbereich gesperrt.', 'bad');
-      return false;
+      setAdminGate(false, '', '');
+      if(showStatus) setServerRoleInfo('Keine zusätzliche Planer-Anmeldung nötig. Organisation/Login läuft zentral.', 'ok');
+      return true;
     }
     try{
       const row = await fetchServerRow(cfg, session);
       const info = userRoleFromData(row?.data || {}, session);
       const label = info.email || serverUserLabel(serverUserFromSession(session));
       if(entryMustChangePassword(info)){
-        setAccessContext(null);
-        setAdminGate(true, 'Bitte zuerst das voreingestellte Start-Passwort ändern: ' + label, 'warn');
-        setPasswordChangeBox(true, 'Dieses Konto muss beim ersten Login ein eigenes Passwort setzen.');
-        if(showStatus) setServerRoleInfo('Passwortwechsel nötig · ' + label, 'bad');
-        return false;
+        setAccessContext(info);
+        setAdminGate(false, '', '');
+        setPasswordChangeBox(false);
+        if(showStatus) setServerRoleInfo('Hinweis: Passwortwechsel nötig · ' + label, 'warn');
+        return true;
       }
       setPasswordChangeBox(false);
       if(info.employee){
@@ -2493,7 +2495,7 @@
   refreshServerButtonFromSession();
   startServerAutosaveWatcher();
   startWishAutoSyncWatcher();
-  evaluateAdminAccess(false).then(ok => { refreshServerButtonFromSession(); if(ok){ serverLoadPrimaryOnStart(); scheduleWishAutoRefresh(); } }).catch(() => setServerButtonState('error','Server-Verbindung prüfen'));
+  evaluateAdminAccess(false).then(ok => { refreshServerButtonFromSession(); if(ok){ scheduleWishAutoRefresh(); } }).catch(() => setServerButtonState('error','Server-Verbindung prüfen'));
 
 })();
 </script>
