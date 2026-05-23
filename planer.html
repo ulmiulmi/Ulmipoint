@@ -408,6 +408,7 @@
   const ORG_DRAFT_KEY = "ulmipoint_org_structure_draft_v1";
   const PLANNER_LAST_TARGET_KEY = "ulmipoint_planner_last_target_v1";
   const SERVER_TOKEN_KEY = "polypoint_server_session_v1";
+  const ADMIN_PERSIST_KEY = "liv_admin_session_v1";
 
   function safeJsonParse(value){
     try{ return JSON.parse(value || "null"); }catch(_){ return null; }
@@ -1030,9 +1031,19 @@
     return keys.length + '-' + h.toString(16);
   }
   function localStorageSnapshot(){ const items = collectUlmipointStorage(); return {items, hash: stableHashFromItems(items), count: Object.keys(items).length}; }
+
+  function adminRealStore(){try{return window.__ULMIPOINT_REAL_LOCAL_STORAGE__||null;}catch(_){return null;}}
+  function readPersistedAdminSession(){
+    try{const store=adminRealStore(); if(!store)return null; const s=JSON.parse(store.getItem(ADMIN_PERSIST_KEY)||'{}')||{}; if(s&&s.adminPersistent===true&&(s.access_token||s.refresh_token))return Object.assign({},s,{adminPersistent:true});}catch(_){ }
+    return null;
+  }
+  function persistAdminSession(session){try{const store=adminRealStore(); if(!store||!session||!session.access_token)return; const s=Object.assign({},session,{adminPersistent:true,adminPersistedAt:Date.now()}); store.setItem(ADMIN_PERSIST_KEY,JSON.stringify(s));}catch(_){ }}
+  function clearPersistedAdmin(){try{const store=adminRealStore(); if(store)store.removeItem(ADMIN_PERSIST_KEY);}catch(_){ }}
   function isServerSessionFresh(s){ return !!(s && s.access_token && (!s.expires_at || s.expires_at > Date.now() + 30000)); }
   function loadServerSession(){
     try { const s = JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY) || '{}'); if(s && (s.access_token || s.refresh_token)) return s; } catch(e){ console.warn(e); }
+    const admin = readPersistedAdminSession();
+    if(admin){ try{localStorage.setItem(SERVER_TOKEN_KEY, JSON.stringify(admin));}catch(_){} return admin; }
     return null;
   }
   function refreshServerLocalInfo(){
@@ -1087,6 +1098,7 @@
   }
   function forgetServerConfig(){
     localStorage.removeItem(SERVER_TOKEN_KEY);
+    clearPersistedAdmin();
     localStorage.removeItem(SERVER_META_KEY);
     ['serverEmailInput','serverPasswordInput'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     const urlEl = document.getElementById('serverUrlInput'); if(urlEl) urlEl.value = SERVER_DEFAULT_URL || '';
@@ -1123,8 +1135,10 @@
     try{
       setPasswordChangeBox(false);
       const data = await supabaseRequest('/auth/v1/token?grant_type=refresh_token', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({refresh_token:old.refresh_token})});
-      return storeServerSession(data, cfg);
-    } catch(e){ console.warn('Server-Session konnte nicht erneuert werden', e); setServerButtonState('ready','Server bereit, bitte neu einloggen'); return null; }
+      const updated = storeServerSession(data, cfg);
+      if(old && old.adminPersistent) persistAdminSession(updated);
+      return updated;
+    } catch(e){ console.warn('Server-Session konnte nicht erneuert werden', e); if(old && old.adminPersistent) clearPersistedAdmin(); setServerButtonState('ready','Server bereit, bitte neu einloggen'); return null; }
   }
   async function getActiveServerSession(){
     const s = loadServerSession();
@@ -1152,7 +1166,7 @@
       serverStatus(data?.user ? 'Registriert. Falls E-Mail-Bestätigung aktiv ist, bitte Mail bestätigen. Danach einloggen.' : 'Registrierung gesendet.', 'ok');
     } catch(e){ serverStatus('Registrierung nicht möglich: ' + e.message, 'bad'); }
   }
-  function serverLogout(){ localStorage.removeItem(SERVER_TOKEN_KEY); setServerButtonState('ready','Server bereit, bitte einloggen'); serverStatus('Abgemeldet.', 'ok'); refreshServerSyncInfo(); setAdminGate(true, 'Abgemeldet. Bitte als Admin/Planer einloggen.', 'warn'); }
+  function serverLogout(){ localStorage.removeItem(SERVER_TOKEN_KEY); clearPersistedAdmin(); setServerButtonState('ready','Server bereit, bitte einloggen'); serverStatus('Abgemeldet.', 'ok'); refreshServerSyncInfo(); setAdminGate(true, 'Abgemeldet. Bitte als Admin/Planer einloggen.', 'warn'); }
   function countLocalEmergencyBackups(){
     let n = 0;
     for(let i=0;i<localStorage.length;i++){ if(/^polypoint_sicherung__/i.test(localStorage.key(i) || '')) n++; }
@@ -1394,6 +1408,7 @@
       const label = access.email || normEmail(session?.user?.email || storedServerEmail()) || serverUserLabel(serverUserFromSession(session));
       const role = normalizeRoleValue(access.role || 'admin') || ROLE_ADMIN;
       const info = {email:label, entry:{}, role:role, configuredCount:Number(access.configured||0), employee:false, allowed:true, organisationSession:true};
+      if(role==='admin') persistAdminSession(session); else clearPersistedAdmin();
       setAccessContext(info);
       setAdminGate(false);
       if(showStatus) setServerRoleInfo('Organisation-Anmeldung aktiv · Benutzer: ' + label, 'ok');

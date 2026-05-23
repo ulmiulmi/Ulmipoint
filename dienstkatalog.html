@@ -30,13 +30,16 @@
 <script>
 (function(){
 const SERVER_TOKEN_KEY='polypoint_server_session_v1';
+const ADMIN_PERSIST_KEY='liv_admin_session_v1';
 const AUTH_KEYS=['ULMIPOINT_ORG_AUTH_V122','ULMIPOINT_ORG_AUTH_V121'];
 let catalog=[];
 const $=id=>document.getElementById(id);
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function sessionFresh(s){return !!(s&&s.access_token&&(!s.expires_at||s.expires_at>Date.now()+30000));}
+function adminRealStore(){try{return window.__ULMIPOINT_REAL_LOCAL_STORAGE__||window.localStorage||null;}catch(_){return null;}}
+function readPersistedAdminSession(){try{const store=adminRealStore(); if(!store)return null; const s=JSON.parse(store.getItem(ADMIN_PERSIST_KEY)||'{}')||{}; if(s&&s.adminPersistent===true&&(s.access_token||s.refresh_token)){localStorage.setItem(SERVER_TOKEN_KEY,JSON.stringify(s)); return s;}}catch(_){ } return null;}
 function readWindowAuth(){try{const box=JSON.parse(window.name||'{}')||{}; for(const k of AUTH_KEYS){const s=box[k]||{}; if(sessionFresh(s)){localStorage.setItem(SERVER_TOKEN_KEY,JSON.stringify(s)); return s;}}}catch(_){ } return null;}
-function session(){try{const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}')||{}; if(sessionFresh(s))return s;}catch(_){ } return readWindowAuth();}
+function session(){try{const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}')||{}; if(sessionFresh(s))return s;}catch(_){ } return readWindowAuth()||readPersistedAdminSession();}
 function requireSession(){if(sessionFresh(session()))return true; $('lock').classList.remove('hidden'); $('app').classList.add('hidden'); return false;}
 function status(t,k=''){const el=$('status'); el.textContent=t; el.className='notice '+k;}
 function cleanDescriptionText(v){

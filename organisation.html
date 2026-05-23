@@ -92,6 +92,7 @@
   const SERVER_DEFAULT_ANON='sb_publishable_3AsChws4K7YjRusOk4m6Mw_aA6iBmdg';
   const SERVER_TOKEN_KEY='polypoint_server_session_v1';
   const ORG_AUTH_HANDOFF_KEY='ULMIPOINT_ORG_AUTH_V121';
+  const ADMIN_PERSIST_KEY='liv_admin_session_v1';
   const STORE_ID='default';
   const $=id=>document.getElementById(id);
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
@@ -108,9 +109,24 @@
     try{const box=JSON.parse(window.name||'{}')||{}; box[ORG_AUTH_HANDOFF_KEY]=session; window.name=JSON.stringify(box);}catch(_){window.name=JSON.stringify({[ORG_AUTH_HANDOFF_KEY]:session});}
   }
   function clearWindowAuth(){try{const box=JSON.parse(window.name||'{}')||{}; delete box[ORG_AUTH_HANDOFF_KEY]; window.name=JSON.stringify(box);}catch(_){window.name='';}}
-  function loadSession(){try{const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}')||{}; if(sessionFresh(s))return s;}catch(_){ } return readWindowAuth()||{};}
+
+  function adminRealStore(){try{return window.__ULMIPOINT_REAL_LOCAL_STORAGE__||null;}catch(_){return null;}}
+  function readPersistedAdminSession(){
+    try{const store=adminRealStore(); if(!store)return null; const s=JSON.parse(store.getItem(ADMIN_PERSIST_KEY)||'{}')||{}; if(s&&s.adminPersistent===true&&(s.access_token||s.refresh_token))return s;}catch(_){ }
+    return null;
+  }
+  function persistAdminSession(session){
+    try{const store=adminRealStore(); if(!store||!session||!session.access_token)return; const s=Object.assign({},session,{adminPersistent:true,adminPersistedAt:Date.now()}); store.setItem(ADMIN_PERSIST_KEY,JSON.stringify(s));}catch(_){ }
+  }
+  function clearPersistedAdmin(){try{const store=adminRealStore(); if(store)store.removeItem(ADMIN_PERSIST_KEY);}catch(_){ }}
+  function loadSession(){try{const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}')||{}; if(sessionFresh(s))return s;}catch(_){ } return readWindowAuth()||readPersistedAdminSession()||{};}
   function saveSession(data,email){const user=Object.assign({},data.user||{}); if(!user.email)user.email=email; const s={access_token:data.access_token,refresh_token:data.refresh_token,user,expires_at:Date.now()+Math.max(60,(data.expires_in||3600))*1000}; localStorage.setItem(SERVER_TOKEN_KEY,JSON.stringify(s)); writeWindowAuth(s); return s;}
   async function supabase(path,opts={}){const headers=Object.assign({'apikey':SERVER_DEFAULT_ANON},opts.headers||{}); const r=await fetch(SERVER_DEFAULT_URL+path,Object.assign({},opts,{headers})); const t=await r.text(); let d=null; try{d=t?JSON.parse(t):null;}catch(_){d=t;} if(!r.ok)throw new Error((d&&d.message)||(d&&d.msg)||(typeof d==='string'?d:'HTTP '+r.status)); return d;}
+  async function refreshPersistedAdminSession(session){
+    if(sessionFresh(session))return session;
+    if(!session||!session.refresh_token)return null;
+    try{const data=await supabase('/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})}); const s=saveSession(data,session.user?.email||''); persistAdminSession(s); return s;}catch(_){clearPersistedAdmin(); return null;}
+  }
   async function row(session){const d=await supabase('/rest/v1/planer_store?id=eq.'+encodeURIComponent(STORE_ID)+'&select=id,data,updated_at',{method:'GET',headers:{Authorization:'Bearer '+session.access_token}}); return Array.isArray(d)?d[0]:null;}
   function roleInfo(data,session,emailFallback){const email=normEmail(session?.user?.email||emailFallback); const roles=(data&&typeof data==='object'&&(data.accessRoles||data.roles))||{}; const entry=(roles&&typeof roles==='object')?roles[email]:null; const obj=(entry&&typeof entry==='object')?entry:(typeof entry==='string'?{role:entry}:{}); return {email, role:normalizeRole(obj.role), count:Object.keys(roles||{}).length};}
   async function unlockWithSession(session,emailFallback){
@@ -119,8 +135,10 @@
     const storeRow=await row(session).catch(()=>null);
     const info=roleInfo(storeRow?.data||{},session,emailFallback);
     if(info.count>0 && info.role!=='admin'){
+      clearPersistedAdmin();
       throw new Error('Kein Admin-Zugriff für '+(info.email||'diese Anmeldung')+'. Hinterlegte Rolle: '+(info.role||'keine Rolle')+'.');
     }
+    if(info.role==='admin') persistAdminSession(session);
     document.body.classList.remove('auth-pending');
     const lock=$('orgAuthLock'); if(lock)lock.style.display='none';
     $('userState').textContent='Angemeldet: '+(info.email||session.user?.email||'Benutzer')+' · Zugriff: '+(info.count>0?'Admin':'Ersteinrichtung ohne Rollenliste');
@@ -136,9 +154,9 @@
     if(!email||!password){msg('Bitte E-Mail und Passwort eingeben.','bad');return;}
     try{msg('Login wird geprüft…','warn'); const data=await supabase('/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})}); const s=saveSession(data,email); await unlockWithSession(s,email);}catch(e){msg('Login nicht möglich: '+e.message,'bad');}
   }
-  function logout(){localStorage.removeItem(SERVER_TOKEN_KEY); clearWindowAuth(); location.href='index.html';}
+  function logout(){localStorage.removeItem(SERVER_TOKEN_KEY); clearWindowAuth(); clearPersistedAdmin(); location.href='index.html';}
   $('orgAuthLoginBtn').addEventListener('click',login); $('orgAuthPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login();}); $('logoutBtn').addEventListener('click',logout);
-  const existing=loadSession(); if(sessionFresh(existing)){unlockWithSession(existing,existing.user?.email||'').catch(e=>{msg('Sitzung nicht freigegeben: '+e.message+' Bitte neu einloggen.','bad');});}
+  (async()=>{let existing=loadSession(); if(existing && existing.adminPersistent && !sessionFresh(existing)){msg('Admin-Anmeldung wird erneuert…','warn'); existing=await refreshPersistedAdminSession(existing)||{};} if(sessionFresh(existing)){unlockWithSession(existing,existing.user?.email||'').catch(e=>{msg('Sitzung nicht freigegeben: '+e.message+' Bitte neu einloggen.','bad');});}})();
 })();
 </script>
 </body>
