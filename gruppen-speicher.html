@@ -1,66 +1,198 @@
 <!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ULMIPOINT Gruppen-Speicher v115</title>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ULMIPOINT – Gruppe neu laden</title>
 <style>
-:root{--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--warn:#9a6700;--shadow:0 12px 30px rgba(16,24,40,.08)}*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#edf5ff,#fff 55%,#f6f8fc);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}main{max-width:1220px;margin:auto;padding:18px}.card,.audit{background:rgba(255,255,255,.94);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:26px;padding:16px;margin-bottom:14px}.eyebrow{display:inline-flex;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:10px}h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.07em;margin:0 0 8px}h2{font-size:24px;letter-spacing:-.05em;margin:0 0 8px}p{color:var(--muted);font-weight:800}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:10px 14px;font-weight:950;cursor:pointer}button.primary{background:var(--blue);border-color:var(--blue);color:#fff}.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:10px;margin:12px 0;font-size:13px;font-weight:850;white-space:pre-wrap}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:var(--green)}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:var(--red)}.notice.warn{border-color:#f3d28f;background:#fffdf5;color:var(--warn)}.notice.lock{border-color:#b7e4ca;background:#f2fff7;color:#087443}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}.site{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:var(--shadow)}.site h2{font-size:23px}.meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.pill{display:inline-flex;border:1px solid var(--line);background:#fbfcfe;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;color:#475467}.pill.ok{background:#e7f7ef;color:var(--green);border-color:#b7e4ca}.pill.warn{background:#fff7e6;color:#9a6700;border-color:#f3d28f}.unit{border:1px solid #edf1f6;background:#fbfcfe;border-radius:18px;padding:10px;margin-top:8px}.unit-title{font-weight:950}.unit-sub{font-size:11px;color:var(--muted);font-weight:850;margin-top:2px}.section-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:8px}.sec{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px;font-size:11px;font-weight:900;min-height:105px;line-height:1.35}.sec b{display:block;font-size:12px;margin-bottom:3px}.sec.ok{border-color:#b7e4ca;background:#f7fff9}.sec.empty{opacity:.78}.sec.bad{border-color:#f2a3a3;background:#fffafa;color:var(--red)}.who{font-size:10px;color:#475467;margin-top:5px;font-weight:850}.history-list{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:auto;max-height:420px;margin-top:8px}.history-row{display:grid;grid-template-columns:170px 1fr auto;gap:8px;align-items:start;padding:10px;border-bottom:1px solid #edf1f6;font-size:12px;font-weight:850}.history-row:last-child{border-bottom:0}.history-time{color:#475467}.history-meta{color:#667085;font-size:11px;margin-top:2px}.chip{border-radius:999px;background:#eef2f7;color:#475467;padding:3px 7px;font-size:10px;font-weight:950}pre{white-space:pre-wrap;background:#111827;color:#fff;border-radius:16px;padding:12px;overflow:auto;max-height:320px}.small-note{font-size:12px;color:#667085;font-weight:850;margin-top:8px}.context-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:12px}.context-item{background:#fbfcfe;border:1px solid var(--line);border-radius:16px;padding:10px}.context-item b{display:block;font-size:11px;color:#667085;text-transform:uppercase;letter-spacing:.03em}.context-item span{font-weight:950}@media(max-width:720px){main{padding:10px}.section-grid{grid-template-columns:1fr}.history-row{grid-template-columns:1fr}}
-</style></head><body><main>
-<section class="card"><div class="eyebrow">ULMIPOINT v115</div><h1>Gruppen-Speicher</h1><p>Die Organisation ist fester Bestandteil der Anwendung. Es werden keine Supabase- oder Login-Daten auf dieser Seite abgefragt.</p><div id="connectionBox" class="notice lock">Organisation dauerhaft verbunden. Daten werden automatisch über den Server geladen.</div><div id="contextBox" class="context-bar"></div><div class="actions"><button id="reloadBtn" class="primary" onclick="loadAll()">Daten dieser Gruppe neu laden</button><button onclick="location.href='/'">Startseite</button><button onclick="location.href='organisation-admin.html'">Organisation verwalten</button></div><div class="small-note">Diese Seite speichert nichts. Sie liest nur die aktuelle Organisation, die Gruppenspeicherbereiche und die gefilterte Bearbeitungshistorie.</div><div id="status" class="notice">Noch nicht geprüft.</div></section>
-<div id="summary" class="notice" style="display:none"></div><section id="list" class="grid"></section>
-<section class="audit"><h2 id="historyTitle">Bearbeitungshistorie dieser Gruppe</h2><p id="historyText">Es werden nur Ereignisse für den aktuellen Haus-/Gruppen-Kontext angezeigt, sofern ein Kontext übergeben wurde.</p><div id="history" class="history-list">Noch nicht geladen.</div></section><pre id="debug" style="display:none"></pre>
+:root{--bg:#eef6f2;--card:#ffffff;--text:#142033;--muted:#667085;--line:#d7e4dc;--green:#087443;--green2:#0f8a5f;--blue:#2563eb;--red:#c73636;--warn:#9a6700;--shadow:0 16px 42px rgba(16,24,40,.10)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#e8f7ee 0,#ffffff 52%,#eef4ff 100%);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}main{max-width:1120px;margin:auto;padding:18px}.hero{background:linear-gradient(135deg,#087443,#0f8a5f);color:#fff;border-radius:30px;padding:22px;box-shadow:var(--shadow);margin-bottom:14px}.hero-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:7px 11px;font-size:12px;font-weight:950}.badge.light{background:#f2fff7;border-color:#b7e4ca;color:#087443}.hero h1{font-size:clamp(34px,5.4vw,64px);line-height:.92;letter-spacing:-.07em;margin:18px 0 8px}.hero p{margin:0;color:rgba(255,255,255,.86);font-weight:850;max-width:820px}.panel{background:rgba(255,255,255,.96);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:26px;padding:16px;margin-bottom:14px}.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:14px}.status-card{border:1px solid var(--line);border-radius:18px;background:#fbfffd;padding:12px}.status-card b{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.status-card span{display:block;margin-top:4px;font-size:17px;font-weight:950}.big-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}button{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:11px 15px;font-weight:950;cursor:pointer}button.primary{background:var(--green);border-color:var(--green);color:#fff}button.primary:disabled{opacity:.45;cursor:not-allowed}.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:18px;padding:12px;margin:12px 0;font-size:13px;font-weight:850;white-space:pre-wrap}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:var(--green)}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:var(--red)}.notice.warn{border-color:#f3d28f;background:#fffdf5;color:var(--warn)}.notice.lock{border-color:#b7e4ca;background:#f2fff7;color:#087443}.notice strong{font-weight:1000}.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.8fr);gap:14px}@media(max-width:850px){main{padding:10px}.two{grid-template-columns:1fr}.hero{border-radius:22px}.panel{border-radius:20px}}h2{font-size:25px;letter-spacing:-.05em;margin:0 0 8px}.muted{color:var(--muted);font-weight:850}.unit{border:1px solid var(--line);background:#fff;border-radius:22px;padding:14px}.unit-title{font-size:24px;font-weight:1000;letter-spacing:-.04em}.unit-sub{font-size:12px;color:var(--muted);font-weight:850;margin-top:2px}.section-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:12px}@media(max-width:720px){.section-grid{grid-template-columns:1fr}}.sec{border:1px solid var(--line);background:#fff;border-radius:16px;padding:11px;font-size:12px;font-weight:900;min-height:118px;line-height:1.38}.sec b{display:block;font-size:13px;margin-bottom:5px}.sec.ok{border-color:#b7e4ca;background:#f7fff9}.sec.empty{opacity:.82}.sec.bad{border-color:#f2a3a3;background:#fffafa;color:var(--red)}.who{font-size:11px;color:#475467;margin-top:7px;font-weight:850}.history-list{border:1px solid var(--line);border-radius:18px;background:#fff;overflow:auto;max-height:480px;margin-top:10px}.history-row{display:grid;grid-template-columns:145px 1fr;gap:8px;align-items:start;padding:11px;border-bottom:1px solid #edf1f6;font-size:12px;font-weight:850}.history-row:last-child{border-bottom:0}.history-time{color:#475467}.history-meta{color:#667085;font-size:11px;margin-top:3px}.chip{display:inline-flex;border-radius:999px;background:#eef2f7;color:#475467;padding:3px 7px;font-size:10px;font-weight:950;margin-top:5px}.hidden{display:none!important}.admin-link{opacity:.65}.danger-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}.danger-list li{background:#fffafa;border:1px solid #f2a3a3;color:#a93434;border-radius:12px;padding:8px 10px;font-size:12px;font-weight:900}pre{white-space:pre-wrap;background:#111827;color:#fff;border-radius:16px;padding:12px;overflow:auto;max-height:320px;font-size:11px}
+</style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div class="hero-top">
+      <div class="badge">✓ Organisation dauerhaft verbunden</div>
+      <div class="badge">Kein Login · keine Supabase-Eingabe</div>
+    </div>
+    <h1>Gruppe neu laden</h1>
+    <p>Diese Ansicht ist absichtlich gruppenbezogen. Es wird keine ganze Organisation geladen, gespeichert oder wiederhergestellt.</p>
+    <div class="status-grid" id="contextBox">
+      <div class="status-card"><b>Verbindung</b><span>Organisation verbunden</span></div>
+      <div class="status-card"><b>Benutzer</b><span>automatisch</span></div>
+      <div class="status-card"><b>Haus</b><span>wird erkannt</span></div>
+      <div class="status-card"><b>Gruppe</b><span>wird erkannt</span></div>
+    </div>
+    <div class="big-actions">
+      <button id="reloadBtn" class="primary" onclick="loadGroupOnly()">Daten dieser Gruppe neu laden</button>
+      <button onclick="location.href='/'">Zur Startseite</button>
+      <button id="adminBtn" class="admin-link hidden" onclick="location.href='gruppen-speicher.html?admin=1'">Admin-Übersicht</button>
+    </div>
+  </section>
+
+  <section id="missingContext" class="panel hidden">
+    <h2>Keine Gruppe gewählt</h2>
+    <div class="notice warn"><strong>Es wurde bewusst keine Organisationsübersicht geladen.</strong> Diese Seite braucht einen Haus-/Gruppen-Kontext, zum Beispiel aus dem Planer heraus.</div>
+    <p class="muted">Richtig wäre ein Aufruf mit aktueller Gruppe:</p>
+    <pre>/gruppen-speicher.html?siteId=haus_2&groupKey=gruppe_1</pre>
+    <ul class="danger-list">
+      <li>Kein „Serverstand neu laden“</li>
+      <li>Keine Supabase-Verbindungsdaten</li>
+      <li>Keine Organisations-Wiederherstellung</li>
+    </ul>
+  </section>
+
+  <section id="groupPanel" class="panel hidden">
+    <div class="two">
+      <div>
+        <h2 id="groupTitle">Aktuelle Gruppe</h2>
+        <p class="muted" id="groupText">Nur diese Gruppe und ihre Speicherbereiche werden geprüft.</p>
+        <div id="groupStatus" class="notice">Noch nicht geladen.</div>
+        <div id="groupContent"></div>
+      </div>
+      <div>
+        <h2>Bearbeitungshistorie</h2>
+        <p class="muted">Nur Ereignisse für diese Gruppe.</p>
+        <div id="history" class="history-list">Noch nicht geladen.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="adminPanel" class="panel hidden">
+    <h2>Admin-Übersicht</h2>
+    <div class="notice lock">Diese Übersicht ist nur sichtbar, wenn sie bewusst mit <strong>?admin=1</strong> geöffnet wird. Normale Gruppenansichten bleiben gruppenbezogen.</div>
+    <div id="adminSummary" class="notice">Noch nicht geladen.</div>
+    <div id="adminList"></div>
+  </section>
+
+  <pre id="debug" class="hidden"></pre>
+</main>
+
 <script>
 const SECTIONS=['state','employees','plan','wishes'];
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function slug(v){return String(v||'').trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'';}
 function fmtDate(v){if(!v)return 'noch nie';try{return new Date(v).toLocaleString('de-CH');}catch(_){return String(v)}}
 function who(u){u=u||{};return u.email||u.name||u.id||u.source||'unbekannt'}
-function setStatus(msg,kind=''){let e=document.getElementById('status');e.textContent=msg;e.className='notice '+kind}
+function secLabel(s){return s==='state'?'Status':s==='employees'?'Mitarbeitende':s==='plan'?'Dienstplan':s==='wishes'?'Wünsche':s}
+function withTs(url){return url+(url.includes('?')?'&':'?')+'ts='+Date.now()}
 async function fetchJson(url,opts){let r=await fetch(url,Object.assign({cache:'no-store'},opts||{}));let t=await r.text();let d={};try{d=t?JSON.parse(t):{}}catch(_){d={message:t}}if(!r.ok||d.ok===false)throw new Error(d.message||('HTTP '+r.status));return d}
+function readStoredContext(){
+  const keys=['ULMIPOINT_GROUP_CONTEXT','ulmipointGroupContext','ulmipoint_current_group','POLYPOINT_GROUP_CONTEXT'];
+  for(const store of [sessionStorage,localStorage]){
+    try{
+      for(const k of keys){
+        const raw=store.getItem(k);
+        if(!raw)continue;
+        try{const obj=JSON.parse(raw); if(obj&&(obj.siteId||obj.site||obj.haus||obj.groupKey||obj.plannerKey||obj.gruppe))return obj;}catch(_){ }
+      }
+    }catch(_){ }
+  }
+  return {};
+}
+function readContext(){
+  const qs=new URLSearchParams(location.search);
+  const stored=readStoredContext();
+  const ctx={
+    siteId:slug(qs.get('siteId')||qs.get('site')||qs.get('haus')||stored.siteId||stored.site||stored.haus||''),
+    groupKey:slug(qs.get('groupKey')||qs.get('plannerKey')||qs.get('unitId')||qs.get('gruppe')||stored.groupKey||stored.plannerKey||stored.unitId||stored.gruppe||''),
+    section:slug(qs.get('section')||qs.get('bereich')||stored.section||stored.bereich||''),
+    admin:qs.get('admin')==='1'
+  };
+  return ctx;
+}
+function renderContext(ctx,siteName,groupName){
+  document.getElementById('contextBox').innerHTML=''
+    +'<div class="status-card"><b>Verbindung</b><span>Organisation verbunden</span></div>'
+    +'<div class="status-card"><b>Benutzer</b><span>automatisch</span></div>'
+    +'<div class="status-card"><b>Haus</b><span>'+esc(siteName||ctx.siteId||'nicht gewählt')+'</span></div>'
+    +'<div class="status-card"><b>Gruppe</b><span>'+esc(groupName||ctx.groupKey||'nicht gewählt')+'</span></div>';
+  document.getElementById('reloadBtn').disabled=!(ctx.siteId&&ctx.groupKey);
+  document.getElementById('adminBtn').classList.toggle('hidden',!ctx.admin);
+}
 function realUnits(site){return (Array.isArray(site.units)?site.units:[]).filter(u=>u&&!['pikett','hausdienstplan','nachtwache'].includes(String(u.type||'')))}
 function unitKey(unit){return slug(unit.plannerKey||unit.id||unit.name||'gruppe')}
 function siteKey(site){return slug(site.id||site.name||'haus_1')}
+function findSiteAndUnit(org,ctx){
+  const sites=Array.isArray(org.sites)?org.sites:[];
+  const site=sites.find(s=>siteKey(s)===ctx.siteId)||null;
+  const unit=site?realUnits(site).find(u=>unitKey(u)===ctx.groupKey)||null:null;
+  return {site,unit,sites};
+}
 function ekey(siteId,groupKey,section){return slug(siteId)+'::'+slug(groupKey)+'::'+slug(section)}
-function secLabel(s){return s==='state'?'Status':s==='employees'?'Mitarbeitende':s==='plan'?'Dienstplan':s==='wishes'?'Wünsche':s}
-function readContext(){
-  const qs=new URLSearchParams(location.search);
-  return {
-    siteId:slug(qs.get('siteId')||qs.get('site')||qs.get('haus')||''),
-    groupKey:slug(qs.get('groupKey')||qs.get('plannerKey')||qs.get('unitId')||qs.get('gruppe')||''),
-    section:slug(qs.get('section')||qs.get('bereich')||'')
-  };
-}
-function withTs(url){return url+(url.includes('?')?'&':'?')+'ts='+Date.now()}
 function makeEventMap(events){let m={};(events||[]).forEach(ev=>{let k=ekey(ev.siteId,ev.groupKey,ev.section);(m[k]=m[k]||[]).push(ev)});return m}
-function filterSitesByContext(sites,ctx){
-  if(!ctx.siteId&&!ctx.groupKey)return sites;
-  return (sites||[]).map(site=>{
-    const sId=siteKey(site);
-    if(ctx.siteId&&sId!==ctx.siteId)return null;
-    const units=realUnits(site).filter(u=>!ctx.groupKey||unitKey(u)===ctx.groupKey);
-    if(!units.length)return null;
-    return Object.assign({},site,{units});
-  }).filter(Boolean);
-}
-function renderContext(ctx,sites){
-  const scope=(ctx.siteId||ctx.groupKey)?'Gruppenansicht':'Admin-/Übersichtsansicht';
-  const site=sites[0]||{};
-  const unit=realUnits(site)[0]||{};
-  document.getElementById('reloadBtn').textContent=(ctx.siteId||ctx.groupKey)?'Daten dieser Gruppe neu laden':'Speicherübersicht neu laden';
-  document.getElementById('historyTitle').textContent=(ctx.siteId||ctx.groupKey)?'Bearbeitungshistorie dieser Gruppe':'Bearbeitungshistorie';
-  document.getElementById('historyText').textContent=(ctx.siteId||ctx.groupKey)?'Angezeigt werden nur Ereignisse für diesen Haus-/Gruppen-Kontext.':'Übersicht über die letzten Gruppen-Ereignisse der Organisation.';
-  document.getElementById('contextBox').innerHTML='<div class="context-item"><b>Verbindung</b><span>Organisation verbunden</span></div><div class="context-item"><b>Ansicht</b><span>'+esc(scope)+'</span></div><div class="context-item"><b>Haus</b><span>'+esc(site.name||ctx.siteId||'alle Häuser')+'</span></div><div class="context-item"><b>Gruppe</b><span>'+esc(unit.name||ctx.groupKey||'alle Gruppen')+'</span></div>';
-}
-async function checkSection(site,unit,section,em){
-  let siteId=siteKey(site), groupKey=unitKey(unit);
+async function checkSection(ctx,section,em){
   try{
-    let d=await fetchJson(withTs('/api/group-'+section+'?siteId='+encodeURIComponent(siteId)+'&groupKey='+encodeURIComponent(groupKey)));
-    let h=em[ekey(siteId,groupKey,section)]||[];
+    let d=await fetchJson(withTs('/api/group-'+section+'?siteId='+encodeURIComponent(ctx.siteId)+'&groupKey='+encodeURIComponent(ctx.groupKey)));
+    let h=em[ekey(ctx.siteId,ctx.groupKey,section)]||[];
     return {section,ok:true,hasContent:!!d.hasContent,revision:d.revision||0,hash:d.hash||'',updatedAt:d.updatedAt||'',updatedBy:d.updatedBy||{},history:h};
   }catch(e){return {section,ok:false,message:e.message||String(e)}}
 }
-async function checkUnit(site,unit,em){let out=[];for(const s of SECTIONS)out.push(await checkSection(site,unit,s,em));return out}
-function renderSection(s){if(!s.ok)return '<div class="sec bad"><b>'+esc(secLabel(s.section))+'</b>Fehler<br>'+esc(s.message)+'</div>';let last=s.history&&s.history[0];let user=who(s.updatedBy)||who(last&&last.createdBy);let time=s.updatedAt||(last&&last.createdAt)||'';return '<div class="sec '+(s.hasContent?'ok':'empty')+'"><b>'+esc(secLabel(s.section))+'</b>'+(s.hasContent?'Daten vorhanden':'leer')+'<br>Rev '+esc(s.revision)+'<br><span style="font-size:10px;color:#667085">'+esc(s.hash||'ohne Hash')+'</span><div class="who">Zuletzt: '+esc(fmtDate(time))+'<br>Von: '+esc(user)+'<br>Events: '+esc((s.history||[]).length)+'</div></div>'}
-function renderSite(site,urs){let units=realUnits(site),a=site.automaticFunctions||{},html='<article class="site"><h2>'+esc(site.name||site.id||'Standort')+'</h2><div class="meta"><span class="pill">'+esc(siteKey(site)||'ohne id')+'</span><span class="pill">'+esc(site.type||'')+'</span><span class="pill '+(units.length?'ok':'warn')+'">'+units.length+' Gruppen</span>';if(a.nachtwache)html+='<span class="pill">Nachtwache</span>';if(a.pikett)html+='<span class="pill">Pikett</span>';if(a.hausdienstplan)html+='<span class="pill">Haus-Dienstplan</span>';html+='</div>';if(!units.length)html+='<div class="notice warn">Keine Gruppen im aktuellen Kontext gefunden.</div>';units.forEach((u,i)=>{const qs='?siteId='+encodeURIComponent(siteKey(site))+'&groupKey='+encodeURIComponent(unitKey(u));html+='<div class="unit"><div class="unit-title">'+esc(u.name||u.id)+'</div><div class="unit-sub">groupKey: '+esc(unitKey(u))+' · unitId: '+esc(u.id||'')+'</div><div class="actions"><button onclick="location.href=\'gruppen-speicher.html'+qs+'\'">Nur diese Gruppe anzeigen</button><button class="primary" onclick="loadAll()">Daten dieser Gruppe neu laden</button></div><div class="section-grid">'+(urs[i]||[]).map(renderSection).join('')+'</div></div>'});return html+'</article>'}
-function renderHistory(events){let el=document.getElementById('history');if(!events.length){el.innerHTML='<div class="history-row"><div>Keine Events</div><div>Noch keine Änderungen für diesen Kontext gespeichert.</div><div></div></div>';return}el.innerHTML=events.slice(0,150).map(ev=>'<div class="history-row"><div class="history-time">'+esc(fmtDate(ev.createdAt))+'</div><div><b>'+esc(ev.type||'Änderung')+'</b><div class="history-meta">Haus: '+esc(ev.siteId)+' · Gruppe: '+esc(ev.groupKey)+' · Bereich: '+esc(secLabel(ev.section))+' · Rev '+esc(ev.revisionVorher||0)+' → '+esc(ev.revisionNachher||0)+'</div><div class="history-meta">Von: '+esc(who(ev.createdBy))+' · Backup: '+esc(ev.backupId||'kein Backup')+'</div></div><div><span class="chip">'+esc(ev.hashNachher||'ohne Hash')+'</span></div></div>').join('')}
-function eventsUrl(ctx){let qs=new URLSearchParams({limit:'500'});if(ctx.siteId)qs.set('siteId',ctx.siteId);if(ctx.groupKey)qs.set('groupKey',ctx.groupKey);if(ctx.section)qs.set('section',ctx.section);return withTs('/api/events?'+qs.toString())}
-async function loadAll(){const ctx=readContext();setStatus((ctx.siteId||ctx.groupKey)?'Gruppendaten werden neu geladen …':'Organisation und Bearbeitungshistorie werden geladen …','warn');document.getElementById('list').innerHTML='';document.getElementById('summary').style.display='none';try{let [orgResp,evResp]=await Promise.all([fetchJson(withTs('/api/org-structure')),fetchJson(eventsUrl(ctx)).catch(e=>({events:[],error:e.message,counters:{}}))]);let events=Array.isArray(evResp.events)?evResp.events:[];renderHistory(events);let em=makeEventMap(events),org=orgResp.organisationStructure||{},allSites=Array.isArray(org.sites)?org.sites:[],sites=filterSitesByContext(allSites,ctx);renderContext(ctx,sites);let html=[],totalUnits=0,totalSections=0,filled=0,errors=0,debug={context:ctx,eventCounters:evResp.counters||{},sites:[]};for(const site of sites){let units=realUnits(site),urs=[];totalUnits+=units.length;for(const u of units){let r=await checkUnit(site,u,em);urs.push(r);totalSections+=r.length;filled+=r.filter(x=>x.ok&&x.hasContent).length;errors+=r.filter(x=>!x.ok).length}html.push(renderSite(site,urs));debug.sites.push({siteId:siteKey(site),siteName:site.name,units:units.map((u,i)=>({id:u.id,name:u.name,plannerKey:unitKey(u),sections:urs[i]}))})}document.getElementById('list').innerHTML=html.join('')||'<div class="notice warn">Kein passender Haus-/Gruppen-Kontext gefunden. Bitte siteId und groupKey prüfen.</div>';let s=document.getElementById('summary');s.style.display='block';s.className='notice '+(errors?'bad':'ok');s.textContent='Häuser angezeigt: '+sites.length+' · Gruppen angezeigt: '+totalUnits+' · Speicherbereiche: '+totalSections+' · mit Daten: '+filled+' · Events im Kontext: '+events.length+' · Fehler: '+errors;document.getElementById('debug').style.display='block';document.getElementById('debug').textContent=JSON.stringify(debug,null,2);setStatus((ctx.siteId||ctx.groupKey)?'Diese Gruppe wurde neu geladen. Die Organisation wurde nicht ersetzt.':'Prüfung fertig. Keine Speicherung ausgeführt.','ok')}catch(e){renderContext(ctx,[]);setStatus('Fehler: '+(e.message||e),'bad')}}loadAll();
-</script></main></body></html>
+function renderSection(s){
+  if(!s.ok)return '<div class="sec bad"><b>'+esc(secLabel(s.section))+'</b>Fehler<br>'+esc(s.message)+'</div>';
+  let last=s.history&&s.history[0];let user=who(s.updatedBy)||who(last&&last.createdBy);let time=s.updatedAt||(last&&last.createdAt)||'';
+  return '<div class="sec '+(s.hasContent?'ok':'empty')+'"><b>'+esc(secLabel(s.section))+'</b>'+(s.hasContent?'Daten vorhanden':'leer')+'<br>Revision '+esc(s.revision)+'<br><span style="font-size:10px;color:#667085">'+esc(s.hash||'ohne Hash')+'</span><div class="who">Zuletzt: '+esc(fmtDate(time))+'<br>Von: '+esc(user)+'<br>Events: '+esc((s.history||[]).length)+'</div></div>';
+}
+function renderHistory(events){
+  let el=document.getElementById('history');
+  if(!events.length){el.innerHTML='<div class="history-row"><div>Keine Events</div><div>Noch keine Änderungen für diese Gruppe gespeichert.</div></div>';return;}
+  el.innerHTML=events.slice(0,120).map(ev=>'<div class="history-row"><div class="history-time">'+esc(fmtDate(ev.createdAt))+'</div><div><b>'+esc(ev.type||'Änderung')+'</b><div class="history-meta">Bereich: '+esc(secLabel(ev.section))+' · Rev '+esc(ev.revisionVorher||0)+' → '+esc(ev.revisionNachher||0)+'</div><div class="history-meta">Von: '+esc(who(ev.createdBy))+' · Backup: '+esc(ev.backupId||'kein Backup')+'</div><span class="chip">'+esc(ev.hashNachher||'ohne Hash')+'</span></div></div>').join('');
+}
+function groupEventsUrl(ctx){let qs=new URLSearchParams({limit:'500',siteId:ctx.siteId,groupKey:ctx.groupKey});if(ctx.section)qs.set('section',ctx.section);return withTs('/api/events?'+qs.toString())}
+async function loadGroupOnly(){
+  const ctx=readContext();
+  renderContext(ctx);
+  document.getElementById('missingContext').classList.toggle('hidden',!!(ctx.siteId&&ctx.groupKey)||ctx.admin);
+  document.getElementById('groupPanel').classList.toggle('hidden',!(ctx.siteId&&ctx.groupKey));
+  document.getElementById('adminPanel').classList.toggle('hidden',!ctx.admin);
+  if(ctx.admin && !(ctx.siteId&&ctx.groupKey))return loadAdminOverview(ctx);
+  if(!(ctx.siteId&&ctx.groupKey))return;
+  document.getElementById('groupStatus').className='notice warn';
+  document.getElementById('groupStatus').textContent='Daten dieser Gruppe werden geladen …';
+  try{
+    const [orgResp,evResp]=await Promise.all([fetchJson(withTs('/api/org-structure')),fetchJson(groupEventsUrl(ctx)).catch(e=>({events:[],error:e.message,counters:{}}))]);
+    const org=orgResp.organisationStructure||{};
+    const found=findSiteAndUnit(org,ctx);
+    renderContext(ctx,found.site&&(found.site.name||found.site.id),found.unit&&(found.unit.name||found.unit.id));
+    document.getElementById('groupTitle').textContent=(found.unit&&found.unit.name?found.unit.name:ctx.groupKey)+' – Gruppendaten';
+    document.getElementById('groupText').textContent='Kontext: '+(found.site&&(found.site.name||found.site.id)||ctx.siteId)+' → '+(found.unit&&(found.unit.name||found.unit.id)||ctx.groupKey);
+    const events=Array.isArray(evResp.events)?evResp.events:[];
+    const em=makeEventMap(events);
+    const sections=[];
+    for(const s of SECTIONS)sections.push(await checkSection(ctx,s,em));
+    renderHistory(events);
+    document.getElementById('groupContent').innerHTML='<div class="unit"><div class="unit-title">'+esc(found.unit&&(found.unit.name||found.unit.id)||ctx.groupKey)+'</div><div class="unit-sub">siteId: '+esc(ctx.siteId)+' · groupKey: '+esc(ctx.groupKey)+'</div><div class="section-grid">'+sections.map(renderSection).join('')+'</div></div>';
+    const filled=sections.filter(x=>x.ok&&x.hasContent).length,errors=sections.filter(x=>!x.ok).length;
+    document.getElementById('groupStatus').className='notice '+(errors?'bad':'ok');
+    document.getElementById('groupStatus').textContent='Diese Gruppe wurde neu geladen. Speicherbereiche mit Daten: '+filled+' / '+sections.length+' · Events: '+events.length+' · Fehler: '+errors+'. Die Organisation wurde nicht ersetzt.';
+    document.getElementById('debug').textContent=JSON.stringify({context:ctx,counters:evResp.counters||{},sections},null,2);
+  }catch(e){
+    document.getElementById('groupStatus').className='notice bad';
+    document.getElementById('groupStatus').textContent='Fehler: '+(e.message||e);
+  }
+}
+function renderAdminSite(site){
+  const units=realUnits(site);
+  return '<div class="unit" style="margin-bottom:10px"><div class="unit-title">'+esc(site.name||site.id||'Standort')+'</div><div class="unit-sub">'+units.length+' Gruppen</div><div class="big-actions">'+units.map(u=>'<button onclick="location.href=\'gruppen-speicher.html?siteId='+encodeURIComponent(siteKey(site))+'&groupKey='+encodeURIComponent(unitKey(u))+'\'">'+esc(u.name||u.id||unitKey(u))+'</button>').join('')+'</div></div>';
+}
+async function loadAdminOverview(ctx){
+  document.getElementById('adminSummary').className='notice warn';
+  document.getElementById('adminSummary').textContent='Admin-Übersicht wird geladen …';
+  try{
+    const orgResp=await fetchJson(withTs('/api/org-structure'));
+    const org=orgResp.organisationStructure||{};
+    const sites=Array.isArray(org.sites)?org.sites:[];
+    renderContext(ctx,'Admin','Übersicht');
+    document.getElementById('adminList').innerHTML=sites.map(renderAdminSite).join('')||'<div class="notice warn">Keine Häuser gefunden.</div>';
+    document.getElementById('adminSummary').className='notice lock';
+    document.getElementById('adminSummary').textContent='Admin-Übersicht geladen. Zum Prüfen bitte gezielt eine Gruppe öffnen.';
+  }catch(e){
+    document.getElementById('adminSummary').className='notice bad';
+    document.getElementById('adminSummary').textContent='Fehler: '+(e.message||e);
+  }
+}
+loadGroupOnly();
+</script>
+</body>
+</html>
