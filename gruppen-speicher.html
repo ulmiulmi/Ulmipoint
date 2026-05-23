@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ULMIPOINT Gruppen-Speicher</title>
+<style>
+:root{--bg:#f6f8fc;--card:#fff;--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--warn:#9a6700;--shadow:0 12px 30px rgba(16,24,40,.08)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#edf5ff,#fbfcff 55%,#f6f8fc);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+main{max-width:1180px;margin:0 auto;padding:18px}
+.hero{background:rgba(255,255,255,.92);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:28px;padding:18px;margin-bottom:14px}
+.eyebrow{display:inline-flex;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:10px}
+h1{font-size:clamp(32px,5vw,56px);line-height:.95;letter-spacing:-.07em;margin:0 0 8px}
+p{color:var(--muted);font-weight:800;line-height:1.4}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:10px 14px;font-weight:950;cursor:pointer}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(16,24,40,.08)}
+.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:10px;margin:12px 0;font-size:13px;font-weight:850;white-space:pre-wrap}
+.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:var(--green)}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:var(--red)}.notice.warn{border-color:#f3d28f;background:#fffdf5;color:var(--warn)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px}
+.site{background:#fff;border:1px solid var(--line);border-radius:24px;padding:14px;box-shadow:var(--shadow)}
+.site h2{font-size:24px;letter-spacing:-.05em;margin:0 0 4px}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 10px}
+.pill{display:inline-flex;border:1px solid var(--line);background:#fbfcfe;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;color:#475467}
+.pill.ok{background:#e7f7ef;color:var(--green);border-color:#b7e4ca}.pill.warn{background:#fff7e6;color:#9a6700;border-color:#f3d28f}
+.unit{border:1px solid #edf1f6;background:#fbfcfe;border-radius:18px;padding:10px;margin-top:8px}
+.unit-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.unit-title{font-weight:950}.unit-sub{font-size:11px;color:var(--muted);font-weight:850;margin-top:2px}
+.section-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.sec{border:1px solid var(--line);background:#fff;border-radius:12px;padding:7px;font-size:11px;font-weight:900;min-height:58px}
+.sec b{display:block;font-size:11px;margin-bottom:3px}
+.sec.ok{border-color:#b7e4ca;background:#f7fff9}.sec.empty{opacity:.75}.sec.bad{border-color:#f2a3a3;background:#fffafa;color:var(--red)}
+pre{white-space:pre-wrap;background:#111827;color:#fff;border-radius:16px;padding:12px;overflow:auto;max-height:320px}
+@media(max-width:720px){main{padding:10px}.section-grid{grid-template-columns:repeat(2,1fr)}.hero,.site{border-radius:20px}}
+</style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div class="eyebrow">ULMIPOINT Speicherprüfung</div>
+    <h1>Gruppen-Speicher</h1>
+    <p>Diese Seite liest die Organisation und prüft pro Haus und Gruppe die getrennten Speicherbereiche. Es wird nichts gespeichert.</p>
+    <div class="actions">
+      <button class="primary" onclick="loadAll()">Organisation & Gruppen prüfen</button>
+      <button onclick="location.href='planer.html'">Zum Planer</button>
+      <button onclick="location.href='organisation-admin.html'">Organisation</button>
+    </div>
+    <div id="status" class="notice">Noch nicht geprüft.</div>
+  </section>
+
+  <div id="summary" class="notice" style="display:none"></div>
+  <section id="list" class="grid"></section>
+  <pre id="debug" style="display:none"></pre>
+</main>
+
+<script>
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function slug(v){return String(v||'').trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'gruppe';}
+function status(msg,kind=''){const el=document.getElementById('status');el.textContent=msg;el.className='notice '+kind;}
+async function fetchJson(url,opts){
+  const resp=await fetch(url,Object.assign({cache:'no-store'},opts||{}));
+  const txt=await resp.text();
+  let data={}; try{data=txt?JSON.parse(txt):{};}catch(_){data={message:txt};}
+  if(!resp.ok||data.ok===false) throw new Error((data&&data.message)||('HTTP '+resp.status));
+  return data;
+}
+function realUnits(site){
+  return (Array.isArray(site.units)?site.units:[]).filter(u=>u && !['pikett','hausdienstplan','nachtwache'].includes(String(u.type||'')));
+}
+async function checkSection(site,unit,section){
+  const siteId=site.id||site.name||'';
+  const groupKey=unit.plannerKey||unit.id||unit.name||'';
+  const url='/api/group-'+section+'?siteId='+encodeURIComponent(siteId)+'&groupKey='+encodeURIComponent(groupKey);
+  try{
+    const data=await fetchJson(url);
+    return {section,ok:true,hasContent:!!data.hasContent,revision:data.revision||0,hash:data.hash||'',objectKey:data.objectKey||'',legacy:data.legacy||null};
+  }catch(e){
+    return {section,ok:false,message:e.message||String(e)};
+  }
+}
+async function checkUnit(site,unit){
+  const sections=['state','employees','plan','wishes'];
+  const results=[];
+  for(const sec of sections){
+    results.push(await checkSection(site,unit,sec));
+  }
+  return results;
+}
+function renderSection(s){
+  if(!s.ok) return '<div class="sec bad"><b>'+esc(s.section)+'</b>Fehler<br>'+esc(s.message)+'</div>';
+  const cls=s.hasContent?'ok':'empty';
+  return '<div class="sec '+cls+'"><b>'+esc(s.section)+'</b>'
+    +(s.hasContent?'Daten vorhanden':'leer')
+    +'<br>Rev '+esc(s.revision)
+    +'<br><span style="font-size:10px;color:#667085">'+esc(s.hash||'ohne Hash')+'</span></div>';
+}
+function renderSite(site, unitResults){
+  const units=realUnits(site);
+  const auto=site.automaticFunctions||{};
+  let html='<article class="site"><h2>'+esc(site.name||site.id||'Standort')+'</h2>';
+  html+='<div class="meta"><span class="pill">'+esc(site.id||'ohne id')+'</span><span class="pill">'+esc(site.type||'')+'</span><span class="pill '+(units.length?'ok':'warn')+'">'+units.length+' Gruppen</span>';
+  if(auto.nachtwache) html+='<span class="pill">Nachtwache</span>';
+  if(auto.pikett) html+='<span class="pill">Pikett</span>';
+  if(auto.hausdienstplan) html+='<span class="pill">Haus-Dienstplan</span>';
+  html+='</div>';
+  if(!units.length){
+    html+='<div class="notice warn">Keine Gruppen in der Organisation. Das ist erlaubt. Gruppen werden erst gespeichert, wenn du sie in der Organisation anlegst.</div>';
+  }else{
+    units.forEach((u,i)=>{
+      const r=unitResults[i]||[];
+      html+='<div class="unit"><div class="unit-head"><div><div class="unit-title">'+esc(u.name||u.id)+'</div><div class="unit-sub">groupKey: '+esc(u.plannerKey||u.id||u.name)+' · unitId: '+esc(u.id||'')+'</div></div></div><div class="section-grid">'+r.map(renderSection).join('')+'</div></div>';
+    });
+  }
+  html+='</article>';
+  return html;
+}
+async function loadAll(){
+  status('Organisation wird geladen …','warn');
+  document.getElementById('list').innerHTML='';
+  document.getElementById('summary').style.display='none';
+  document.getElementById('debug').style.display='none';
+  try{
+    const orgResp=await fetchJson('/api/org-structure?ts='+Date.now());
+    const org=orgResp.organisationStructure||{};
+    const sites=Array.isArray(org.sites)?org.sites:[];
+    let totalUnits=0,totalSections=0,filled=0,errors=0;
+    const htmlParts=[];
+    const debug={updatedAt:orgResp.updatedAt||'',sites:[]};
+    for(const site of sites){
+      const units=realUnits(site);
+      totalUnits+=units.length;
+      const unitResults=[];
+      for(const unit of units){
+        const r=await checkUnit(site,unit);
+        unitResults.push(r);
+        totalSections+=r.length;
+        filled+=r.filter(x=>x.ok&&x.hasContent).length;
+        errors+=r.filter(x=>!x.ok).length;
+      }
+      htmlParts.push(renderSite(site,unitResults));
+      debug.sites.push({siteId:site.id,siteName:site.name,units:units.map((u,i)=>({id:u.id,name:u.name,plannerKey:u.plannerKey,sections:unitResults[i]}))});
+    }
+    document.getElementById('list').innerHTML=htmlParts.join('');
+    const summary=document.getElementById('summary');
+    summary.style.display='block';
+    summary.className='notice '+(errors?'bad':'ok');
+    summary.textContent='Standorte: '+sites.length+' · Gruppen: '+totalUnits+' · Speicherbereiche: '+totalSections+' · mit Daten: '+filled+' · Fehler: '+errors;
+    document.getElementById('debug').style.display='block';
+    document.getElementById('debug').textContent=JSON.stringify(debug,null,2);
+    status('Prüfung fertig. Jeder Eintrag wird über Haus + Gruppe + Abschnitt separat gelesen.','ok');
+  }catch(e){
+    status('Fehler: '+(e.message||e),'bad');
+  }
+}
+loadAll();
+</script>
+</body>
+</html>
