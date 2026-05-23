@@ -222,6 +222,34 @@ button.primary{background:var(--navBlue);border-color:var(--navBlue)}button.ok{b
   }
 }
 
+
+/* v153 Wunschportal: Titel wieder mittig unter dem Banner */
+.hero > div:nth-of-type(2){
+  text-align:center!important;
+  padding:18px 22px 6px!important;
+}
+.hero > div:nth-of-type(2) h1{
+  margin-left:auto!important;
+  margin-right:auto!important;
+  text-align:center!important;
+  max-width:none!important;
+}
+.hero > .toolbar{
+  justify-content:center!important;
+}
+@media(max-width:820px){
+  .hero > div:nth-of-type(2){
+    text-align:center!important;
+    padding:14px 18px 4px!important;
+  }
+  .hero > div:nth-of-type(2) h1{
+    text-align:center!important;
+  }
+  .hero > .toolbar{
+    justify-content:center!important;
+  }
+}
+
 </style>
 <link rel="stylesheet" href="assets/ulmipoint-ui.css?v=69">
 </head>
