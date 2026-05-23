@@ -17,7 +17,7 @@ main{max-width:1360px;margin:auto;padding:18px}.hero,.card,.panel{background:rgb
   <div class="auth-card">
     <div class="eyebrow">ULMIPOINT Organisation</div>
     <h1>Login</h1>
-    <div class="lead">System & Speicher ist geschützt. Bitte mit Admin-E-Mail und Passwort anmelden.</div>
+    <div class="lead">System & Speicher ist geschützt. Wenn du von Organisation kommst, wird der Login automatisch übernommen. Bei direktem Aufruf bitte anmelden.</div>
     <label><span class="field-label">E-Mail</span><input id="orgAuthEmail" type="email" autocomplete="username" placeholder="name@example.ch"></label>
     <label><span class="field-label">Passwort</span><input id="orgAuthPassword" type="password" autocomplete="current-password" placeholder="Passwort"></label>
     <div class="actions" style="margin-top:14px"><button class="primary" id="orgAuthLoginBtn" type="button">Einloggen</button><a class="btn" href="organisation.html">Zur Organisation</a></div>
@@ -140,18 +140,21 @@ checkConnection().catch(()=>{});
   const SERVER_DEFAULT_URL='https://ezjufsxacihfdwpyoibs.supabase.co';
   const SERVER_DEFAULT_ANON='sb_publishable_3AsChws4K7YjRusOk4m6Mw_aA6iBmdg';
   const SERVER_TOKEN_KEY='polypoint_server_session_v1';
+  const ORG_AUTH_HANDOFF_KEY='ULMIPOINT_ORG_AUTH_V121';
   const STORE_ID='default';
   const $=id=>document.getElementById(id);
   function normEmail(v){return String(v||'').trim().toLowerCase();}
   function normalizeRole(v){v=String(v||'').trim().toLowerCase(); if(['admin','administrator','leitung','verwaltung'].includes(v))return 'admin'; if(['planner','planer','planung'].includes(v))return 'planner'; if(['hausleitung','haus-leitung','hl'].includes(v))return 'hausleitung'; if(['tko','teamkoordination','team-koordinator'].includes(v))return 'tko'; if(['employee','mitarbeiter','ma'].includes(v))return 'employee'; return v;}
   function msg(t,k='warn'){const el=$('orgAuthStatus'); if(el){el.textContent=t; el.className='notice '+k;}}
   function sessionFresh(s){return !!(s&&s.access_token&&(!s.expires_at||s.expires_at>Date.now()+30000));}
-  function loadSession(){try{return JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}')||{};}catch(_){return {};}}
-  function saveSession(data,email){const user=Object.assign({},data.user||{}); if(!user.email)user.email=email; const s={access_token:data.access_token,refresh_token:data.refresh_token,user,expires_at:Date.now()+Math.max(60,(data.expires_in||3600))*1000}; localStorage.setItem(SERVER_TOKEN_KEY,JSON.stringify(s)); return s;}
+  function readWindowAuth(){try{const box=JSON.parse(window.name||'{}')||{}; const s=box[ORG_AUTH_HANDOFF_KEY]||{}; if(sessionFresh(s)){localStorage.setItem(SERVER_TOKEN_KEY,JSON.stringify(s)); return s;}}catch(_){ } return null;}
+  function writeWindowAuth(session){if(!sessionFresh(session))return; try{const box=JSON.parse(window.name||'{}')||{}; box[ORG_AUTH_HANDOFF_KEY]=session; window.name=JSON.stringify(box);}catch(_){window.name=JSON.stringify({[ORG_AUTH_HANDOFF_KEY]:session});}}
+  function loadSession(){try{const s=JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}')||{}; if(sessionFresh(s))return s;}catch(_){ } return readWindowAuth()||{};}
+  function saveSession(data,email){const user=Object.assign({},data.user||{}); if(!user.email)user.email=email; const s={access_token:data.access_token,refresh_token:data.refresh_token,user,expires_at:Date.now()+Math.max(60,(data.expires_in||3600))*1000}; localStorage.setItem(SERVER_TOKEN_KEY,JSON.stringify(s)); writeWindowAuth(s); return s;}
   async function supabase(path,opts={}){const headers=Object.assign({'apikey':SERVER_DEFAULT_ANON},opts.headers||{}); const r=await fetch(SERVER_DEFAULT_URL+path,Object.assign({},opts,{headers})); const t=await r.text(); let d=null; try{d=t?JSON.parse(t):null;}catch(_){d=t;} if(!r.ok)throw new Error((d&&d.message)||(d&&d.msg)||(typeof d==='string'?d:'HTTP '+r.status)); return d;}
   async function row(session){const d=await supabase('/rest/v1/planer_store?id=eq.'+encodeURIComponent(STORE_ID)+'&select=id,data,updated_at',{method:'GET',headers:{Authorization:'Bearer '+session.access_token}}); return Array.isArray(d)?d[0]:null;}
   function roleInfo(data,session,emailFallback){const email=normEmail(session?.user?.email||emailFallback); const roles=(data&&typeof data==='object'&&(data.accessRoles||data.roles))||{}; const entry=(roles&&typeof roles==='object')?roles[email]:null; const obj=(entry&&typeof entry==='object')?entry:(typeof entry==='string'?{role:entry}:{}); return {email, role:normalizeRole(obj.role), count:Object.keys(roles||{}).length};}
-  async function unlockWithSession(session,emailFallback){msg('Login OK. Rolle wird geprüft…','warn'); const storeRow=await row(session).catch(()=>null); const info=roleInfo(storeRow?.data||{},session,emailFallback); if(info.count>0 && info.role!=='admin') throw new Error('Kein Admin-Zugriff für '+(info.email||'diese Anmeldung')+'. Rolle: '+(info.role||'keine Rolle')+'.'); document.body.classList.remove('auth-pending'); const lock=$('orgAuthLock'); if(lock)lock.style.display='none';}
+  async function unlockWithSession(session,emailFallback){writeWindowAuth(session); msg('Login OK. Rolle wird geprüft…','warn'); const storeRow=await row(session).catch(()=>null); const info=roleInfo(storeRow?.data||{},session,emailFallback); if(info.count>0 && info.role!=='admin') throw new Error('Kein Admin-Zugriff für '+(info.email||'diese Anmeldung')+'. Rolle: '+(info.role||'keine Rolle')+'.'); document.body.classList.remove('auth-pending'); const lock=$('orgAuthLock'); if(lock)lock.style.display='none';}
   async function login(){const email=String($('orgAuthEmail').value||'').trim(); const password=String($('orgAuthPassword').value||''); if(!email||!password){msg('Bitte E-Mail und Passwort eingeben.','bad');return;} try{msg('Login wird geprüft…','warn'); const data=await supabase('/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})}); const s=saveSession(data,email); await unlockWithSession(s,email);}catch(e){msg('Login nicht möglich: '+e.message,'bad');}}
   $('orgAuthLoginBtn')?.addEventListener('click',login); $('orgAuthPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')login();}); const existing=loadSession(); if(sessionFresh(existing)){unlockWithSession(existing,existing.user?.email||'').catch(e=>msg('Sitzung nicht freigegeben: '+e.message+' Bitte neu einloggen.','bad'));}
 })();
