@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ULMIPOINT · System & Speicher</title>
+<style>
+:root{--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--warn:#9a6700;--bg:#f4f8ff;--shadow:0 14px 38px rgba(16,24,40,.10)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 12% 8%,rgba(37,99,235,.12),transparent 28%),radial-gradient(circle at 88% 15%,rgba(243,155,47,.13),transparent 25%),linear-gradient(135deg,#f4f1e9,#fbfcff 60%,#eef5fb);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
+main{max-width:1360px;margin:auto;padding:18px}.hero,.card,.panel{background:rgba(255,255,255,.90);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px}.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start;overflow:hidden;position:relative}.eyebrow{display:inline-flex;align-items:center;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:10px}.hero h1{font-size:clamp(38px,6vw,70px);line-height:.92;letter-spacing:-.075em;margin:0 0 8px}.lead{font-size:15px;color:var(--muted);font-weight:850;line-height:1.45;max-width:820px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button,a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:10px 14px;font-weight:950;cursor:pointer}button.primary,a.primary{background:var(--blue);border-color:var(--blue);color:#fff}button.ok,a.ok{background:#e7f7ef;border-color:#b7e4ca;color:var(--green)}button.warn,a.warn{background:#fff7e6;border-color:#f3d28f;color:var(--warn)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}.card h2,.panel h2{font-size:23px;letter-spacing:-.045em;margin:0 0 8px}.muted{color:var(--muted);font-size:13px;font-weight:820;line-height:1.45}.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:11px;margin-top:10px;font-size:12px;font-weight:850;white-space:pre-wrap}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:var(--green)}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:var(--red)}.notice.warn{border-color:#f3d28f;background:#fffdf5;color:var(--warn)}.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;margin-top:10px;font-size:12px;font-weight:850}.kv div:nth-child(odd){color:#475467}.pill{display:inline-flex;border:1px solid var(--line);background:#fbfcfe;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;color:#475467;margin:2px}.pill.ok{background:#e7f7ef;color:var(--green);border-color:#b7e4ca}.pill.warn{background:#fff7e6;color:var(--warn);border-color:#f3d28f}.pill.bad{background:#fffafa;color:var(--red);border-color:#f2a3a3}.list{border:1px solid var(--line);background:#fff;border-radius:16px;overflow:auto;max-height:430px;margin-top:10px}.row{display:grid;grid-template-columns:170px 1fr auto;gap:10px;padding:10px;border-bottom:1px solid #edf1f6;font-size:12px;font-weight:850}.row:last-child{border-bottom:0}.row small{display:block;color:var(--muted);font-weight:820;margin-top:2px}.section-table{width:100%;border-collapse:separate;border-spacing:0;margin-top:10px;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:#fff}th,td{text-align:left;border-bottom:1px solid #edf1f6;padding:8px;font-size:12px;vertical-align:top}th{background:#f8fafc;font-weight:950;color:#475467}tr:last-child td{border-bottom:0}pre{white-space:pre-wrap;background:#111827;color:#fff;border-radius:16px;padding:12px;overflow:auto;max-height:360px}.danger-zone{border-color:#f2a3a3;background:#fffafa}.danger-zone h2{color:var(--red)}@media(max-width:760px){main{padding:10px}.hero{grid-template-columns:1fr}.row{grid-template-columns:1fr}.kv{grid-template-columns:1fr}.section-table{display:block;overflow:auto}.hero h1{font-size:42px}}
+</style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div>
+      <div class="eyebrow">ULMIPOINT · geschützter Technikbereich</div>
+      <h1>System & Speicher</h1>
+      <div class="lead">Zentrale technische Verwaltung für Verbindung, Serverstatus, Sicherungen, Speicherstände und globale Aktivität. Fachliche Stammdaten bleiben in der Organisation. Normale Arbeitsseiten speichern weiterhin ihre eigenen Bereiche.</div>
+      <div class="actions">
+        <button class="primary" id="checkBtn">System prüfen</button>
+        <button class="ok" id="loadBtn">Speicherübersicht laden</button>
+        <button class="warn" id="backupBtn">Technische Sicherung herunterladen</button>
+        <a class="btn" href="organisation-admin.html">Organisation öffnen</a>
+        <a class="btn" href="gruppen-speicher.html?admin=1">Gruppen-Speicher prüfen</a>
+        <a class="btn" href="index.html">Startseite</a>
+      </div>
+    </div>
+    <div class="notice ok" id="topState">Organisation dauerhaft verbunden. Keine Supabase-Zugangsdaten auf normalen Arbeitsseiten.</div>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>Verbindung</h2>
+      <div class="muted">Supabase und Speicher-ID werden serverseitig verwendet. Hier werden keine Project-URL oder Keys eingegeben.</div>
+      <div class="kv" id="connectionKv">
+        <div>Status</div><div>noch nicht geprüft</div>
+        <div>Organisation</div><div>–</div>
+        <div>Häuser</div><div>–</div>
+        <div>Letzter Serverstand</div><div>–</div>
+      </div>
+      <div class="notice" id="connectionStatus">Bereit.</div>
+    </article>
+
+    <article class="card">
+      <h2>Fachliche Verwaltung</h2>
+      <div class="muted">Alles, was Häuser, Gruppen, Bereiche, Mitarbeitende, Rollen und Zuweisungen betrifft, bleibt in der Organisation.</div>
+      <div class="actions"><a class="btn ok" href="organisation-admin.html">Organisation verwalten</a></div>
+      <div class="notice ok">Organisation = fachliche Struktur und Rechte.</div>
+    </article>
+
+    <article class="card">
+      <h2>Technische Verwaltung</h2>
+      <div class="muted">Alles, was globalen Speicher, Sicherungen, Verlauf, Diagnose und Serverstatus betrifft, ist hier zusammengefasst.</div>
+      <div class="actions"><button id="eventsBtn">Aktivität laden</button><button id="downloadEventsBtn">Aktivität herunterladen</button></div>
+      <div class="notice warn">System & Speicher = Technik, Sicherungen und Diagnose.</div>
+    </article>
+  </section>
+
+  <section class="panel">
+    <h2>Speicherbereiche</h2>
+    <div class="muted">Prüft pro Haus, Gruppe und Bereich, ob Daten, Revisionen, Hashes und Events vorhanden sind. Diese Seite schreibt nichts.</div>
+    <div id="summary" class="notice">Noch nicht geladen.</div>
+    <div style="overflow:auto"><table class="section-table" id="sectionTable"><thead><tr><th>Haus</th><th>Gruppe</th><th>Bereich</th><th>Status</th><th>Revision</th><th>Hash</th><th>Zuletzt</th><th>Von</th><th>Events</th></tr></thead><tbody><tr><td colspan="9">Noch nicht geladen.</td></tr></tbody></table></div>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>Speicherregel</h2>
+      <div class="notice ok">Planer / Dienstplan speichert group-plan.
+Mitarbeitende speichern group-employees.
+Wünsche speichern group-wishes.
+Status speichert group-state.
+Diese Seite liest und sichert nur.</div>
+    </article>
+    <article class="card danger-zone">
+      <h2>Globale Wiederherstellung</h2>
+      <div class="muted">Wiederherstellen und komplette Serverüberschreibungen gehören nur in diesen geschützten Technikbereich und sollten nicht auf normalen Gruppen- oder Planerseiten liegen.</div>
+      <div class="notice bad">In dieser v118-Seite ist globale Wiederherstellung bewusst nicht als Schnellknopf aktiv. Erst prüfen, Sicherung herunterladen, dann gezielt wiederherstellen.</div>
+    </article>
+  </section>
+
+  <section class="panel">
+    <h2>Globale Aktivität</h2>
+    <div class="muted">Server-Eventprotokoll über gespeicherte Gruppenbereiche.</div>
+    <div id="history" class="list"><div class="row"><div>Noch nicht geladen</div><div>Aktivität laden drücken.</div><div></div></div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Diagnose</h2>
+    <pre id="debug">Noch keine Diagnose.</pre>
+  </section>
+</main>
+<script>
+(function(){
+'use strict';
+const SECTIONS=['state','employees','plan','wishes'];
+const sectionLabels={state:'Status',employees:'Mitarbeitende',plan:'Dienstplan',wishes:'Wünsche'};
+let lastBundle=null;
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function slug(v){return String(v||'').trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'gruppe';}
+function fmt(v){if(!v)return '–';try{return new Date(v).toLocaleString('de-CH');}catch(_){return String(v);}}
+function who(u){u=u||{};return u.email||u.name||u.id||u.source||'unbekannt';}
+function key(siteId,groupKey,section){return slug(siteId)+'::'+slug(groupKey)+'::'+slug(section);}
+function status(id,msg,kind=''){const e=document.getElementById(id);if(e){e.textContent=msg;e.className='notice '+kind;}}
+async function fetchJson(url,opts){const r=await fetch(url,Object.assign({cache:'no-store'},opts||{}));const t=await r.text();let d={};try{d=t?JSON.parse(t):{};}catch(_){d={message:t};}if(!r.ok||d.ok===false)throw new Error(d.message||('HTTP '+r.status));return d;}
+function realUnits(site){return (Array.isArray(site.units)?site.units:[]).filter(u=>u&&!['pikett','hausdienstplan','nachtwache'].includes(String(u.type||'')));}
+function makeEventMap(events){const m={};(events||[]).forEach(ev=>{const k=key(ev.siteId,ev.groupKey,ev.section);(m[k]=m[k]||[]).push(ev);});return m;}
+function setKv(orgResp,events){const org=orgResp.organisationStructure||{};const sites=Array.isArray(org.sites)?org.sites:[];const updated=orgResp.updatedAt||orgResp.updated_at||'';document.getElementById('connectionKv').innerHTML='<div>Status</div><div><span class="pill ok">verbunden</span></div><div>Organisation</div><div>'+esc(org.organisation?.name||org.name||'LIV – Leben in Vielfalt')+'</div><div>Häuser</div><div>'+sites.length+'</div><div>Letzter Serverstand</div><div>'+esc(fmt(updated))+'</div>';document.getElementById('topState').textContent='Organisation verbunden · '+sites.length+' Häuser · '+(events?events.length:0)+' Events';}
+async function checkConnection(){status('connectionStatus','Organisation wird geprüft …','warn');try{const [orgResp,evResp]=await Promise.all([fetchJson('/api/org-structure?ts='+Date.now()),fetchJson('/api/events?limit=20&ts='+Date.now()).catch(e=>({events:[],error:e.message}))]);setKv(orgResp,evResp.events||[]);status('connectionStatus','Verbindung ok. Organisation wird automatisch vom Server gelesen.','ok');document.getElementById('debug').textContent=JSON.stringify({org:orgResp,events:(evResp.events||[]).slice(0,3),eventError:evResp.error||''},null,2);return {orgResp,evResp};}catch(e){status('connectionStatus','Fehler: '+e.message,'bad');document.getElementById('debug').textContent=String(e.stack||e);throw e;}}
+async function checkSection(site,unit,section,em){const siteId=site.id||site.name||'', groupKey=unit.plannerKey||unit.id||unit.name||'';try{const d=await fetchJson('/api/group-'+section+'?siteId='+encodeURIComponent(siteId)+'&groupKey='+encodeURIComponent(groupKey)+'&ts='+Date.now());const evs=em[key(siteId,groupKey,section)]||[];return {siteId,siteName:site.name||siteId,groupKey,groupName:unit.name||unit.id||groupKey,section,ok:true,hasContent:!!d.hasContent,revision:d.revision||0,hash:d.hash||'',updatedAt:d.updatedAt||'',updatedBy:d.updatedBy||{},events:evs,value:d.value};}catch(e){return {siteId,siteName:site.name||siteId,groupKey,groupName:unit.name||unit.id||groupKey,section,ok:false,message:e.message,events:[]};}}
+async function loadOverview(){status('summary','Speicherübersicht wird geladen …','warn');const tb=document.querySelector('#sectionTable tbody');tb.innerHTML='<tr><td colspan="9">Lade …</td></tr>';try{const [orgResp,evResp]=await Promise.all([fetchJson('/api/org-structure?ts='+Date.now()),fetchJson('/api/events?limit=500&ts='+Date.now()).catch(e=>({events:[],error:e.message}))]);const events=Array.isArray(evResp.events)?evResp.events:[];setKv(orgResp,events);renderEvents(events);const em=makeEventMap(events);const org=orgResp.organisationStructure||{};const sites=Array.isArray(org.sites)?org.sites:[];const rows=[];for(const site of sites){for(const unit of realUnits(site)){for(const s of SECTIONS){rows.push(await checkSection(site,unit,s,em));}}}lastBundle={exportedAt:new Date().toISOString(),organisation:org,events,sections:rows};renderRows(rows);const filled=rows.filter(r=>r.ok&&r.hasContent).length;const errors=rows.filter(r=>!r.ok).length;status('summary','Häuser: '+sites.length+' · Gruppen: '+new Set(rows.map(r=>r.siteId+'::'+r.groupKey)).size+' · Speicherbereiche: '+rows.length+' · mit Daten: '+filled+' · Events: '+events.length+' · Fehler: '+errors,errors?'bad':'ok');document.getElementById('debug').textContent=JSON.stringify({summary:{sites:sites.length,sections:rows.length,filled,errors,events:events.length},sections:rows.map(r=>Object.assign({},r,{value:undefined})).slice(0,80)},null,2);}catch(e){status('summary','Fehler: '+e.message,'bad');document.getElementById('debug').textContent=String(e.stack||e);}}
+function renderRows(rows){const tb=document.querySelector('#sectionTable tbody');if(!rows.length){tb.innerHTML='<tr><td colspan="9">Keine Gruppenbereiche gefunden.</td></tr>';return;}tb.innerHTML=rows.map(r=>'<tr><td>'+esc(r.siteName||r.siteId)+'</td><td>'+esc(r.groupName||r.groupKey)+'</td><td>'+esc(sectionLabels[r.section]||r.section)+'</td><td>'+(r.ok?(r.hasContent?'<span class="pill ok">Daten vorhanden</span>':'<span class="pill warn">leer</span>'):'<span class="pill bad">Fehler</span><small>'+esc(r.message)+'</small>')+'</td><td>'+esc(r.revision||0)+'</td><td><small>'+esc(r.hash||'–')+'</small></td><td>'+esc(fmt(r.updatedAt))+'</td><td>'+esc(who(r.updatedBy))+'</td><td>'+esc((r.events||[]).length)+'</td></tr>').join('');}
+async function loadEvents(){status('connectionStatus','Aktivität wird geladen …','warn');try{const evResp=await fetchJson('/api/events?limit=500&ts='+Date.now());const events=Array.isArray(evResp.events)?evResp.events:[];renderEvents(events);status('connectionStatus','Aktivität geladen: '+events.length+' Events.','ok');if(!lastBundle)lastBundle={};lastBundle.events=events;}catch(e){status('connectionStatus','Aktivität konnte nicht geladen werden: '+e.message,'bad');}}
+function renderEvents(events){const el=document.getElementById('history');if(!events||!events.length){el.innerHTML='<div class="row"><div>Keine Events</div><div>Noch keine technischen Ereignisse gefunden.</div><div></div></div>';return;}el.innerHTML=events.slice(0,200).map(ev=>'<div class="row"><div>'+esc(fmt(ev.createdAt))+'</div><div><b>'+esc(ev.type||'Änderung')+'</b><small>Haus: '+esc(ev.siteId)+' · Gruppe: '+esc(ev.groupKey)+' · Bereich: '+esc(sectionLabels[ev.section]||ev.section)+' · Rev '+esc(ev.revisionVorher||0)+' → '+esc(ev.revisionNachher||0)+'</small><small>Von: '+esc(who(ev.createdBy))+' · Backup: '+esc(ev.backupId||'kein Backup')+'</small></div><div><span class="pill">'+esc(ev.hashNachher||'ohne Hash')+'</span></div></div>').join('');}
+function downloadJson(filename,data){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
+async function downloadBackup(){if(!lastBundle)await loadOverview();if(!lastBundle)return;downloadJson('ulmipoint_system_sicherung_'+new Date().toISOString().slice(0,10)+'.json',lastBundle);status('summary','Technische Sicherung heruntergeladen.','ok');}
+function downloadEvents(){downloadJson('ulmipoint_aktivitaet_'+new Date().toISOString().slice(0,10)+'.json',{exportedAt:new Date().toISOString(),events:lastBundle?.events||[]});}
+document.getElementById('checkBtn').addEventListener('click',checkConnection);document.getElementById('loadBtn').addEventListener('click',loadOverview);document.getElementById('eventsBtn').addEventListener('click',loadEvents);document.getElementById('backupBtn').addEventListener('click',downloadBackup);document.getElementById('downloadEventsBtn').addEventListener('click',downloadEvents);
+checkConnection().catch(()=>{});
+})();
+</script>
+</body>
+</html>
