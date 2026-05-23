@@ -8,9 +8,23 @@
 :root{--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--red:#c73636;--warn:#9a6700;--bg:#f4f8ff;--shadow:0 14px 38px rgba(16,24,40,.10)}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 12% 8%,rgba(37,99,235,.12),transparent 28%),radial-gradient(circle at 88% 15%,rgba(243,155,47,.13),transparent 25%),linear-gradient(135deg,#f4f1e9,#fbfcff 60%,#eef5fb);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}
 main{max-width:1360px;margin:auto;padding:18px}.hero,.card,.panel{background:rgba(255,255,255,.90);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);padding:18px;margin-bottom:14px}.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start;overflow:hidden;position:relative}.eyebrow{display:inline-flex;align-items:center;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:10px}.hero h1{font-size:clamp(38px,6vw,70px);line-height:.92;letter-spacing:-.075em;margin:0 0 8px}.lead{font-size:15px;color:var(--muted);font-weight:850;line-height:1.45;max-width:820px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button,a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:10px 14px;font-weight:950;cursor:pointer}button.primary,a.primary{background:var(--blue);border-color:var(--blue);color:#fff}button.ok,a.ok{background:#e7f7ef;border-color:#b7e4ca;color:var(--green)}button.warn,a.warn{background:#fff7e6;border-color:#f3d28f;color:var(--warn)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}.card h2,.panel h2{font-size:23px;letter-spacing:-.045em;margin:0 0 8px}.muted{color:var(--muted);font-size:13px;font-weight:820;line-height:1.45}.notice{border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:11px;margin-top:10px;font-size:12px;font-weight:850;white-space:pre-wrap}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:var(--green)}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:var(--red)}.notice.warn{border-color:#f3d28f;background:#fffdf5;color:var(--warn)}.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 10px;margin-top:10px;font-size:12px;font-weight:850}.kv div:nth-child(odd){color:#475467}.pill{display:inline-flex;border:1px solid var(--line);background:#fbfcfe;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;color:#475467;margin:2px}.pill.ok{background:#e7f7ef;color:var(--green);border-color:#b7e4ca}.pill.warn{background:#fff7e6;color:var(--warn);border-color:#f3d28f}.pill.bad{background:#fffafa;color:var(--red);border-color:#f2a3a3}.list{border:1px solid var(--line);background:#fff;border-radius:16px;overflow:auto;max-height:430px;margin-top:10px}.row{display:grid;grid-template-columns:170px 1fr auto;gap:10px;padding:10px;border-bottom:1px solid #edf1f6;font-size:12px;font-weight:850}.row:last-child{border-bottom:0}.row small{display:block;color:var(--muted);font-weight:820;margin-top:2px}.section-table{width:100%;border-collapse:separate;border-spacing:0;margin-top:10px;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:#fff}th,td{text-align:left;border-bottom:1px solid #edf1f6;padding:8px;font-size:12px;vertical-align:top}th{background:#f8fafc;font-weight:950;color:#475467}tr:last-child td{border-bottom:0}pre{white-space:pre-wrap;background:#111827;color:#fff;border-radius:16px;padding:12px;overflow:auto;max-height:360px}.danger-zone{border-color:#f2a3a3;background:#fffafa}.danger-zone h2{color:var(--red)}@media(max-width:760px){main{padding:10px}.hero{grid-template-columns:1fr}.row{grid-template-columns:1fr}.kv{grid-template-columns:1fr}.section-table{display:block;overflow:auto}.hero h1{font-size:42px}}
+
+.auth-pending main{display:none}.auth-lock{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 20% 10%,rgba(37,99,235,.14),transparent 30%),linear-gradient(135deg,#f4f1e9,#fbfcff 62%,#eef5fb)}.auth-card{width:min(560px,100%);background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:30px;box-shadow:0 26px 80px rgba(15,23,42,.22);padding:18px}.auth-card h1{font-size:clamp(34px,8vw,56px);line-height:.9;letter-spacing:-.07em;margin:0 0 8px}.auth-card label{display:block;margin-top:10px}.field-label{display:block;color:var(--muted);font-size:12px;font-weight:950;margin-bottom:4px}.auth-card input{width:100%;border:1px solid var(--line);border-radius:15px;background:#fff;padding:12px;font-weight:900;color:var(--text)}
 </style>
 </head>
-<body>
+<body class="auth-pending">
+<div id="orgAuthLock" class="auth-lock">
+  <div class="auth-card">
+    <div class="eyebrow">ULMIPOINT Organisation</div>
+    <h1>Login</h1>
+    <div class="lead">System & Speicher ist geschützt. Bitte mit Admin-E-Mail und Passwort anmelden.</div>
+    <label><span class="field-label">E-Mail</span><input id="orgAuthEmail" type="email" autocomplete="username" placeholder="name@example.ch"></label>
+    <label><span class="field-label">Passwort</span><input id="orgAuthPassword" type="password" autocomplete="current-password" placeholder="Passwort"></label>
+    <div class="actions" style="margin-top:14px"><button class="primary" id="orgAuthLoginBtn" type="button">Einloggen</button><a class="btn" href="organisation.html">Zur Organisation</a></div>
+    <div id="orgAuthStatus" class="notice warn">Bitte einloggen. Zugriff ist nur für Admin freigegeben.</div>
+  </div>
+</div>
+
 <main>
   <section class="hero">
     <div>
@@ -118,6 +132,28 @@ async function downloadBackup(){if(!lastBundle)await loadOverview();if(!lastBund
 function downloadEvents(){downloadJson('ulmipoint_aktivitaet_'+new Date().toISOString().slice(0,10)+'.json',{exportedAt:new Date().toISOString(),events:lastBundle?.events||[]});}
 document.getElementById('checkBtn').addEventListener('click',checkConnection);document.getElementById('loadBtn').addEventListener('click',loadOverview);document.getElementById('eventsBtn').addEventListener('click',loadEvents);document.getElementById('backupBtn').addEventListener('click',downloadBackup);document.getElementById('downloadEventsBtn').addEventListener('click',downloadEvents);
 checkConnection().catch(()=>{});
+})();
+</script>
+
+<script>
+(function(){
+  const SERVER_DEFAULT_URL='https://ezjufsxacihfdwpyoibs.supabase.co';
+  const SERVER_DEFAULT_ANON='sb_publishable_3AsChws4K7YjRusOk4m6Mw_aA6iBmdg';
+  const SERVER_TOKEN_KEY='polypoint_server_session_v1';
+  const STORE_ID='default';
+  const $=id=>document.getElementById(id);
+  function normEmail(v){return String(v||'').trim().toLowerCase();}
+  function normalizeRole(v){v=String(v||'').trim().toLowerCase(); if(['admin','administrator','leitung','verwaltung'].includes(v))return 'admin'; if(['planner','planer','planung'].includes(v))return 'planner'; if(['hausleitung','haus-leitung','hl'].includes(v))return 'hausleitung'; if(['tko','teamkoordination','team-koordinator'].includes(v))return 'tko'; if(['employee','mitarbeiter','ma'].includes(v))return 'employee'; return v;}
+  function msg(t,k='warn'){const el=$('orgAuthStatus'); if(el){el.textContent=t; el.className='notice '+k;}}
+  function sessionFresh(s){return !!(s&&s.access_token&&(!s.expires_at||s.expires_at>Date.now()+30000));}
+  function loadSession(){try{return JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}')||{};}catch(_){return {};}}
+  function saveSession(data,email){const user=Object.assign({},data.user||{}); if(!user.email)user.email=email; const s={access_token:data.access_token,refresh_token:data.refresh_token,user,expires_at:Date.now()+Math.max(60,(data.expires_in||3600))*1000}; localStorage.setItem(SERVER_TOKEN_KEY,JSON.stringify(s)); return s;}
+  async function supabase(path,opts={}){const headers=Object.assign({'apikey':SERVER_DEFAULT_ANON},opts.headers||{}); const r=await fetch(SERVER_DEFAULT_URL+path,Object.assign({},opts,{headers})); const t=await r.text(); let d=null; try{d=t?JSON.parse(t):null;}catch(_){d=t;} if(!r.ok)throw new Error((d&&d.message)||(d&&d.msg)||(typeof d==='string'?d:'HTTP '+r.status)); return d;}
+  async function row(session){const d=await supabase('/rest/v1/planer_store?id=eq.'+encodeURIComponent(STORE_ID)+'&select=id,data,updated_at',{method:'GET',headers:{Authorization:'Bearer '+session.access_token}}); return Array.isArray(d)?d[0]:null;}
+  function roleInfo(data,session,emailFallback){const email=normEmail(session?.user?.email||emailFallback); const roles=(data&&typeof data==='object'&&(data.accessRoles||data.roles))||{}; const entry=(roles&&typeof roles==='object')?roles[email]:null; const obj=(entry&&typeof entry==='object')?entry:(typeof entry==='string'?{role:entry}:{}); return {email, role:normalizeRole(obj.role), count:Object.keys(roles||{}).length};}
+  async function unlockWithSession(session,emailFallback){msg('Login OK. Rolle wird geprüft…','warn'); const storeRow=await row(session).catch(()=>null); const info=roleInfo(storeRow?.data||{},session,emailFallback); if(info.count>0 && info.role!=='admin') throw new Error('Kein Admin-Zugriff für '+(info.email||'diese Anmeldung')+'. Rolle: '+(info.role||'keine Rolle')+'.'); document.body.classList.remove('auth-pending'); const lock=$('orgAuthLock'); if(lock)lock.style.display='none';}
+  async function login(){const email=String($('orgAuthEmail').value||'').trim(); const password=String($('orgAuthPassword').value||''); if(!email||!password){msg('Bitte E-Mail und Passwort eingeben.','bad');return;} try{msg('Login wird geprüft…','warn'); const data=await supabase('/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})}); const s=saveSession(data,email); await unlockWithSession(s,email);}catch(e){msg('Login nicht möglich: '+e.message,'bad');}}
+  $('orgAuthLoginBtn')?.addEventListener('click',login); $('orgAuthPassword')?.addEventListener('keydown',e=>{if(e.key==='Enter')login();}); const existing=loadSession(); if(sessionFresh(existing)){unlockWithSession(existing,existing.user?.email||'').catch(e=>msg('Sitzung nicht freigegeben: '+e.message+' Bitte neu einloggen.','bad'));}
 })();
 </script>
 </body>

@@ -18,20 +18,36 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ULMIPOINT Organisation</title>
 <style>
-:root{--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--yellow:#9a6700;--red:#c73636;--shadow:0 12px 30px rgba(16,24,40,.08)}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 14% 10%,rgba(37,99,235,.10),transparent 30%),radial-gradient(circle at 86% 18%,rgba(243,155,47,.12),transparent 28%),linear-gradient(135deg,#f4f1e9,#fbfcff 62%,#eef5fb);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}.app{max-width:1180px;margin:0 auto;padding:18px}.hero,.card{background:rgba(255,255,255,.90);border:1px solid var(--line);border-radius:30px;padding:18px;box-shadow:var(--shadow)}.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start}.eyebrow{display:inline-flex;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:10px}h1{margin:0 0 8px;font-size:clamp(42px,8vw,78px);line-height:.9;letter-spacing:-.08em}h2{font-size:24px;letter-spacing:-.04em;margin:0}.lead,.mini{color:var(--muted);font-weight:850;line-height:1.4}.lead{font-size:15px;max-width:760px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px}.card{display:flex;flex-direction:column;gap:10px;min-height:220px}.icon{font-size:38px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}a.btn,button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:11px 14px;font-weight:950;cursor:pointer}.primary{background:var(--blue)!important;border-color:var(--blue)!important;color:#fff!important}.ok{background:#e7f7ef!important;border-color:#b7e4ca!important;color:var(--green)!important}.warn{background:#fff7e6!important;border-color:#f3d28f!important;color:var(--yellow)!important}.notice{margin-top:14px;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:12px;font-size:13px;font-weight:850}.pill{display:inline-flex;border:1px solid var(--line);background:#fbfcfe;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;color:#475467;margin:2px}.pill.ok{background:#e7f7ef;color:var(--green);border-color:#b7e4ca}.pill.warn{background:#fff7e6;color:var(--yellow);border-color:#f3d28f}@media(max-width:720px){.app{padding:10px}.hero{grid-template-columns:1fr;border-radius:0 0 26px 26px;margin:-10px -10px 0}h1{font-size:52px}.card{min-height:0}}
+:root{--text:#172033;--muted:#667085;--line:#d9e2ef;--blue:#2563eb;--green:#0f8a5f;--yellow:#9a6700;--red:#c73636;--shadow:0 12px 30px rgba(16,24,40,.08)}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 14% 10%,rgba(37,99,235,.10),transparent 30%),radial-gradient(circle at 86% 18%,rgba(243,155,47,.12),transparent 28%),linear-gradient(135deg,#f4f1e9,#fbfcff 62%,#eef5fb);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text)}body.auth-pending .app{display:none}.app{max-width:1180px;margin:0 auto;padding:18px}.hero,.card{background:rgba(255,255,255,.90);border:1px solid var(--line);border-radius:30px;padding:18px;box-shadow:var(--shadow)}.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start}.eyebrow{display:inline-flex;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:950;margin-bottom:10px}h1{margin:0 0 8px;font-size:clamp(42px,8vw,78px);line-height:.9;letter-spacing:-.08em}h2{font-size:24px;letter-spacing:-.04em;margin:0}.lead,.mini{color:var(--muted);font-weight:850;line-height:1.4}.lead{font-size:15px;max-width:760px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px}.card{display:flex;flex-direction:column;gap:10px;min-height:220px}.icon{font-size:38px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}a.btn,button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--text);border-radius:999px;padding:11px 14px;font-weight:950;cursor:pointer}.primary{background:var(--blue)!important;border-color:var(--blue)!important;color:#fff!important}.ok{background:#e7f7ef!important;border-color:#b7e4ca!important;color:var(--green)!important}.warn{background:#fff7e6!important;border-color:#f3d28f!important;color:var(--yellow)!important}.bad{background:#ffe7e7!important;border-color:#f2a3a3!important;color:var(--red)!important}.notice{margin-top:14px;border:1px solid #c9dcff;background:#f7fbff;color:#175cd3;border-radius:16px;padding:12px;font-size:13px;font-weight:850;white-space:pre-wrap}.notice.ok{border-color:#b7e4ca;background:#e7f7ef;color:var(--green)}.notice.bad{border-color:#f2a3a3;background:#fffafa;color:var(--red)}.notice.warn{border-color:#f3d28f;background:#fffdf5;color:var(--yellow)}.pill{display:inline-flex;border:1px solid var(--line);background:#fbfcfe;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:950;color:#475467;margin:2px}.pill.ok{background:#e7f7ef;color:var(--green);border-color:#b7e4ca}.pill.warn{background:#fff7e6;color:var(--yellow);border-color:#f3d28f}.auth-lock{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 20% 10%,rgba(37,99,235,.14),transparent 30%),linear-gradient(135deg,#f4f1e9,#fbfcff 62%,#eef5fb)}.auth-card{width:min(560px,100%);background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:30px;box-shadow:0 26px 80px rgba(15,23,42,.22);padding:18px}.auth-card h1{font-size:clamp(34px,8vw,56px)}label{display:block;margin-top:10px}.field-label{display:block;color:var(--muted);font-size:12px;font-weight:950;margin-bottom:4px}input{width:100%;border:1px solid var(--line);border-radius:15px;background:#fff;padding:12px;font-weight:900;color:var(--text)}@media(max-width:720px){.app{padding:10px}.hero{grid-template-columns:1fr;border-radius:0 0 26px 26px;margin:-10px -10px 0}h1{font-size:52px}.card{min-height:0}}
 </style>
-<link rel="stylesheet" href="assets/ulmipoint-ui.css?v=119">
+<link rel="stylesheet" href="assets/ulmipoint-ui.css?v=120">
 </head>
-<body>
+<body class="auth-pending">
+<div id="orgAuthLock" class="auth-lock">
+  <div class="auth-card">
+    <div class="eyebrow">ULMIPOINT Organisation</div>
+    <h1>Login</h1>
+    <div class="lead">Organisation, System & Speicher und die Speicherprüfungen sind geschützt. Bitte mit E-Mail und Passwort anmelden.</div>
+    <label><span class="field-label">E-Mail</span><input id="orgAuthEmail" type="email" autocomplete="username" placeholder="name@example.ch"></label>
+    <label><span class="field-label">Passwort</span><input id="orgAuthPassword" type="password" autocomplete="current-password" placeholder="Passwort"></label>
+    <div class="actions" style="margin-top:14px">
+      <button class="primary" id="orgAuthLoginBtn" type="button">Einloggen</button>
+      <a class="btn" href="index.html">Zurück</a>
+    </div>
+    <div id="orgAuthStatus" class="notice warn">Bitte einloggen. Zugriff ist nur für Admin freigegeben. Wenn noch keine Rollenliste besteht, reicht ein gültiges Supabase-Login zur Ersteinrichtung.</div>
+  </div>
+</div>
+
 <div class="app">
   <section class="hero">
     <div>
       <div class="eyebrow">ULMIPOINT Verwaltung</div>
       <h1>Organisation</h1>
-      <div class="lead">Hier liegt alles, was zur Organisation gehört. Die fachliche Verwaltung bleibt getrennt vom technischen Bereich, ist aber trotzdem unter Organisation erreichbar.</div>
-      <div class="notice" id="orgState">Organisation wird geprüft …</div>
+      <div class="lead">Hier liegt alles, was zur Organisation gehört. Fachliche Verwaltung und technischer Bereich sind unter Organisation erreichbar, aber erst nach Login sichtbar.</div>
+      <div class="notice ok" id="orgState">Organisation verbunden.</div>
+      <div class="notice" id="userState">Benutzer angemeldet.</div>
     </div>
-    <div class="actions"><a class="btn" href="index.html">Startseite</a></div>
+    <div class="actions"><button class="bad" id="logoutBtn" type="button">Abmelden</button><a class="btn" href="index.html">Startseite</a></div>
   </section>
 
   <section class="grid">
@@ -47,7 +63,7 @@
       <div class="icon">🛠️</div>
       <h2>System & Speicher</h2>
       <div class="mini">Technische Verwaltung: Verbindung, Serverstatus, Speicherübersicht, Sicherungen, globale Aktivität und Diagnose.</div>
-      <div><span class="pill warn">technisch</span><span class="pill">geschützt</span></div>
+      <div><span class="pill warn">technisch</span><span class="pill">Admin geschützt</span></div>
       <div class="actions"><a class="btn warn" href="system-speicher.html">System & Speicher öffnen</a></div>
     </article>
 
@@ -60,13 +76,50 @@
     </article>
   </section>
 
-  <div class="notice">Startseite bleibt einfach. Technische Verwaltung erscheint nicht mehr als eigene Hauptkarte, sondern unter Organisation.</div>
+  <div class="notice">Startseite bleibt einfach. Fachliche und technische Verwaltung erscheinen erst nach Login unter Organisation.</div>
 </div>
 <script>
 (function(){
-  async function fetchJson(url){const r=await fetch(url,{cache:'no-store'});const t=await r.text();let d={};try{d=t?JSON.parse(t):{};}catch(_){d={message:t};}if(!r.ok||d.ok===false)throw new Error(d.message||('HTTP '+r.status));return d;}
+  const SERVER_DEFAULT_URL='https://ezjufsxacihfdwpyoibs.supabase.co';
+  const SERVER_DEFAULT_ANON='sb_publishable_3AsChws4K7YjRusOk4m6Mw_aA6iBmdg';
+  const SERVER_TOKEN_KEY='polypoint_server_session_v1';
+  const STORE_ID='default';
+  const $=id=>document.getElementById(id);
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-  fetchJson('/api/org-structure?ts='+Date.now()).then(d=>{const org=d.organisationStructure||{};const sites=Array.isArray(org.sites)?org.sites:[];document.getElementById('orgState').innerHTML='Organisation verbunden · '+esc(org.organisation?.name||org.name||'LIV – Leben in Vielfalt')+' · '+sites.length+' Standorte';}).catch(e=>{document.getElementById('orgState').textContent='Organisation konnte nicht geprüft werden: '+e.message;});
+  function normEmail(v){return String(v||'').trim().toLowerCase();}
+  function normalizeRole(v){v=String(v||'').trim().toLowerCase(); if(['admin','administrator','leitung','verwaltung'].includes(v))return 'admin'; if(['planner','planer','planung'].includes(v))return 'planner'; if(['hausleitung','haus-leitung','hl'].includes(v))return 'hausleitung'; if(['tko','teamkoordination','team-koordinator'].includes(v))return 'tko'; if(['employee','mitarbeiter','ma'].includes(v))return 'employee'; return v;}
+  function msg(t,k='warn'){const el=$('orgAuthStatus'); if(el){el.textContent=t; el.className='notice '+k;}}
+  function sessionFresh(s){return !!(s&&s.access_token&&(!s.expires_at||s.expires_at>Date.now()+30000));}
+  function loadSession(){try{return JSON.parse(localStorage.getItem(SERVER_TOKEN_KEY)||'{}')||{};}catch(_){return {};}}
+  function saveSession(data,email){const user=Object.assign({},data.user||{}); if(!user.email)user.email=email; const s={access_token:data.access_token,refresh_token:data.refresh_token,user,expires_at:Date.now()+Math.max(60,(data.expires_in||3600))*1000}; localStorage.setItem(SERVER_TOKEN_KEY,JSON.stringify(s)); return s;}
+  async function supabase(path,opts={}){const headers=Object.assign({'apikey':SERVER_DEFAULT_ANON},opts.headers||{}); const r=await fetch(SERVER_DEFAULT_URL+path,Object.assign({},opts,{headers})); const t=await r.text(); let d=null; try{d=t?JSON.parse(t):null;}catch(_){d=t;} if(!r.ok)throw new Error((d&&d.message)||(d&&d.msg)||(typeof d==='string'?d:'HTTP '+r.status)); return d;}
+  async function row(session){const d=await supabase('/rest/v1/planer_store?id=eq.'+encodeURIComponent(STORE_ID)+'&select=id,data,updated_at',{method:'GET',headers:{Authorization:'Bearer '+session.access_token}}); return Array.isArray(d)?d[0]:null;}
+  function roleInfo(data,session,emailFallback){const email=normEmail(session?.user?.email||emailFallback); const roles=(data&&typeof data==='object'&&(data.accessRoles||data.roles))||{}; const entry=(roles&&typeof roles==='object')?roles[email]:null; const obj=(entry&&typeof entry==='object')?entry:(typeof entry==='string'?{role:entry}:{}); return {email, role:normalizeRole(obj.role), count:Object.keys(roles||{}).length};}
+  async function unlockWithSession(session,emailFallback){
+    msg('Login OK. Rolle wird geprüft…','warn');
+    const storeRow=await row(session).catch(()=>null);
+    const info=roleInfo(storeRow?.data||{},session,emailFallback);
+    if(info.count>0 && info.role!=='admin'){
+      throw new Error('Kein Admin-Zugriff für '+(info.email||'diese Anmeldung')+'. Hinterlegte Rolle: '+(info.role||'keine Rolle')+'.');
+    }
+    document.body.classList.remove('auth-pending');
+    const lock=$('orgAuthLock'); if(lock)lock.style.display='none';
+    $('userState').textContent='Angemeldet: '+(info.email||session.user?.email||'Benutzer')+' · Zugriff: '+(info.count>0?'Admin':'Ersteinrichtung ohne Rollenliste');
+    try{
+      const r=await fetch('/api/org-structure?ts='+Date.now(),{cache:'no-store',headers:{Authorization:'Bearer '+session.access_token}});
+      const t=await r.text(); let d={}; try{d=t?JSON.parse(t):{};}catch(_){d={message:t};}
+      const org=d.organisationStructure||{}; const sites=Array.isArray(org.sites)?org.sites:[];
+      $('orgState').innerHTML='Organisation verbunden · '+esc(org.organisation?.name||org.name||'LIV – Leben in Vielfalt')+' · '+sites.length+' Standorte';
+    }catch(e){$('orgState').textContent='Organisation verbunden, Details konnten nicht geladen werden: '+e.message;}
+  }
+  async function login(){
+    const email=String($('orgAuthEmail').value||'').trim(); const password=String($('orgAuthPassword').value||'');
+    if(!email||!password){msg('Bitte E-Mail und Passwort eingeben.','bad');return;}
+    try{msg('Login wird geprüft…','warn'); const data=await supabase('/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})}); const s=saveSession(data,email); await unlockWithSession(s,email);}catch(e){msg('Login nicht möglich: '+e.message,'bad');}
+  }
+  function logout(){localStorage.removeItem(SERVER_TOKEN_KEY); location.href='index.html';}
+  $('orgAuthLoginBtn').addEventListener('click',login); $('orgAuthPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login();}); $('logoutBtn').addEventListener('click',logout);
+  const existing=loadSession(); if(sessionFresh(existing)){unlockWithSession(existing,existing.user?.email||'').catch(e=>{msg('Sitzung nicht freigegeben: '+e.message+' Bitte neu einloggen.','bad');});}
 })();
 </script>
 </body>
