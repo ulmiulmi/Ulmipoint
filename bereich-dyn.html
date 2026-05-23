@@ -253,7 +253,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
           <button class="dup-hidden" onclick="makePlan(true)" data-duplicate-of="top-month-plan">Monat planen</button>
           <button class="okbtn" onclick="stepPlanForward()">Schritt weiter</button>
           <button class="dup-hidden" onclick="applyNextIssueFix()" data-duplicate-of="issue-strip">nächsten Konflikt lösen</button>
-          <button class="dup-hidden" onclick="askOpenAIDirect()" data-duplicate-of="control-page">KI kontrollieren</button>
+          
           <button class="dup-hidden" onclick="openPrintPDFPage()" data-duplicate-of="top-export">PDF / Druck A4</button>
           <button class="danger" onclick="clearPlanMarkings()">Markierungen löschen</button>
           <button onclick="togglePlanMarkers()" id="markerToggleBtn">Markierungen aus</button>
@@ -289,7 +289,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
   </article></section>
 
   <section id="rules" class="view"><article class="card"><div class="section"><h2>Dienste</h2><span class="pill blue">Dienste</span></div>
-    <details open style="margin-top:12px"><summary><b>Dienste dieser Gruppe</b></summary><div class="mini" style="margin:8px 0">In der Gruppe werden <b>keine Dienste vorgegeben</b>. Die Dienste werden aus dem zentralen Organisationskatalog übernommen. Ganz vorne wird pro Dienst nur <b>Aktiv für diese Gruppe</b> angeklickt; erst bei aktiven Diensten werden Arbeit / Gruppe / Auto / Manuell für diese Gruppe gesetzt. Andere Gruppen werden nicht verändert.</div><div class="toolbar" style="margin:8px 0"><button class="primary" onclick="showCentralDutyPicker()">Dienste aus zentralem Katalog auswählen</button><button class="okbtn" onclick="saveGroupDutiesFromUI(true)">Gruppen-Dienste auf Server speichern</button></div><div id="centralDutyPicker" class="inline-duty-picker"><div class="inline-duty-picker-head"><div><h3 style="margin:0">Dienste für diese Gruppe auswählen</h3><div class="mini">Die Dienste kommen aus dem zentralen Organisationskatalog. Ganz vorne aktivierst du den Dienst für diese Gruppe. Sitzungen/Verfügungsdienste und kurzfristige Einsätze sind für jede Gruppe bereits aktiv vorgeschlagen. Danach werden nur für aktive Dienste Arbeit / Gruppe / Auto / Manuell angezeigt.</div></div><div class="toolbar" style="margin:0"><button class="primary" onclick="applyCentralDutyPicker()">Auswahl in diese Gruppe übernehmen</button><button onclick="hideCentralDutyPicker()">Schliessen</button></div></div><div id="centralDutyPickerStatus" class="mini">Noch nicht geladen.</div><div id="centralDutyPickerNav" class="inline-duty-nav"></div><div id="centralDutyPickerList"></div></div><div class="table-wrap duty-catalog-wrap" style="max-height:none;overflow-x:auto;overflow-y:visible"><table id="dutyTable" class="duty-table"><thead><tr><th><span class="duty-col-help" tabindex="0">Kurz <span class="info-dot">i</span><span class="duty-col-pop">Kurzcode des Dienstes. Dieser Code erscheint im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Name <span class="info-dot">i</span><span class="duty-col-pop">Lesbarer Name des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Typ <span class="info-dot">i</span><span class="duty-col-pop">Art des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Start <span class="info-dot">i</span><span class="duty-col-pop">Beginn des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Ende <span class="info-dot">i</span><span class="duty-col-pop">Ende des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Intervalle <span class="info-dot">i</span><span class="duty-col-pop">Für geteilte Dienste.</span></span></th><th><span class="duty-col-help" tabindex="0">h <span class="info-dot">i</span><span class="duty-col-pop">Stunden, die der Dienst zählt.</span></span></th><th>Arbeit</th><th>Gruppe</th><th>Auto</th><th>manuell</th><th>Bedeutung</th><th></th></tr></thead><tbody></tbody></table></div></details>
+    <details open style="margin-top:12px"><summary><b>Dienste dieser Gruppe</b></summary><div class="mini" style="margin:8px 0">In der Gruppe werden <b>keine Dienste vorgegeben</b>. Die Dienste werden aus dem zentralen Organisationskatalog übernommen. Ganz vorne wird pro Dienst nur <b>Aktiv für diese Gruppe</b> angeklickt; erst bei aktiven Diensten werden Arbeit / Gruppe / Auto / Manuell für diese Gruppe gesetzt. Andere Gruppen werden nicht verändert.</div><div class="toolbar" style="margin:8px 0"><button class="primary" onclick="showCentralDutyPicker()">Dienste aus zentralem Katalog auswählen</button><button class="okbtn" onclick="saveGroupDutiesFromUI(true)">Gruppen-Dienste auf Server speichern</button></div><div id="centralDutyPicker" class="inline-duty-picker"><div class="inline-duty-picker-head"><div><h3 style="margin:0">Dienste für diese Gruppe auswählen</h3><div class="mini">Die Dienste kommen aus dem zentralen Organisationskatalog. Ganz vorne aktivierst du den Dienst für diese Gruppe. Sitzungen/Verfügungsdienste, kurzfristige Einsätze, Frei/Ferien, Krankheit/Unfall, Weiterbildung/Schule und Gleitzeit sind für jede Gruppe bereits aktiv vorgeschlagen. Danach werden nur für aktive Dienste Arbeit / Gruppe / Auto / Manuell angezeigt.</div></div><div class="toolbar" style="margin:0"><button class="primary" onclick="applyCentralDutyPicker()">Auswahl in diese Gruppe übernehmen</button><button onclick="hideCentralDutyPicker()">Schliessen</button></div></div><div id="centralDutyPickerStatus" class="mini">Noch nicht geladen.</div><div id="centralDutyPickerNav" class="inline-duty-nav"></div><div id="centralDutyPickerList"></div></div><div class="table-wrap duty-catalog-wrap" style="max-height:none;overflow-x:auto;overflow-y:visible"><table id="dutyTable" class="duty-table"><thead><tr><th><span class="duty-col-help" tabindex="0">Kurz <span class="info-dot">i</span><span class="duty-col-pop">Kurzcode des Dienstes. Dieser Code erscheint im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Name <span class="info-dot">i</span><span class="duty-col-pop">Lesbarer Name des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Typ <span class="info-dot">i</span><span class="duty-col-pop">Art des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Start <span class="info-dot">i</span><span class="duty-col-pop">Beginn des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Ende <span class="info-dot">i</span><span class="duty-col-pop">Ende des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Intervalle <span class="info-dot">i</span><span class="duty-col-pop">Für geteilte Dienste.</span></span></th><th><span class="duty-col-help" tabindex="0">h <span class="info-dot">i</span><span class="duty-col-pop">Stunden, die der Dienst zählt.</span></span></th><th>Arbeit</th><th>Gruppe</th><th>Auto</th><th>manuell</th><th>Bedeutung</th><th></th></tr></thead><tbody></tbody></table></div></details>
     <details style="margin-top:12px"><summary><b>Standardbedarf Woche / Wochenende normal</b></summary><div class="mini" style="margin:8px 0">Pro Wochentag Dienste direkt anhaken. Bei Bedarf Anzahl erhöhen, zum Beispiel F9 zweimal. Samstag und Sonntag werden jetzt direkt aus dieser Eingabe für <b>Wochenende normal</b> übernommen. Feiertage nutzen weiterhin die Wochenendregel, wenn kein Tagesstatus gesetzt ist.</div><div id="stdNeeds"></div><div class="toolbar"><button class="primary" onclick="saveStandardNeedsFromUI(); makePlan(true)">Standardwoche übernehmen</button></div></details>
     <details style="margin-top:12px"><summary><b>Schulferien / Feiertage Basel-Stadt lokal</b></summary><div class="mini" style="margin:8px 0">Bearbeitbare lokale Liste. Format Ferien: YYYY-MM-DD bis YYYY-MM-DD pro Zeile. Feiertage: YYYY-MM-DD Name. Zusätzliche arbeitsfreie Halbtage werden automatisch als ½FT markiert: Fasnachtsmontag-Nachmittag, Fasnachtsmittwoch-Nachmittag, 31. Juli-Nachmittag, Heiligabend-Nachmittag und Silvester-Nachmittag, sofern diese Tage nicht auf Samstag/Sonntag fallen. Fasnacht wird nicht als ganzer Feiertag geführt.</div><div class="formgrid"><div><label>Schulferien</label><textarea id="schoolHolidayText"></textarea></div><div><label>Feiertage</label><textarea id="holidayText"></textarea></div></div><button class="primary" onclick="saveCalendarLists(); renderAll()">Kalenderlisten übernehmen</button></details>
   </article></section>
@@ -316,7 +316,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
   <section id="checks" class="view"><article class="card control-card"><div class="section control-head"><h2 class="control-title">Kontrolle / Regelzentrale</h2><span class="pill blue" id="checkCount">0 Punkte</span></div><div class="mini control-intro">Hier werden die aktiven Regeln, die klaren KI-Befehle und die Konflikte des Plans geprüft. Solange der Plan noch nicht vollständig gedeckt ist, bleiben abhängige Punkte im Entwurf gelb; absolute Sperren bleiben rot. BT / Tagesstatus, Dienstkatalog, Schulferien und Feiertage bleiben die Eingabe unter Dienste.</div>
     <details class="control-accordion"><summary>Regelzentrale</summary><div class="rulegrid" id="ruleCards"></div></details>
     <details class="control-accordion"><summary>Klare Befehle an die KI</summary><div class="cmd-box">Diese Befehle sind die Planungsanweisung. Planung, Kontrolle und Korrektur sollen dieselben Befehle verwenden.</div><div id="aiCommandList" class="commandgrid"></div></details>
-    <div class="toolbar control-actions"><button class="primary" onclick="renderRules(); renderChecks()">Kontrolle aktualisieren</button><button onclick="makePlan(true); renderRules(); renderChecks()">Neu berechnen & kontrollieren</button></div><div id="planningPhaseLog" class="issue green" style="display:none;margin-top:10px"></div><div class="control-results-title"><span>Prüfung & Konflikte</span><span class="mini">Ergebnis der aktuellen Kontrolle</span></div><div id="issueList" style="margin-top:12px"></div></article></section>
+    <div class="toolbar control-actions"><button class="primary" onclick="renderRules(); renderChecks()">Kontrolle aktualisieren</button><button onclick="makePlan(true); renderRules(); renderChecks()">Neu berechnen & kontrollieren</button></div><div id="apiResult" class="issue" style="display:none;margin-top:10px"></div><div id="planningPhaseLog" class="issue green" style="display:none;margin-top:10px"></div><div class="control-results-title"><span>Prüfung & Konflikte</span><span class="mini">Ergebnis der aktuellen Kontrolle</span></div><div id="issueList" style="margin-top:12px"></div></article></section>
 
   <section id="system" class="view"><article class="card group-storage-card">
     <div class="section"><h2>Gruppen-Speicher</h2><span class="pill blue" id="groupStorageContext">Gruppe</span></div>
@@ -3517,19 +3517,28 @@ function defaultCentralDutyFlags(d){
   return {countsAsWork:work,countsForCoverage:group,autoPlan:auto,manualOnly:manual};
 }
 function universalGroupDutyDefaultActive(d){
-  // Diese zentralen Grund-/Abwesenheitsdienste braucht jede Gruppe.
-  // Sie bleiben aus dem zentralen Katalog, werden aber im Gruppen-Picker automatisch aktiv vorgeschlagen.
+  // Diese Grund-/Abwesenheitsdienste braucht jede Gruppe.
+  // Deshalb werden sie im Gruppen-Picker IMMER vorne als aktiv vorgeschlagen.
+  // Robust gegen unterschiedliche Kategorie-Schreibweisen und zentrale Code-/Kurzcode-Felder.
   const code=centralDutyCode(d);
-  const cat=String(d?.category||'');
-  const mandatoryCats=new Set([
-    'Sitzungen / Verfügungsdienste',
-    'Kurzfristige Einsätze / Mehrarbeit',
-    'Frei / Kompensation / Ferien',
-    'Krankheit / Unfall / Abwesenheiten',
-    'Weiterbildung / Schule',
-    'Gleitzeit'
+  const rawCode=String(d?.code||'').trim().toUpperCase();
+  const cat=String(d?.category||'').trim().toLowerCase();
+  const requiredCodes=new Set([
+    'TS','TSK','TSN','VD','KE','AM',
+    'FR','WF','KGL','KF','FER',
+    'KR','KA','UN','PA','HO',
+    'WB','WBL','SCH','SCHF','UEK','ÜK',
+    'G',
+    '5','8','12','18','25','40','41','52','55','57','60','61','70','72','75','1001','2400','2401','2480','8001','8002'
   ]);
-  return ['TS','TSK','TSN','VD','KE','AM'].includes(code) || mandatoryCats.has(cat);
+  if(requiredCodes.has(code)||requiredCodes.has(rawCode))return true;
+  return cat.includes('sitzungen')
+    || cat.includes('verfügungsdienste') || cat.includes('verfuegungsdienste')
+    || cat.includes('kurzfristige') || cat.includes('mehrarbeit')
+    || cat.includes('frei') || cat.includes('kompensation') || cat.includes('ferien')
+    || cat.includes('krankheit') || cat.includes('unfall') || cat.includes('abwesenheiten')
+    || cat.includes('weiterbildung') || cat.includes('schule')
+    || cat.includes('gleitzeit');
 }
 function currentDutyByCentral(d){
   const code=centralDutyCode(d); const id=centralDutyId(d);
@@ -4539,6 +4548,31 @@ function runStructuredPlanningPhases(show=true){
   if(show)toast('Monat in Planungsphasen neu berechnet','ok');
 }
 
+function shouldRunKIOnPlan(show){
+  if(!show)return false;
+  if(monthIsFixed())return false;
+  return true;
+}
+function runKIReviewAfterPlanning(reason='Monat geplant'){
+  if(window.__ulmiKIReviewRunning)return;
+  window.__ulmiKIReviewRunning=true;
+  setTimeout(async()=>{
+    try{
+      const result=q('apiResult');
+      if(result){
+        result.style.display='block';
+        result.className='issue yellow';
+        result.innerHTML='<b>KI prüft automatisch nach der Planung…</b><div>Geprüft wird nur diese Gruppe und der aktuelle Monat. Es wird nichts automatisch gespeichert.</div>';
+      }
+      await askOpenAIDirect();
+    }catch(e){
+      console.warn('Automatische KI-Prüfung fehlgeschlagen',e);
+    }finally{
+      window.__ulmiKIReviewRunning=false;
+    }
+  },350);
+}
+
 function makePlan(show=true){
   try{
     window.__lastPlanError='';
@@ -4548,6 +4582,7 @@ function makePlan(show=true){
     if(!state.employees.some(emp=>isActiveInMonth(emp))){toast('Kein Dienstplan möglich – zuerst Mitarbeitende laden','bad');renderPlan();return;}
     if(planningPhasesEnabled()){
       runStructuredPlanningPhases(show);
+      if(shouldRunKIOnPlan(show))runKIReviewAfterPlanning('Planungsphasen');
     }else{
       resetPlanningPhaseLog();
       runPlanningPhase('klassische Planung ohne Phasen',()=>{
@@ -4568,6 +4603,7 @@ function makePlan(show=true){
       });
       saveState(false);renderPlan();renderPlanningPhaseLog();
       if(show)toast('Monat neu berechnet','ok');
+      if(shouldRunKIOnPlan(show))runKIReviewAfterPlanning('klassische Planung');
     }
   }catch(e){
     console.error(e);
@@ -6776,28 +6812,46 @@ function parseAIReviewItems(text){
   return items.slice(0,60);
 }
 async function askOpenAIDirect(){
-  readAPIFromUI();
-  saveState(false);
-  const key=apiKeyFromUI();
   const result=q('apiResult');
-  if(!key){toast('API-Key fehlt','warn'); if(result)result.innerHTML='<b>API-Key fehlt</b><div>Trage den Key ein und speichere ihn im Browser/Sicherung.</div>'; return;}
-  const model=(state.api?.model || q('apiModel')?.value || 'gpt-5.2').trim();
   const payload=buildAIPayload();
-  if(result)result.innerHTML='<b>Externe KI läuft…</b><div>Der aktuelle Monat wird kontrolliert. Der Plan wird nicht automatisch geändert.</div>';
+  if(result){
+    result.style.display='block';
+    result.className='issue yellow';
+    result.innerHTML='<b>KI läuft über Vercel…</b><div>Geprüft wird nur diese Gruppe und der aktuelle Monat. Es wird nichts automatisch gespeichert.</div>';
+  }
   try{
-    const res=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model,store:false,instructions:'Du bist ein Dienstplan-Kontrolleur für POLYPOINT. Nutze ausschließlich die mitgegebenen Regeln und Dienstdefinitionen. Gib klare, knappe Vorschläge in normalem Deutsch zurück. Keine technischen Befehle, keine LOCK/employeeId-Syntax, keine Backticks. Keine Chain-of-Thought. Keine Änderungen für andere Monate. Fixierte Einträge schützen.',input:JSON.stringify(payload),temperature:0.1,max_output_tokens:1400})});
+    const session=groupServerSession();
+    const headers={'Content-Type':'application/json'};
+    if(session&&session.access_token) headers.Authorization='Bearer '+session.access_token;
+    const res=await fetch('/api/group',{method:'POST',headers,body:JSON.stringify({
+      mode:'kiDienstplanPruefen',
+      siteId:ULMI_DYNAMIC_CONTEXT.siteId||'',
+      siteName:ULMI_DYNAMIC_CONTEXT.siteName||'',
+      unitId:ULMI_DYNAMIC_CONTEXT.unitId||'',
+      unitName:ULMI_DYNAMIC_CONTEXT.unitName||PLANER_GROUP_NAME,
+      groupKey:ULMI_DYNAMIC_CONTEXT.plannerKey||ULMI_DYNAMIC_CONTEXT.unitId||PLANER_GROUP_ID,
+      groupId:PLANER_GROUP_ID,
+      payload
+    })});
     const data=await res.json().catch(()=>({}));
-    if(!res.ok){throw new Error((data.error&&data.error.message)||('HTTP '+res.status));}
-    const text=extractResponseText(data)||'Keine Antwort erhalten.';
+    if(!res.ok || !data.ok){throw new Error(data.message||('KI-Serverfehler '+res.status));}
+    const text=data.text||data.answer||'Keine Antwort erhalten.';
     state.aiReview={text,items:parseAIReviewItems(text),createdAt:new Date().toISOString(),month:monthKey()};
     saveState(false);
-    if(result)result.innerHTML='<b>Antwort externe KI</b><div class="mini">Im Plan werden passende Datums-/Mitarbeiter-Hinweise mit KI markiert.</div><pre style="white-space:pre-wrap;font-family:inherit;margin:8px 0 0">'+esc(aiReadableBlock(text))+'</pre>';
+    if(result){
+      result.className='issue green';
+      result.innerHTML='<b>Antwort KI</b><div class="mini">Die KI hat nur diese Gruppe geprüft. Passende Datums-/Mitarbeiter-Hinweise werden mit KI markiert.</div><pre style="white-space:pre-wrap;font-family:inherit;margin:8px 0 0">'+esc(aiReadableBlock(text))+'</pre>';
+    }
     renderPlan();
-    toast('Externe KI fertig – Hinweise im Plan markiert','ok');
+    renderChecks();
+    toast('KI fertig – Hinweise im Plan markiert','ok');
   }catch(err){
     console.error(err);
-    if(result)result.innerHTML='<b>API-Aufruf fehlgeschlagen</b><div>'+esc(err.message||err)+'</div><div class="mini" style="margin-top:6px">Je nach Browser kann ein direkter Aufruf ohne Server blockiert werden. Der Planer bleibt lokal nutzbar.</div>';
-    toast('API fehlgeschlagen','bad');
+    if(result){
+      result.className='issue red';
+      result.innerHTML='<b>KI-Aufruf fehlgeschlagen</b><div>'+esc(err.message||err)+'</div><div class="mini" style="margin-top:6px">Prüfe Vercel: OPENAI_API_KEY muss gesetzt sein. Der Planer bleibt ohne KI normal nutzbar.</div>';
+    }
+    toast('KI fehlgeschlagen','bad');
   }
 }
 

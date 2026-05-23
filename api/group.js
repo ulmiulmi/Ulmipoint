@@ -1,5 +1,6 @@
 const {allow,send,readBody,fetchStore,saveStore}=require('../lib/_wishlib');
 const group=require('../lib/_group-section');
+const kiPlaner=require('../lib/_ki-planer');
 
 function parseQuery(req){
   const proto=(req.headers['x-forwarded-proto']||'https');
@@ -86,6 +87,12 @@ module.exports=async function handler(req,res){
     if(mode==='load'){
       const result=decorateSectionResult(group.publicSection(data,ids.siteId,ids.groupKey,section),section);
       result.legacy=group.legacyPreview(data,ids.siteId,ids.groupKey);
+      result.updatedAt=row.updated_at||'';
+      return send(res,200,result);
+    }
+
+    if(['kiDienstplanPruefen','kiPlaner','aiReview'].includes(mode)){
+      const result=await kiPlaner.pruefeDienstplan({data,siteId:ids.siteId,groupKey:ids.groupKey,body,row});
       result.updatedAt=row.updated_at||'';
       return send(res,200,result);
     }
