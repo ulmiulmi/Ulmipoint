@@ -812,7 +812,7 @@ function employeeLimitEntryViolation(emp,date,entry){
   const limits=activeEmployeeLimits(emp,date);
   if(!limits.length||!entry||entry.removed)return null;
   const max=employeeLimitMaxDailyHours(emp,date);
-  const h=entryHours(entry);
+  const h=entryHours(entry,emp);
   if(max!=null&&h>max+0.001)return `${emp.name}: Einschränkung ${employeeLimitLabel(primaryEmployeeLimit(emp,date))} – dieser Eintrag hätte ${formatHoursHMLabel(h)}, erlaubt sind maximal ${formatHoursHMLabel(max)} pro Tag`;
   const seq=employeeLimitSequenceViolationForEntry(emp,date,entry);
   if(seq)return seq;
@@ -6080,7 +6080,7 @@ function sickDailyTargetHours(emp,date){
   return monthTarget(emp,y,m)/monthWorkdayEquivalent(y,m);
 }
 function sickOriginalPlannedHours(emp,date,old){
-  const h=entryHours(old);
+  const h=entryHours(old,emp);
   if(Number.isFinite(h)&&h>0)return h;
   return sickDailyTargetHours(emp,date);
 }
@@ -6764,7 +6764,7 @@ function compactDutyConfigCascade(issues){
 function validatePlan(){const issues=[];const dutyConfig=dutyConfigurationIssues();dutyConfig.forEach(x=>issues.push(x));const brokenDutyCodes=dutyConfigurationProblemCodes(dutyConfig);dates.forEach(date=>{const needs=dayNeedCodes(date);const covered=coverageEntries(date);const needCounts={};needs.forEach(code=>{needCounts[code]=(needCounts[code]||0)+1;});let vdCredits=manualVDCredits(date);Object.entries(needCounts).forEach(([code,needed])=>{if(brokenDutyCodes.has(String(code)))return;let missing=Math.max(0,needed-countCoverageDuty(date,code));if(missing&&vdCredits){const used=Math.min(missing,vdCredits);missing-=used;vdCredits-=used;}if(missing&&!issues.find(i=>i.date===date&&i.type==='open'&&i.code===code)){issues.push({level:'yellow',type:'open',date,code,text:`${date}: ${code} offen`});}});const tmCode=teamMeetingDutyCode();const tmMissing=teamMeetingMissingEmployees(date,tmCode);if(tmMissing.length)issues.push({level:'yellow',type:'teamMeetingMissing',date,code:tmCode,text:`${date}: ${tmCode} fehlt bei ${tmMissing.length} Person(en) – Teamsitzung ist obligatorisch`});if(!isTeamMeetingAnchorDate(date)&&!pikettCoveredByAzore(date)&&regularNeedsCoveredForPikett(date)&&isRuleOn('pikett')&&state.rules.pikett?.enabled!==false&&state.rules.pikett?.dailyRequired!==false&&pikettOnDate(date).length<1){
   issues.push({level:'yellow',type:'pikettOpen',date,text:`${date}: Pikettdienst offen`});
 }
-const ov=overlapViolation(covered,date);if(isRuleOn('coverage')&&ov.bad)issues.push({level:'red',type:'overlap',date,allowed:ov.allowed,minutes:ov.minutes,text:`${date}: Überschneidung ${fmtOverlapMinutes(ov.minutes)} statt erlaubt ${fmtOverlapMinutes(ov.allowed)} (${ov.source}; Dienstauswahl benötigt ${fmtOverlapMinutes(ov.required||0)})`});const regularTV=regularCoveragePeople(date);if(isRuleOn('coverage')&&regularTV.length&&!regularTV.some(emp=>canTakeTVOnDate(emp,date)))issues.push({level:'red',type:'tv',date,text:`${date}: Tagesverantwortung fehlt. Leitung zählt nicht; TKO zählt nicht, wenn die Person im Büro gebunden ist.`});skillMixIssuesForDate(date).forEach(x=>issues.push(x));pauseSafetyIssuesForDate(date).forEach(x=>issues.push(x));staffReserveIssuesForDate(date).forEach(x=>issues.push(x));studentSupportIssuesForDate(date).forEach(x=>issues.push(x));let gd=0;state.employees.forEach(emp=>{const e=state.plan[entryKey(emp.id,date)];if(!e)return;if(!isActiveOn(emp,date)){issues.push({level:'red',type:'inactivePlanned',date,emp:emp.name,text:`${date}: ${emp.name} ist nicht aktiv, hat aber ${e.code||'einen Eintrag'}`});return;}if(shouldHaveSchool(emp,date)&&e.code!=='SCH')issues.push({level:'red',type:'schoolProtected',date,emp:emp.name,text:`${date}: ${emp.name} hat ${e.code||'einen Eintrag'} auf geschütztem Schultag – SCH darf nicht überschrieben werden`});if(shouldHaveSchoolFree(emp,date)&&e.code!=='SCHF')issues.push({level:'red',type:'schoolProtected',date,emp:emp.name,text:`${date}: ${emp.name} hat ${e.code||'einen Eintrag'} auf Schule-Freizeit – SCHF darf niemals überschrieben werden`});const limText=employeeLimitEntryViolation(emp,date,e);if(limText)issues.push({level:'red',type:'employeeLimit',date,emp:emp.name,text:limText});if(hasPikettLegacyBadge(e)){issues.push({level:'red',type:'pikettOnDuty',date,emp:emp.name,text:`${date}: ${emp.name} hat Pikett zusätzlich zu ${e.code||'einem Dienst'} – P muss ein eigener Eintrag ohne anderen Dienst sein`});}if(e.code==='P'&&(e.officeAddon||entryHours(e)>0)){issues.push({level:'red',type:'pikettOnDuty',date,emp:emp.name,text:`${date}: ${emp.name} P darf keine Arbeitszeit/Büro-Zusatz haben`});}
+const ov=overlapViolation(covered,date);if(isRuleOn('coverage')&&ov.bad)issues.push({level:'red',type:'overlap',date,allowed:ov.allowed,minutes:ov.minutes,text:`${date}: Überschneidung ${fmtOverlapMinutes(ov.minutes)} statt erlaubt ${fmtOverlapMinutes(ov.allowed)} (${ov.source}; Dienstauswahl benötigt ${fmtOverlapMinutes(ov.required||0)})`});const regularTV=regularCoveragePeople(date);if(isRuleOn('coverage')&&regularTV.length&&!regularTV.some(emp=>canTakeTVOnDate(emp,date)))issues.push({level:'red',type:'tv',date,text:`${date}: Tagesverantwortung fehlt. Leitung zählt nicht; TKO zählt nicht, wenn die Person im Büro gebunden ist.`});skillMixIssuesForDate(date).forEach(x=>issues.push(x));pauseSafetyIssuesForDate(date).forEach(x=>issues.push(x));staffReserveIssuesForDate(date).forEach(x=>issues.push(x));studentSupportIssuesForDate(date).forEach(x=>issues.push(x));let gd=0;state.employees.forEach(emp=>{const e=state.plan[entryKey(emp.id,date)];if(!e)return;if(!isActiveOn(emp,date)){issues.push({level:'red',type:'inactivePlanned',date,emp:emp.name,text:`${date}: ${emp.name} ist nicht aktiv, hat aber ${e.code||'einen Eintrag'}`});return;}if(shouldHaveSchool(emp,date)&&e.code!=='SCH')issues.push({level:'red',type:'schoolProtected',date,emp:emp.name,text:`${date}: ${emp.name} hat ${e.code||'einen Eintrag'} auf geschütztem Schultag – SCH darf nicht überschrieben werden`});if(shouldHaveSchoolFree(emp,date)&&e.code!=='SCHF')issues.push({level:'red',type:'schoolProtected',date,emp:emp.name,text:`${date}: ${emp.name} hat ${e.code||'einen Eintrag'} auf Schule-Freizeit – SCHF darf niemals überschrieben werden`});const limText=employeeLimitEntryViolation(emp,date,e);if(limText)issues.push({level:'red',type:'employeeLimit',date,emp:emp.name,text:limText});if(hasPikettLegacyBadge(e)){issues.push({level:'red',type:'pikettOnDuty',date,emp:emp.name,text:`${date}: ${emp.name} hat Pikett zusätzlich zu ${e.code||'einem Dienst'} – P muss ein eigener Eintrag ohne anderen Dienst sein`});}if(e.code==='P'&&(e.officeAddon||entryHours(e,emp)>0)){issues.push({level:'red',type:'pikettOnDuty',date,emp:emp.name,text:`${date}: ${emp.name} P darf keine Arbeitszeit/Büro-Zusatz haben`});}
 const tmPauseWhy=e.teamMeetingAddon?teamMeetingSplitPauseReason(e,e.teamMeetingAddon):'';if(tmPauseWhy){issues.push({level:'red',type:'teamMeetingSplitPause',date,emp:emp.name,text:`${date}: ${emp.name} ${tmPauseWhy} – Teamsitzung darf nicht in eine GD-Pause fallen`});}
 if(e.code==='P'&&employeePikettBlockedByPct(emp)){issues.push({level:'red',type:'pikettPct',date,emp:emp.name,text:`${date}: ${emp.name} hat ${parseFloat(emp.pct)||0}% Pensum – P ist erst unter ${pikettBlockPct()}% erlaubt`});}
 if(e.code==='P'&&isSickLikeEntry(e)){issues.push({level:'red',type:'pikettSick',date,emp:emp.name,text:`${date}: ${emp.name} ist krank/abwesend – P darf nicht auf KR/KA stehen`});}if(e.code==='P'){const spacingWhy=pikettSpacingReason(emp,date);if(spacingWhy)issues.push({level:'red',type:'pikettSpacing',date,emp:emp.name,text:`${date}: ${emp.name} ${spacingWhy}`});}if(isRuleOn('officePlanning')&&isOfficeDutyCode(e.code)){
@@ -6808,8 +6808,40 @@ function renderQuickIssues(){
   q('quickIssues').innerHTML=html||'Keine roten Punkte und keine fehlenden Dienste.';
 }
 function monthTarget(emp,y,m){const ov=monthTargetOverride(emp.id,y,m);return ov===null?autoMonthTarget(emp,y,m):ov;}
-function entryHours(e){if(!e||e.removed)return 0;const d=duty(e.code);if(!d)return 0;const addon=officeAddonHours(e);if(e.code==='KR'&&Number.isFinite(parseFloat(e.manualHours)))return (parseFloat(e.manualHours)||0)+addon;if(d.hoursMode==='manual')return (parseFloat(e.manualHours??e.vdHours??0)||0)+addon;return (d.countsAsWork?(parseFloat(d.hours)||0):0)+addon;}
-function monthHours(empId,y,m){let sum=0;for(let d=1;d<=daysInMonth(y,m);d++){const date=iso(y,m,d);const emp=empById(empId);if(emp&&!isActiveOn(emp,date))continue;sum+=entryHours(state.plan[entryKey(empId,date)]);}return sum;}
+function employeePensumFactor(emp){
+  const pct=parseFloat(emp&&emp.pct);
+  if(!Number.isFinite(pct)||pct<=0)return 1;
+  return pct/100;
+}
+function roundHoursToMinute(hours){
+  const h=parseFloat(hours)||0;
+  return Math.round(h*60)/60;
+}
+function dutyUsesPensumHours(d,code,emp){
+  if(!emp||!d)return false;
+  const raw=String(code||d.code||'').trim().toUpperCase();
+  const norm=raw.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]+/g,'');
+  if(d.countsForCoverage)return false; // echte Gruppendienste zählen immer mit effektiver Dienstzeit
+  if(d.hoursMode==='manual')return false; // manuelle effektive Stunden nicht automatisch kürzen
+  if(['FER','KR','KA','UN','UB','PA','HO','WB','WBL','SCH','SCHF','UEK','ÜK','UK','G'].includes(raw)||['FER','KR','KA','UN','UB','PA','HO','WB','WBL','SCH','SCHF','UEK','UK','G'].includes(norm))return true;
+  const type=String(d.type||'').toLowerCase();
+  if(['absencework','schoolfree'].includes(type))return true;
+  if(type==='office'&&raw==='G')return true; // Gleitzeit ja, Büro-B nicht automatisch kürzen
+  const txt=(String(d.name||'')+' '+String(d.meaning||'')+' '+String(d.category||'')).toLowerCase();
+  return /ferien|krank|unfall|pflege|homeoffice|weiterbildung|schule|überbetrieblicher|ueberbetrieblicher|gleitzeit/.test(txt);
+}
+function entryHours(e,emp){
+  if(!e||e.removed)return 0;
+  const d=duty(e.code);
+  if(!d)return 0;
+  const addon=officeAddonHours(e);
+  if(e.code==='KR'&&Number.isFinite(parseFloat(e.manualHours)))return (parseFloat(e.manualHours)||0)+addon;
+  if(d.hoursMode==='manual')return (parseFloat(e.manualHours??e.vdHours??0)||0)+addon;
+  let base=d.countsAsWork?(parseFloat(d.hours)||0):0;
+  if(base&&dutyUsesPensumHours(d,e.code,emp))base=roundHoursToMinute(base*employeePensumFactor(emp));
+  return base+addon;
+}
+function monthHours(empId,y,m){let sum=0;for(let d=1;d<=daysInMonth(y,m);d++){const date=iso(y,m,d);const emp=empById(empId);if(emp&&!isActiveOn(emp,date))continue;sum+=entryHours(state.plan[entryKey(empId,date)],emp);}return sum;}
 function yearBalance(empId,y,untilM){
   const emp=empById(empId);if(!emp)return 0;
   const co=monthBalanceCarryover(empId,y,untilM);
@@ -6831,7 +6863,7 @@ function buildAIPayload(){
   dates.forEach(date=>{
     state.employees.forEach(emp=>{
       const e=state.plan[entryKey(emp.id,date)];
-      if(e&&e.code){plan.push({date,employeeId:emp.id,employee:emp.name,role:emp.role,code:e.code,manual:!!e.manual,fixed:!!e.fixed,hours:entryHours(e),officeAddon:e.officeAddon||null,vacationWeekend:!!e.vacationWeekend,countsForSequence:entryCountsForWorkSequence(e),pikett:hasPikettEntry(e),studentExtra:!!e.studentExtra,reason:e.reason||''});}
+      if(e&&e.code){plan.push({date,employeeId:emp.id,employee:emp.name,role:emp.role,code:e.code,manual:!!e.manual,fixed:!!e.fixed,hours:entryHours(e,emp),officeAddon:e.officeAddon||null,vacationWeekend:!!e.vacationWeekend,countsForSequence:entryCountsForWorkSequence(e),pikett:hasPikettEntry(e),studentExtra:!!e.studentExtra,reason:e.reason||''});}
     });
   });
   const employees=state.employees.map(emp=>({id:emp.id,name:emp.name,role:emp.role,pct:emp.pct,group:!!emp.group,fp:!!emp.fp,tv:canTakeTV(emp),split:!!emp.split,officePct:emp.officePct||0,shortDutyLimitApplies:shortDutyLimitApplies(emp),officeTarget:officeAddonTargetHours(emp,state.selectedYear,state.selectedMonth),officePlanned:monthOfficePlannedHours(emp.id,state.selectedYear,state.selectedMonth),officeAllowedMin:officeAllowedMin(emp,state.selectedYear,state.selectedMonth),officeAllowedMax:officeAllowedMax(emp,state.selectedYear,state.selectedMonth),officeMustFollowAllDutyRules:true,officeMinFullDayPerWeek:needsWeeklyFullOfficeDay(emp)&&state.rules.officePlanning?.minFullOfficeDayPerWeek!==false,officeFullDayThresholdPct:state.rules.officePlanning?.minFullOfficeDayThresholdPct||20,officeAddonPlanned:monthOfficeAddonHours(emp.id,state.selectedYear,state.selectedMonth),apprenticeYear:emp.apprenticeYear||'',schoolDays:emp.schoolDays||[],schoolFreeDays:emp.schoolFreeDays||[],officeDays:emp.officeDays||[],active:emp.active!==false,monthTarget:monthTarget(emp,state.selectedYear,state.selectedMonth),autoMonthTarget:autoMonthTarget(emp,state.selectedYear,state.selectedMonth),monthTargetOverride:monthTargetOverride(emp.id,state.selectedYear,state.selectedMonth),monthHours:monthHours(emp.id,state.selectedYear,state.selectedMonth),monthDiff:currentMonthDiff(emp.id,state.selectedYear,state.selectedMonth),balanceRatio:employeeBalanceData(emp,state.selectedYear,state.selectedMonth).ratio,yearBalance:yearBalance(emp.id,state.selectedYear,state.selectedMonth),employeeLimits:employeeLimitsFor(emp.id),holidayCompAnnualDays:holidayCompAnnualDays(emp,state.selectedYear),holidayCompPlannedDays:holidayCompPlannedDays(emp.id,state.selectedYear),holidayCompRemainingDays:holidayCompRemainingDays(emp.id,state.selectedYear),holidayCompNeededThisMonth:holidayCompNeededThisMonth(emp,state.selectedYear,state.selectedMonth)}));
@@ -7012,7 +7044,7 @@ function openPrintPDFPage(){
 }
 
 function renderExport(){q('exportPreview').innerHTML=`Aktueller Monat: ${MONTHS[state.selectedMonth-1]} ${state.selectedYear}. Der Button öffnet zuerst eine eigene PDF-/Druckseite; dort passt der Monatsplan auf eine A4-Seite im Querformat.`;}
-function downloadCSV(){const rows=[['Datum','Mitarbeiter','Rolle','Dienst','Name','Stunden','Status']];dates.forEach(date=>state.employees.forEach(emp=>{const e=state.plan[entryKey(emp.id,date)];if(e?.code){const d=duty(e.code)||{};rows.push([date,emp.name,emp.role,e.code+(e.officeAddon?'+BÜRO':''),d.name||'',entryHours(e),e.officeAddon?('Büro '+(e.officeAddon.position||'')+' '+officeAddonHours(e).toFixed(1)+'h'):(e.officeRequired?'Büro obligatorisch':e.manual?'manuell':e.auto?'auto':'')]);}}));download('polypoint_v13_plan.csv',rows.map(r=>r.map(csv).join(';')).join('\n'),'text/csv');}
+function downloadCSV(){const rows=[['Datum','Mitarbeiter','Rolle','Dienst','Name','Stunden','Status']];dates.forEach(date=>state.employees.forEach(emp=>{const e=state.plan[entryKey(emp.id,date)];if(e?.code){const d=duty(e.code)||{};rows.push([date,emp.name,emp.role,e.code+(e.officeAddon?'+BÜRO':''),d.name||'',entryHours(e,emp),e.officeAddon?('Büro '+(e.officeAddon.position||'')+' '+officeAddonHours(e).toFixed(1)+'h'):(e.officeRequired?'Büro obligatorisch':e.manual?'manuell':e.auto?'auto':'')]);}}));download('polypoint_v13_plan.csv',rows.map(r=>r.map(csv).join(';')).join('\n'),'text/csv');}
 function copyPlanText(){const txt=dates.map(date=>`${date}: `+state.employees.map(emp=>{const e=state.plan[entryKey(emp.id,date)];return e?.code?`${emp.name} ${e.code}`:'';}).filter(Boolean).join(', ')).join('\n');navigator.clipboard?.writeText(txt);toast('Plan kopiert','ok');}
 function exportSicherung(){saveState(false);download(`polypoint_${PLANER_GROUP_ID}_v13_backup_${monthKey()}.json`,JSON.stringify(state,null,2),'application/json');}
 function importSicherung(ev){const file=ev.target.files[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(r.result);state={...defaultState(),...obj};normalizeStorageObjects();normalizeRules();normalizeDutyCatalog();normalizeCalendarLists();normalizeMonthTargets();normalizeLearners();saveState(true);renderAll();}catch(e){toast('Sicherung laden nicht möglich','bad');}};r.readAsText(file);}
