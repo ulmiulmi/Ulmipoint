@@ -613,6 +613,9 @@
     p.set("unitType", ctx.type || "bereich");
     p.set("plannerKey", ctx.plannerKey || id);
     if(isFunc) p.set("functionType", id);
+    if(id==="hausdienstplan"){
+      try{ p.set("units", JSON.stringify(realHouseUnits())); }catch(_){ }
+    }
 
     if(id==="nachtwache") return "nachtwache-dyn.html?" + p.toString();
     if(id==="pikett") return "pikett-dyn.html?" + p.toString();

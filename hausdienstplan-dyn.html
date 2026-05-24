@@ -133,7 +133,7 @@
   <div class="head">
     <div class="title">
       <h1>Haus-Dienstplan</h1>
-      <div class="mini">Zentrale Ansicht aus Azoren, Bali, Capri und Delos – sortiert nach Funktion. Nachtwache steht separat darunter.</div>
+      <div class="mini" id="normalSubtitle">Zentrale Ansicht aus den Gruppen dieses Hauses – sortiert nach Funktion. Nachtwache steht separat darunter.</div>
     </div>
     <div class="actions hidden-print">
       <button class="primary" onclick="reloadAll(true)">neu laden</button>
@@ -161,7 +161,7 @@
 
   <section class="card">
     <div class="bar" style="justify-content:space-between;margin-bottom:10px">
-      <div><span class="pill blue">Haus</span> <b>Azoren · Bali · Capri · Delos</b></div>
+      <div><span class="pill blue">Haus</span> <b id="normalGroupLabel">Gruppen dieses Hauses</b></div>
       <span class="mini" id="normalCount"></span>
     </div>
     <div class="table-wrap" id="normalTable"></div>
@@ -177,11 +177,12 @@
 </div>
 <script>
 'use strict';
-const VERSION='13.0.187';
+const VERSION='13.0.188';
 const MONTHS=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 const WEEKDAYS=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
 const BASE='polypoint_ki_planer_v13_clean__';
-const NORMAL_GROUPS=[{id:'azoren',name:'Azoren'},{id:'bali',name:'Bali'},{id:'capri',name:'Capri'},{id:'delos',name:'Delos'}];
+const FALLBACK_NORMAL_GROUPS=[{id:'azoren',name:'Azoren'},{id:'bali',name:'Bali'},{id:'capri',name:'Capri'},{id:'delos',name:'Delos'}];
+let NORMAL_GROUPS=FALLBACK_NORMAL_GROUPS.slice();
 const NIGHT_GROUP={id:'nachtwache',name:'Nachtwache'};
 const ROLE_ORDER=['Leitung','TKO','Fachperson','FABE','Assistenz','Ausbildung','Schüler','Schueler','Lernende','Praktikum','ohne Funktion'];
 let selectedMonth=new Date().getMonth()+1;
@@ -212,6 +213,70 @@ function readGroup(group){
   }
   return fallback||{group,key:profileKey(group.id,'default'),profile:'default',state:null,found:false};
 }
+
+function currentSiteId(){
+  try{return (window.__ULMI_DYNAMIC_CONTEXT__&&window.__ULMI_DYNAMIC_CONTEXT__.siteId)||new URLSearchParams(location.search||'').get('siteId')||'haus_1';}catch(_){return 'haus_1';}
+}
+function currentSiteName(){
+  try{return (window.__ULMI_DYNAMIC_CONTEXT__&&window.__ULMI_DYNAMIC_CONTEXT__.siteName)||new URLSearchParams(location.search||'').get('siteName')||'Haus';}catch(_){return 'Haus';}
+}
+function dynamicGroupStorageId(unit){
+  const site=slug(currentSiteId()||'haus_1');
+  const key=slug(unit?.plannerKey||unit?.id||unit?.name||'bereich');
+  if((site==='haus_1'||site==='haus1') && ['azoren','bali','capri','delos'].includes(key)) return key;
+  return site+'__'+key;
+}
+function unitIsRealGroup(unit){
+  if(!unit || unit.active===false) return false;
+  const t=String(unit.type||'').toLowerCase();
+  return !['pikett','hausdienstplan','nachtwache'].includes(t);
+}
+function unitsToGroups(units){
+  return (Array.isArray(units)?units:[]).filter(unitIsRealGroup).map(unit=>({
+    id:dynamicGroupStorageId(unit),
+    name:String(unit.name||unit.id||unit.plannerKey||'Gruppe'),
+    unitId:unit.id||'',
+    plannerKey:unit.plannerKey||unit.id||''
+  }));
+}
+async function loadGroupsFromOrganisation(){
+  let groups=[];
+  try{
+    const p=new URLSearchParams(location.search||'');
+    const raw=p.get('units');
+    if(raw) groups=unitsToGroups(JSON.parse(raw));
+  }catch(_){ }
+  if(!groups.length){
+    try{
+      const resp=await fetch('/api/org-structure?ts='+Date.now(),{method:'GET',cache:'no-store'});
+      const txt=await resp.text();
+      let data=null;try{data=txt?JSON.parse(txt):null;}catch(_){data=null;}
+      const org=data?.organisationStructure||data?.org||data||{};
+      const sites=Array.isArray(org.sites)?org.sites:[];
+      const siteKey=slug(currentSiteId());
+      const site=sites.find(s=>slug(s.id||s.name)===siteKey)||sites.find(s=>slug(s.name)===siteKey)||null;
+      if(site) groups=unitsToGroups(site.units||[]);
+    }catch(e){console.warn('Organisation für Haus-Dienstplan nicht geladen',e);}
+  }
+  if(groups.length){
+    NORMAL_GROUPS=groups;
+  }else{
+    NORMAL_GROUPS=FALLBACK_NORMAL_GROUPS.slice();
+  }
+  updateGroupLabels();
+}
+function updateGroupLabels(){
+  const names=NORMAL_GROUPS.map(g=>g.name).filter(Boolean);
+  const label=q('normalGroupLabel');
+  if(label) label.textContent=names.length?names.join(' · '):'Gruppen dieses Hauses';
+  const sub=q('normalSubtitle');
+  if(sub){
+    const site=currentSiteName();
+    sub.textContent='Zentrale Ansicht aus '+(names.length?names.join(', '):'den Gruppen dieses Hauses')+' – sortiert nach Funktion. Nachtwache steht separat darunter.';
+    if(site && site!=='Haus') sub.textContent+=' Standort: '+site+'.';
+  }
+}
+
 function initSelectors(){
   const m=q('monthSelect'),y=q('yearSelect');
   m.innerHTML=MONTHS.map((x,i)=>`<option value="${i+1}">${x}</option>`).join('');
@@ -363,7 +428,7 @@ window.importBackup=importBackup;
 
 
 window.addEventListener('storage',()=>reloadAll(false));
-initSelectors();reloadAll(false);
+initSelectors();loadGroupsFromOrganisation().then(()=>reloadAll(false));
 </script>
 <script>
 (function(){
