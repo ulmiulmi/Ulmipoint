@@ -198,20 +198,51 @@ function entryKey(empId,date){return `${date}__${empId}`}
 function monthKey(y=selectedYear,m=selectedMonth){return `${y}-${pad(m)}`}
 function profileKey(groupId,profile){return `${BASE}${groupId}${profile&&profile!=='default'?`__${profile}`:''}`}
 function profileLabel(p){return !p||p==='default'?'dieses Gerät':p}
+function uniqueList(list){return Array.from(new Set((list||[]).map(x=>String(x||'').trim()).filter(Boolean)));}
+function storageKeyParts(key){
+  let rest=String(key||'').startsWith(BASE)?String(key).slice(BASE.length):String(key||'');
+  let profile='default';
+  ['__pc','__handy'].forEach(suf=>{if(rest.endsWith(suf)){profile=suf.slice(2);rest=rest.slice(0,-suf.length);}});
+  return {groupId:rest,profile};
+}
+function stateGroupName(st, fallback){
+  const values=[st?.unitName, st?.planerGroupName, st?.groupName, st?.groupLabel, st?.context?.unitName, st?.context?.groupName, st?.meta?.unitName, st?.meta?.groupName];
+  const val=values.map(v=>String(v||'').trim()).find(Boolean);
+  return val || fallback || 'Gruppe';
+}
+function normalizeGroupFromState(group, obj){
+  if(!obj || typeof obj!=='object') return group;
+  const name=stateGroupName(obj, group?.name);
+  return Object.assign({}, group||{}, {name});
+}
+function candidateGroupIds(group){
+  const site=slug(currentSiteId()||'haus_1');
+  const base=[];
+  if(group){
+    base.push(group.id, group.unitId, group.plannerKey, slug(group.name));
+    [group.unitId, group.plannerKey, slug(group.name)].forEach(x=>{x=String(x||'').trim(); if(x) base.push(site+'__'+slug(x));});
+  }
+  return uniqueList(base);
+}
 function candidateProfiles(groupId){const out=['default'];try{const stored=localStorage.getItem(`${BASE}${groupId}_device_profile`);if(stored&&!out.includes(stored))out.push(stored);}catch(e){}['pc','handy'].forEach(p=>{if(!out.includes(p))out.push(p)});return out}
 function readGroup(group){
   let fallback=null;
-  for(const profile of candidateProfiles(group.id)){
-    const key=profileKey(group.id,profile);
-    try{
-      const raw=localStorage.getItem(key);
-      if(!raw)continue;
-      const obj=JSON.parse(raw);
-      if(!fallback)fallback={group,key,profile,state:obj,found:true};
-      if(Array.isArray(obj.employees)&&obj.employees.length)return {group,key,profile,state:obj,found:true};
-    }catch(e){console.warn('readGroup',group.id,e)}
+  for(const gid of candidateGroupIds(group)){
+    for(const profile of candidateProfiles(gid)){
+      const key=profileKey(gid,profile);
+      try{
+        const raw=localStorage.getItem(key);
+        if(!raw)continue;
+        const obj=JSON.parse(raw);
+        const normalizedGroup=normalizeGroupFromState(Object.assign({},group,{id:gid}),obj);
+        const hit={group:normalizedGroup,key,profile,state:obj,found:true,storageId:gid};
+        if(!fallback)fallback=hit;
+        if(Array.isArray(obj.employees)&&obj.employees.length)return hit;
+      }catch(e){console.warn('readGroup',gid,e)}
+    }
   }
-  return fallback||{group,key:profileKey(group.id,'default'),profile:'default',state:null,found:false};
+  const id=(candidateGroupIds(group)[0]||group?.id||'gruppe');
+  return fallback||{group,key:profileKey(id,'default'),profile:'default',state:null,found:false,storageId:id};
 }
 
 function currentSiteId(){
@@ -239,6 +270,43 @@ function unitsToGroups(units){
     plannerKey:unit.plannerKey||unit.id||''
   }));
 }
+
+function stateLooksLikeGroup(st){
+  if(!st || typeof st!=='object') return false;
+  if(st.functionType && ['nachtwache','pikett','hausdienstplan','zeiterfassung','monatsabschluss'].includes(String(st.functionType).toLowerCase())) return false;
+  if(st.planerGroupId && ['nachtwache','pikett','hausdienstplan','overview'].includes(String(st.planerGroupId).toLowerCase())) return false;
+  return Array.isArray(st.employees) || (st.plan && typeof st.plan==='object') || Array.isArray(st.duties);
+}
+function stateBelongsToCurrentSite(st, groupId){
+  const site=slug(currentSiteId()||'haus_1');
+  const sid=slug(st?.siteId || st?.context?.siteId || st?.meta?.siteId || '');
+  if(sid) return sid===site;
+  const gid=String(groupId||'');
+  if(gid.startsWith(site+'__')) return true;
+  // Alte Haus-1-Gruppen wurden früher ohne Standort-Präfix gespeichert.
+  return site==='haus_1' || site==='haus1';
+}
+function discoverGroupsFromSavedStates(){
+  const map=new Map();
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const key=localStorage.key(i)||'';
+      if(!key.startsWith(BASE) || key.endsWith('_device_profile')) continue;
+      const parts=storageKeyParts(key);
+      if(!parts.groupId || ['nachtwache','pikett','hausdienstplan','overview'].includes(parts.groupId)) continue;
+      const raw=localStorage.getItem(key); if(!raw) continue;
+      let st=null; try{st=JSON.parse(raw);}catch(_){continue;}
+      if(!stateLooksLikeGroup(st) || !stateBelongsToCurrentSite(st, parts.groupId)) continue;
+      const name=stateGroupName(st, parts.groupId.replace(/^.*__/, '').replace(/_/g,' '));
+      const group={id:parts.groupId,name,unitId:st.unitId||st.planerGroupId||'',plannerKey:st.plannerKey||st.planerGroupId||parts.groupId};
+      const score=(Array.isArray(st.employees)?st.employees.length:0)*10 + (st.plan?1:0);
+      const prev=map.get(parts.groupId);
+      if(!prev || score>prev.score) map.set(parts.groupId,{group,score});
+    }
+  }catch(e){console.warn('Gespeicherte Gruppen konnten nicht durchsucht werden',e);}
+  return Array.from(map.values()).map(x=>x.group).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'de',{numeric:true}));
+}
+
 async function loadGroupsFromOrganisation(){
   let groups=[];
   try{
@@ -258,7 +326,12 @@ async function loadGroupsFromOrganisation(){
       if(site) groups=unitsToGroups(site.units||[]);
     }catch(e){console.warn('Organisation für Haus-Dienstplan nicht geladen',e);}
   }
-  if(groups.length){
+  const savedGroups=discoverGroupsFromSavedStates();
+  if(savedGroups.length){
+    // Für den Haus-Dienstplan ist der gespeicherte Gruppenstand die Quelle.
+    // Dort steht auch der Name, den die Gruppe wirklich verwendet.
+    NORMAL_GROUPS=savedGroups;
+  }else if(groups.length){
     NORMAL_GROUPS=groups;
   }else{
     NORMAL_GROUPS=FALLBACK_NORMAL_GROUPS.slice();
@@ -329,7 +402,8 @@ function rowsFor(groups){
   groups.forEach(group=>{
     const info=loaded[group.id]||readGroup(group);
     const st=info.state||{};
-    (Array.isArray(st.employees)?st.employees:[]).filter(empActiveInMonth).forEach(emp=>rows.push({group,info,state:st,emp,role:roleName(emp)}));
+    const displayGroup=info.group||group;
+    (Array.isArray(st.employees)?st.employees:[]).filter(empActiveInMonth).forEach(emp=>rows.push({group:displayGroup,info,state:st,emp,role:roleName(emp)}));
   });
   rows.sort((a,b)=>roleRank(a.role)-roleRank(b.role)||a.role.localeCompare(b.role,'de')||String(a.emp.name||'').localeCompare(String(b.emp.name||''),'de')||a.group.name.localeCompare(b.group.name,'de'));
   return rows;
@@ -360,7 +434,7 @@ function renderTable(elId,groups,emptyText){
 }
 function renderSources(){
   const groups=[...NORMAL_GROUPS,NIGHT_GROUP];
-  q('sourceGrid').innerHTML=groups.map(g=>{const i=loaded[g.id]||{};const st=i.state||{};const emp=Array.isArray(st.employees)?st.employees.length:0;const saved=st.savedAt?new Date(st.savedAt).toLocaleString('de-CH'):'';return `<div class="source"><b>${esc(g.name)}</b><small>${i.found?`${emp} Mitarbeitende · ${profileLabel(i.profile)}${saved?' · '+esc(saved):''}`:'kein Speicher auf diesem Gerät gefunden'}</small></div>`}).join('');
+  q('sourceGrid').innerHTML=groups.map(g=>{const i=loaded[g.id]||{};const dg=i.group||g;const st=i.state||{};const emp=Array.isArray(st.employees)?st.employees.length:0;const saved=st.savedAt?new Date(st.savedAt).toLocaleString('de-CH'):'';return `<div class="source"><b>${esc(dg.name)}</b><small>${i.found?`${emp} Mitarbeitende · ${profileLabel(i.profile)}${saved?' · '+esc(saved):''}`:'kein Speicher auf diesem Gerät gefunden'}</small></div>`}).join('');
   const missing=groups.filter(g=>!(loaded[g.id]?.found));
   const warn=q('warnBox');
   if(missing.length){warn.style.display='block';warn.textContent='Nicht gefunden: '+missing.map(g=>g.name).join(', ')+'. Der Haus-Dienstplan liest nur gespeicherte Gruppenstände von diesem Gerät.';}else{warn.style.display='none';warn.textContent='';}
