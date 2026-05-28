@@ -227,30 +227,58 @@ function renderHistory(events){
   let el=document.getElementById('history');
   if(!events.length){el.innerHTML='<div class="history-row"><div>Keine Events</div><div>Noch keine Änderungen für diese Gruppe gespeichert.</div></div>';return;}
   el.innerHTML=events.slice(0,120).map(ev=>{
-    const restore=ev.backupId?'<button class="restore-btn" type="button" onclick="restoreEventBackup('+jsArg(ev.backupId)+','+jsArg(ev.section||'state')+','+jsArg(ev.revisionVorher||0)+')">Backup laden</button>':'';
+    const restore=ev.backupId?'<button class="restore-btn js-restore-backup" type="button" data-backup-id="'+esc(ev.backupId)+'" data-section="'+esc(ev.section||'state')+'" data-rev="'+esc(ev.revisionVorher||0)+'" onclick="return restoreEventBackup('+jsArg(ev.backupId)+','+jsArg(ev.section||'state')+','+jsArg(ev.revisionVorher||0)+',this,false)">Backup laden</button>':'';
     const safety=ev.safetyBackupId?'<div class="history-meta">Sicherheits-Backup aktueller Stand: '+esc(ev.safetyBackupId)+'</div>':'';
     return '<div class="history-row"><div class="history-time">'+esc(fmtDate(ev.createdAt))+'</div><div><b>'+esc(ev.type||'Änderung')+'</b><div class="history-meta">Bereich: '+esc(secLabel(ev.section))+' · Rev '+esc(ev.revisionVorher||0)+' → '+esc(ev.revisionNachher||0)+'</div><div class="history-meta">Von: '+esc(who(ev.createdBy))+' · Backup: '+esc(ev.backupId||'kein Backup')+'</div>'+safety+'<span class="chip">'+esc(ev.hashNachher||'ohne Hash')+'</span><div>'+restore+'</div></div></div>';
   }).join('');
 }
 function readServerUserEmail(){try{const s=JSON.parse(localStorage.getItem('polypoint_server_session_v1')||'{}')||{};return s.user&&s.user.email?s.user.email:'';}catch(_){return '';}}
-async function restoreEventBackup(backupId,section,rev){
+function readServerSession(){try{return JSON.parse(localStorage.getItem('polypoint_server_session_v1')||'{}')||{};}catch(_){return {};}}
+async function restoreEventBackup(backupId,section,rev,btn,skipConfirm){
   const ctx=readContext();
   backupId=String(backupId||'').trim();
   section=String(section||'state').trim()||'state';
-  if(!backupId)return;
-  if(!confirm('Backup '+backupId+' für '+secLabel(section)+' laden?\n\nDer aktuelle Stand wird vorher automatisch gesichert. Der Backup-Inhalt wird als neue Revision gespeichert.'))return;
+  if(!backupId)return false;
+  if(!skipConfirm && !confirm('Backup '+backupId+' für '+secLabel(section)+' laden?\n\nDer aktuelle Stand wird vorher automatisch gesichert. Der Backup-Inhalt wird als neue Revision gespeichert.'))return false;
   const status=document.getElementById('groupStatus');
-  if(status){status.className='notice warn';status.textContent='Backup wird als neue Revision geladen …';}
+  const oldText=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Backup wird geladen …';}
+  if(status){status.className='notice warn';status.textContent='Backup '+backupId+' wird als neue Revision geladen …';}
   try{
-    const d=await fetchJson('/api/group',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      mode:'restoreBackup',siteId:ctx.siteId,groupKey:ctx.groupKey,section,backupId,userEmail:readServerUserEmail(),source:'gruppen-speicher-restore'
+    const session=readServerSession();
+    const headers={'Content-Type':'application/json'};
+    if(session&&session.access_token)headers.Authorization='Bearer '+session.access_token;
+    const d=await fetchJson('/api/group',{method:'POST',headers,credentials:'same-origin',body:JSON.stringify({
+      mode:'restoreBackup',siteId:ctx.siteId,groupKey:ctx.groupKey,section,backupId,userEmail:session?.user?.email||readServerUserEmail(),source:'gruppen-speicher-restore'
     })});
     if(status){status.className='notice ok';status.textContent='Backup geladen. Neue Revision '+(d.revision||d.groupRevision||d.groupDutyRevision||'')+'.';}
     await loadGroupOnly();
   }catch(e){
     if(status){status.className='notice bad';status.textContent='Backup nicht geladen: '+(e.message||e);}
+    if(btn){btn.disabled=false;btn.textContent=oldText||'Backup laden';delete btn.dataset.restoreConfirmAt;}
   }
+  return false;
 }
+window.restoreEventBackup=restoreEventBackup;
+function handleRestoreButtonClick(e){
+  const btn=e.target&&e.target.closest?e.target.closest('.js-restore-backup'):null;
+  if(!btn)return;
+  e.preventDefault();
+  e.stopPropagation();
+  const backupId=btn.dataset.backupId||'';
+  const section=btn.dataset.section||'state';
+  const now=Date.now();
+  const last=Number(btn.dataset.restoreConfirmAt||0);
+  const status=document.getElementById('groupStatus');
+  if(!last || now-last>15000){
+    btn.dataset.restoreConfirmAt=String(now);
+    btn.textContent='Nochmals tippen zum Laden';
+    if(status){status.className='notice warn';status.textContent='Zum Wiederherstellen bitte denselben Backup-Button nochmals antippen. Backup: '+backupId;}
+    return false;
+  }
+  return restoreEventBackup(backupId,section,btn.dataset.rev||'',btn,true);
+}
+document.addEventListener('click',handleRestoreButtonClick,true);
 function groupEventsUrl(ctx){let qs=new URLSearchParams({limit:'500',siteId:ctx.siteId,groupKey:ctx.groupKey});if(ctx.section)qs.set('section',ctx.section);return withTs('/api/events?'+qs.toString())}
 async function loadGroupOnly(){
   const ctx=readContext();

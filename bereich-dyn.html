@@ -7084,7 +7084,7 @@ async function loadGroupActivity(show=true){
     const data=await resp.json().catch(()=>({ok:false,message:'Ungültige Serverantwort'}));
     if(!resp.ok||!data.ok)throw new Error(data.message||('Serverfehler '+resp.status));
     const events=Array.isArray(data.events)?data.events:[];
-    if(el)el.innerHTML=events.length?events.map(ev=>`<div class="server-history-row"><div><div class="server-history-title">${esc(ev.type||'Änderung')} · ${esc(ev.section||'')}</div><div class="server-history-meta">${esc(ev.createdAt?new Date(ev.createdAt).toLocaleString('de-CH'):'')} · Revision ${esc(ev.revisionVorher||0)} → ${esc(ev.revisionNachher||0)} · Backup ${esc(ev.backupId||'-')} · ${esc(ev.createdBy?.email||'')}</div>${ev.backupId?`<div style="margin-top:8px"><button type="button" onclick="restoreGroupBackup(${jsArg(ev.backupId)},${jsArg(ev.section||'state')})">Backup laden</button></div>`:''}</div></div>`).join(''):'<div class="server-history-row"><div><div class="server-history-title">Keine Aktivität für diese Gruppe.</div></div></div>';
+    if(el)el.innerHTML=events.length?events.map(ev=>`<div class="server-history-row"><div><div class="server-history-title">${esc(ev.type||'Änderung')} · ${esc(ev.section||'')}</div><div class="server-history-meta">${esc(ev.createdAt?new Date(ev.createdAt).toLocaleString('de-CH'):'')} · Revision ${esc(ev.revisionVorher||0)} → ${esc(ev.revisionNachher||0)} · Backup ${esc(ev.backupId||'-')} · ${esc(ev.createdBy?.email||'')}</div>${ev.backupId?`<div style="margin-top:8px"><button class="js-restore-group-backup" type="button" data-backup-id="${esc(ev.backupId)}" data-section="${esc(ev.section||'state')}" onclick="return restoreGroupBackup(${jsArg(ev.backupId)},${jsArg(ev.section||'state')},false,this)">Backup laden</button></div>`:''}</div></div>`).join(''):'<div class="server-history-row"><div><div class="server-history-title">Keine Aktivität für diese Gruppe.</div></div></div>';
     window.__groupActivityCache=data;
     if(show)toast('Aktivität dieser Gruppe geladen','ok');
   }catch(e){if(el)el.innerHTML='<div class="server-history-row"><div><div class="server-history-title">Aktivität nicht geladen</div><div class="server-history-meta">'+esc(e.message)+'</div></div></div>';if(show)toast(e.message,'bad');}
@@ -7095,12 +7095,14 @@ function downloadGroupActivity(){
   toast('Aktivität heruntergeladen','ok');
 }
 function jsArg(v){return JSON.stringify(String(v||''));}
-async function restoreGroupBackup(backupId,section){
+async function restoreGroupBackup(backupId,section,skipConfirm=false,btn=null){
   backupId=String(backupId||'').trim();
   section=String(section||'state').trim()||'state';
-  if(!backupId){toast('Keine Backup-ID vorhanden','bad');return;}
+  if(!backupId){toast('Keine Backup-ID vorhanden','bad');return false;}
   const text='Backup '+backupId+' für '+groupSectionLabel(section)+' wieder laden?\n\nDer aktuelle Stand wird zuerst automatisch als neues Sicherheits-Backup abgelegt. Danach wird der Backup-Inhalt als neue Revision gespeichert.';
-  if(!confirm(text))return;
+  if(!skipConfirm && !confirm(text))return false;
+  const oldText=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Backup wird geladen …';}
   try{
     groupSetStatus('Backup wird wiederhergestellt…','blue');
     const ctx=groupContextParams();
@@ -7137,8 +7139,29 @@ async function restoreGroupBackup(backupId,section){
     const msg=(e&&e.message)||'Backup konnte nicht geladen werden';
     groupSetStatus('Backup nicht geladen – '+msg,'bad');
     toast(msg,'bad');
+    if(btn){btn.disabled=false;btn.textContent=oldText||'Backup laden';delete btn.dataset.restoreConfirmAt;}
   }
+  return false;
 }
+window.restoreGroupBackup=restoreGroupBackup;
+function handleGroupBackupClick(e){
+  const btn=e.target&&e.target.closest?e.target.closest('.js-restore-group-backup'):null;
+  if(!btn)return;
+  e.preventDefault();
+  e.stopPropagation();
+  const backupId=btn.dataset.backupId||'';
+  const section=btn.dataset.section||'state';
+  const now=Date.now();
+  const last=Number(btn.dataset.restoreConfirmAt||0);
+  if(!last || now-last>15000){
+    btn.dataset.restoreConfirmAt=String(now);
+    btn.textContent='Nochmals tippen zum Laden';
+    groupSetStatus('Zum Wiederherstellen bitte denselben Backup-Button nochmals antippen. Backup: '+backupId,'blue');
+    return false;
+  }
+  return restoreGroupBackup(backupId,section,true,btn);
+}
+document.addEventListener('click',handleGroupBackupClick,true);
 function downloadGroupBackup(){
   try{
     const payload={kind:'ulmipoint-group-backup',version:PLANER_VERSION,createdAt:new Date().toISOString(),context:groupContextParams(),state:groupServerPayload()};
