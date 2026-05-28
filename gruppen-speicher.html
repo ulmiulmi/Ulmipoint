@@ -81,6 +81,7 @@ main{max-width:1320px;margin:auto;padding:18px}
     </div>
     <div class="big-actions">
       <button id="reloadBtn" class="primary" onclick="loadGroupOnly()">Daten dieser Gruppe neu laden</button>
+      <button onclick="checkCompleteness()">Vollständigkeit prüfen</button>
       <button onclick="splitStateIntoSections()">Fehlende Bereiche aus Status anlegen</button>
       <button onclick="location.href='/'">Zur Startseite</button>
       <button id="adminBtn" class="admin-link hidden" onclick="location.href='gruppen-speicher.html?admin=1'">Admin-Übersicht</button>
@@ -105,6 +106,7 @@ main{max-width:1320px;margin:auto;padding:18px}
         <h2 id="groupTitle">Aktuelle Gruppe</h2>
         <p class="muted" id="groupText">Nur diese Gruppe und ihre Speicherbereiche werden geprüft.</p>
         <div id="groupStatus" class="notice">Noch nicht geladen.</div>
+        <div id="checkReport"></div>
         <div id="groupContent"></div>
       </div>
       <div>
@@ -251,12 +253,89 @@ function wishesFromStatusPayload(payload){
   }
   return {};
 }
+function firstPayloadValue(payload,keys,validator){
+  payload=payload&&typeof payload==='object'?payload:{};
+  for(const k of keys){
+    const v=payload[k];
+    if(validator?validator(v):valueHasRealContent('',v))return v;
+  }
+  return undefined;
+}
 function sectionValueFromStatusPayload(payload,section){
   payload=payload&&typeof payload==='object'?payload:{};
-  if(section==='employees')return Array.isArray(payload.employees)?payload.employees:[];
-  if(section==='plan')return (payload.plan&&typeof payload.plan==='object'&&!Array.isArray(payload.plan))?payload.plan:{};
+  if(section==='employees')return firstPayloadValue(payload,['employees','mitarbeitende','staff','people','persons','employeeList'],v=>Array.isArray(v)&&v.length>0)||[];
+  if(section==='plan')return firstPayloadValue(payload,['plan','dienstplan','schedule','roster','entries'],v=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length>0)||{};
+  if(section==='duties')return firstPayloadValue(payload,['duties','dienste','groupDuties','services'],v=>Array.isArray(v)&&v.length>0)||[];
   if(section==='wishes')return wishesFromStatusPayload(payload);
   return {};
+}
+function valueCount(section,value){
+  if(!valueHasRealContent(section,value))return 0;
+  if(Array.isArray(value))return value.length;
+  if(value&&typeof value==='object'){
+    const v=section==='wishes'?(value.wishes||value):value;
+    return Object.keys(v||{}).length;
+  }
+  return 1;
+}
+function renderCheckRow(row){
+  const cls=row.error?'bad':(row.serverHas?'ok':(row.statusHas?'empty':'bad'));
+  const status=row.error?'Fehler':(row.serverHas?'Server: vorhanden':(row.statusHas?'nur im Status gefunden':'fehlt'));
+  const detail=row.error?row.error:('Server Rev '+(row.revision||0)+'<br>Status enthält: '+(row.statusHas?'ja, '+row.statusCount+' Einträge':'nein'));
+  return '<div class="sec '+cls+'"><b>'+esc(secLabel(row.section))+'</b>'+status+'<br>'+detail+'<div class="who">'+esc(row.hint||'Nur geprüft – nichts gespeichert.')+'</div></div>';
+}
+async function checkCompleteness(){
+  const ctx=readContext();
+  const status=document.getElementById('groupStatus');
+  const report=document.getElementById('checkReport');
+  if(!(ctx.siteId&&ctx.groupKey)){
+    if(status){status.className='notice bad';status.textContent='Keine eindeutige Gruppe gewählt.';}
+    return false;
+  }
+  if(status){status.className='notice warn';status.textContent='Vollständigkeit wird geprüft … Es wird nichts gespeichert.';}
+  if(report)report.innerHTML='';
+  try{
+    const [stateData,evResp]=await Promise.all([
+      fetchJson(withTs(groupSectionApi('state')+'?siteId='+encodeURIComponent(ctx.siteId)+'&groupKey='+encodeURIComponent(ctx.groupKey))),
+      fetchJson(groupEventsUrl(ctx)).catch(()=>({events:[]}))
+    ]);
+    const payload=statusPayloadFromSection(stateData);
+    const em=makeEventMap(Array.isArray(evResp.events)?evResp.events:[]);
+    const rows=[];
+    for(const section of SECTIONS){
+      const statusValue=section==='state'?payload:sectionValueFromStatusPayload(payload,section);
+      const statusHas=section==='state'?valueHasRealContent('state',payload):valueHasRealContent(section,statusValue);
+      let checked=null;
+      try{checked=await checkSection(ctx,section,em);}
+      catch(e){checked={section,ok:false,message:e.message||String(e)};}
+      rows.push({
+        section,
+        serverHas:!!(checked&&checked.ok&&checked.hasContent),
+        statusHas,
+        statusCount:valueCount(section,statusValue),
+        revision:(checked&&checked.revision)||0,
+        error:checked&&!checked.ok?(checked.message||'Prüfung fehlgeschlagen'):'',
+        hint:section==='state'?'Grundzustand der Gruppe':(!checked||!checked.ok?'Serverprüfung fehlgeschlagen':(checked.hasContent?'separater Bereich ist vorhanden':(statusHas?'kann aus Status angelegt werden':'nicht im aktuellen Status gefunden')))
+      });
+    }
+    const missingFromServer=rows.filter(r=>r.section!=='state'&&!r.serverHas);
+    const canCreate=missingFromServer.filter(r=>r.statusHas);
+    const notFound=missingFromServer.filter(r=>!r.statusHas);
+    const errors=rows.filter(r=>r.error);
+    let summary='Prüfung fertig. Vorhanden: '+rows.filter(r=>r.serverHas).length+' / '+rows.length+'.';
+    if(canCreate.length)summary+=' Aus Status anlegbar: '+canCreate.map(r=>secLabel(r.section)).join(', ')+'.';
+    if(notFound.length)summary+=' Nicht im aktuellen Status gefunden: '+notFound.map(r=>secLabel(r.section)).join(', ')+'.';
+    if(errors.length)summary+=' Fehler: '+errors.map(r=>secLabel(r.section)).join(', ')+'.';
+    const summaryClass=errors.length?'bad':(notFound.length?'warn':'ok');
+    if(status){status.className='notice '+summaryClass;status.textContent=summary+' Die Organisation wurde nicht ersetzt und es wurde nichts gespeichert.';}
+    if(report){
+      report.innerHTML='<div class="unit" style="margin:10px 0"><div class="unit-title">Vollständigkeitsprüfung</div><div class="unit-sub">siteId: '+esc(ctx.siteId)+' · groupKey: '+esc(ctx.groupKey)+' · nur gelesen</div><div class="section-grid">'+rows.map(renderCheckRow).join('')+'</div></div>';
+    }
+    document.getElementById('debug').textContent=JSON.stringify({context:ctx,completeness:rows},null,2);
+  }catch(e){
+    if(status){status.className='notice bad';status.textContent='Vollständigkeit konnte nicht geprüft werden: '+(e.message||e);}
+  }
+  return false;
 }
 async function saveSplitSection(ctx,section,value){
   const session=readServerSession();
@@ -355,6 +434,7 @@ async function restoreEventBackup(backupId,section,rev,btn,skipConfirm){
   return false;
 }
 window.restoreEventBackup=restoreEventBackup;
+window.checkCompleteness=checkCompleteness;
 function handleRestoreButtonClick(e){
   const btn=e.target&&e.target.closest?e.target.closest('.js-restore-backup'):null;
   if(!btn)return;
@@ -385,6 +465,8 @@ async function loadGroupOnly(){
   if(!(ctx.siteId&&ctx.groupKey))return;
   document.getElementById('groupStatus').className='notice warn';
   document.getElementById('groupStatus').textContent='Daten dieser Gruppe werden geladen …';
+  const checkReportEl=document.getElementById('checkReport');
+  if(checkReportEl)checkReportEl.innerHTML='';
   try{
     const [orgResp,evResp]=await Promise.all([fetchJson(withTs('/api/org-structure')),fetchJson(groupEventsUrl(ctx)).catch(e=>({events:[],error:e.message,counters:{}}))]);
     const org=orgResp.organisationStructure||{};
