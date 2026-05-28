@@ -162,8 +162,18 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
 
 .quick-save-floating{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:9998;display:flex;gap:7px;align-items:center;background:rgba(255,255,255,.96);border:1px solid var(--line);box-shadow:0 14px 35px rgba(15,23,42,.22);border-radius:999px;padding:7px 8px}.quick-save-floating button{box-shadow:none}.quick-save-floating .quick-save-note{font-size:11px;font-weight:950;color:var(--muted);padding:0 6px;white-space:nowrap}@media(max-width:640px){.quick-save-floating{left:8px;right:8px;bottom:8px;transform:none;justify-content:center;border-radius:18px;flex-wrap:wrap}.quick-save-floating button{padding:9px 12px}.quick-save-floating .quick-save-note{width:100%;text-align:center}}@media print{.quick-save-floating{display:none!important}}
 </style>
+
+<style id="ulmiEmergencySaveStyle">
+@media screen{body{padding-top:72px!important}}
+@media(max-width:720px){#ulmiEmergencySaveBar{top:auto!important;bottom:8px!important;left:6px!important;right:6px!important;padding:8px!important}#ulmiEmergencySaveBar button:first-child{font-size:17px!important;padding:14px 18px!important}body{padding-top:0!important;padding-bottom:78px!important}}
+</style>
 </head>
 <body>
+<div id="ulmiEmergencySaveBar" class="no-print" style="position:fixed;left:8px;right:8px;top:8px;z-index:2147483647;display:flex;gap:8px;align-items:center;justify-content:center;background:#10845f;color:#fff;border:2px solid #087443;border-radius:18px;padding:10px;box-shadow:0 18px 45px rgba(15,23,42,.35);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;">
+  <button type="button" onclick="saveState(true)" style="border:0;background:#fff;color:#10845f;border-radius:999px;padding:13px 22px;font-size:18px;font-weight:1000;box-shadow:0 8px 20px rgba(15,23,42,.22);">💾 ALLES SPEICHERN</button>
+  <button type="button" onclick="loadGroupStateFromServer(true)" style="border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:11px 14px;font-weight:950;">neu laden</button>
+</div>
+
 <div id="toast" class="status-toast"></div>
 <div class="fullscreen-float no-print">
   <button onclick="fitPlanToScreen()">Ganz anzeigen</button>
