@@ -2582,12 +2582,23 @@ function groupServerPayload(){
   delete payload._freshSourceKey;
   return payload;
 }
+async function groupReadJsonResponse(resp){
+  const text=await resp.text();
+  let data=null;
+  try{data=text?JSON.parse(text):{};}
+  catch(_){
+    const html=/<!doctype html|<html|cloudflare|cf-error-code|error code 520/i.test(text||'');
+    data={ok:false,message:html?'Server liefert gerade eine Fehlerseite statt Daten. Bitte nochmals laden.':((text||'').slice(0,300)||'Ungültige Serverantwort')};
+  }
+  return data||{};
+}
 async function groupServerCall(mode,extra={}){
   const session=groupServerSession();
   const headers={'Content-Type':'application/json'};
   if(session&&session.access_token) headers.Authorization='Bearer '+session.access_token;
   const body=Object.assign({
     mode,
+    section:'state',
     siteId:ULMI_DYNAMIC_CONTEXT.siteId||'',
     siteName:ULMI_DYNAMIC_CONTEXT.siteName||'',
     unitId:ULMI_DYNAMIC_CONTEXT.unitId||'',
@@ -2596,41 +2607,88 @@ async function groupServerCall(mode,extra={}){
     groupId:PLANER_GROUP_ID,
     storageKey:currentStorageKey()
   },extra||{});
-  const resp=await fetch(GROUP_STATE_API,{method:'POST',headers,body:JSON.stringify(body)});
-  let data=null; try{data=await resp.json();}catch(_){data={ok:false,message:'Ungültige Serverantwort'};}
-  if(!resp.ok || !data.ok) throw Object.assign(new Error(data.message||('Serverfehler '+resp.status)),{status:resp.status,data});
-  return data;
+  const urls=[GROUP_STATE_API];
+  if(mode==='load')urls.push('/api/group?section=state');
+  let lastErr=null;
+  for(const url of urls){
+    try{
+      const resp=await fetch(url,{method:'POST',headers,credentials:'same-origin',cache:'no-store',body:JSON.stringify(body)});
+      const data=await groupReadJsonResponse(resp);
+      if(!resp.ok || !data.ok) throw Object.assign(new Error(data.message||('Serverfehler '+resp.status)),{status:resp.status,data});
+      return data;
+    }catch(e){lastErr=e;}
+  }
+  throw lastErr||new Error('Server-Laden nicht möglich');
 }
 function groupSetStatus(text,kind=''){
   const el=q('saveStatus');
   if(el) el.textContent=text;
   try{ if(kind) el.className='pill '+(kind==='ok'?'green':kind==='bad'?'red':kind==='warn'?'yellow':'blue'); }catch(_){ }
 }
+async function mergeGroupStructuredSectionsFromServer(show=false,opts={}){
+  const merged=[];
+  try{
+    const empData=await fetchGroupSection('employees');
+    const employees=Array.isArray(empData.value)?empData.value:[];
+    if(employees.length){state.employees=employees;merged.push('Mitarbeitende');}
+  }catch(e){console.warn('Mitarbeitende separat nicht geladen',e);}
+  try{
+    const planData=await fetchGroupSection('plan');
+    const plan=(planData.value&&typeof planData.value==='object'&&!Array.isArray(planData.value))?planData.value:{};
+    if(Object.keys(plan).length){state.plan=plan;merged.push('Dienstplan');}
+  }catch(e){console.warn('Dienstplan separat nicht geladen',e);}
+  try{
+    const wishData=await fetchGroupSection('wishes');
+    const wishes=(wishData.value&&typeof wishData.value==='object')?wishData.value:null;
+    if(wishes&&Object.keys(wishes).length){state.groupWishes=wishes;merged.push('Wünsche');}
+  }catch(e){console.warn('Wünsche separat nicht geladen',e);}
+  if(merged.length){
+    normalizeStorageObjects();normalizeRules();normalizeDutyCatalog();normalizeCalendarLists();normalizeMonthTargets();normalizeLearners();
+    makeDates();
+    if(opts.saveLocal){try{saveState(false,{force:true,allowEmpty:true,skipServer:true});}catch(_){ }}
+    if(opts.render){try{renderAll();}catch(_){ }}
+    if(show)toast('Separate Bereiche geladen: '+merged.join(', '),'ok');
+  }
+  return merged;
+}
 async function loadGroupStateFromServer(show=true){
   try{
     groupSetStatus('Server lädt…','blue');
     const data=await groupServerCall('load');
     const entry=data.groupState;
-    if(entry&&entry.payload&&stateWeight(entry.payload)>0){
-      applyLoadedState(entry.payload);
-      let dutiesMerged=false;
-      try{dutiesMerged=await mergeGroupDutiesFromServer(false,{saveLocal:false});}catch(dutyErr){console.warn('Gruppen-Dienste separat nicht geladen',dutyErr);}
-      __groupServerRevision=data.groupRevision||entry.revisionId||'';
+    const payload=entry&&entry.payload&&typeof entry.payload==='object'?entry.payload:null;
+    let usedState=false;
+    if(payload&&Object.keys(payload).length){
+      applyLoadedState(payload);
+      usedState=true;
+    }
+    let mergedSections=[];
+    try{mergedSections=await mergeGroupStructuredSectionsFromServer(false,{saveLocal:false,render:false});}catch(sectionErr){console.warn('Separate Gruppenbereiche nicht geladen',sectionErr);}
+    let dutiesMerged=false;
+    try{dutiesMerged=await mergeGroupDutiesFromServer(false,{saveLocal:false});}catch(dutyErr){console.warn('Gruppen-Dienste separat nicht geladen',dutyErr);}
+    if(usedState||mergedSections.length||dutiesMerged){
+      __groupServerRevision=data.groupRevision||entry?.revisionId||data.revision||'';
       state.groupRevision=__groupServerRevision;
       state.serverGroupRevision=__groupServerRevision;
       makeDates();
       try{saveState(false,{force:true,allowEmpty:true,skipServer:true});}catch(_){ }
       renderAll();
-      groupSetStatus(`${PLANER_GROUP_NAME} · Server geladen${dutiesMerged?' + Gruppen-Dienste':''}: `+(state.savedAt?new Date(state.savedAt).toLocaleString('de-CH'):'ohne Datum'),'ok');
-      if(show)toast(`${PLANER_GROUP_NAME}: vom Server geladen${dutiesMerged?' + Gruppen-Dienste':''}`,'ok');
+      const parts=[];
+      if(usedState)parts.push('Status');
+      mergedSections.forEach(x=>parts.push(x));
+      if(dutiesMerged&&!parts.includes('Gruppen-Dienste'))parts.push('Gruppen-Dienste');
+      const label=parts.length?(' · geladen: '+parts.join(', ')):' · Server geladen';
+      groupSetStatus(`${PLANER_GROUP_NAME}${label}`,'ok');
+      if(show)toast(`${PLANER_GROUP_NAME}: vom Server geladen${parts.length?' – '+parts.join(', '):''}`,'ok');
       return true;
     }
     groupSetStatus(`${PLANER_GROUP_NAME} · kein Serverstand gefunden`,'warn');
     if(show)toast('Kein Gruppenstand auf dem Server gefunden','warn');
     return false;
   }catch(e){
-    groupSetStatus(`${PLANER_GROUP_NAME} · Server nicht verbunden`,'warn');
-    if(show)toast((e&&e.message)||'Server-Laden nicht möglich','warn');
+    const msg=(e&&e.message)||'Server-Laden nicht möglich';
+    groupSetStatus(`${PLANER_GROUP_NAME} · Server nicht verbunden: ${msg}`,'warn');
+    if(show)toast(msg,'warn');
     return false;
   }
 }
@@ -7036,10 +7094,18 @@ function groupQuery(){
   return p.toString();
 }
 async function fetchGroupSection(section){
-  const resp=await fetch(groupApiPath(section)+'?'+groupQuery(),{method:'GET'});
-  const data=await resp.json().catch(()=>({ok:false,message:'Ungültige Serverantwort'}));
-  if(!resp.ok||!data.ok)throw new Error(data.message||('Serverfehler '+resp.status));
-  return data;
+  const qs=groupQuery();
+  const urls=[groupApiPath(section)+'?'+qs,'/api/group?section='+encodeURIComponent(section)+'&'+qs];
+  let lastErr=null;
+  for(const url of urls){
+    try{
+      const resp=await fetch(url,{method:'GET',credentials:'same-origin',cache:'no-store'});
+      const data=await groupReadJsonResponse(resp);
+      if(!resp.ok||!data.ok)throw new Error(data.message||('Serverfehler '+resp.status));
+      return data;
+    }catch(e){lastErr=e;}
+  }
+  throw lastErr||new Error('Serverbereich nicht geladen');
 }
 function groupSectionLabel(section){return ({state:'Gruppenstand',employees:'Mitarbeitende',plan:'Dienstplan',duties:'Dienste',wishes:'Wünsche'}[section]||section);}
 
@@ -7195,6 +7261,8 @@ async function restoreGroupBackup(backupId,section,skipConfirm=false,btn=null){
     let restoreMsg='Backup als neue Revision geladen.';
     if(section==='state' && data.groupState&&data.groupState.payload&&stateWeight(data.groupState.payload)>0){
       applyLoadedState(data.groupState.payload);
+      let mergedSections=[];
+      try{mergedSections=await mergeGroupStructuredSectionsFromServer(false,{saveLocal:false,render:false});}catch(sectionErr){console.warn('Separate Bereiche nach Restore nicht geladen',sectionErr);}
       try{await mergeGroupDutiesFromServer(false,{saveLocal:false});}catch(dutyErr){console.warn('Gruppen-Dienste nach Restore nicht separat geladen',dutyErr);}
       __groupServerRevision=data.groupRevision||data.groupState.revisionId||data.revision||'';
       state.groupRevision=__groupServerRevision;
@@ -7202,7 +7270,7 @@ async function restoreGroupBackup(backupId,section,skipConfirm=false,btn=null){
       makeDates();
       try{saveState(false,{force:true,allowEmpty:true,skipServer:true});}catch(_){ }
       renderAll();
-      restoreMsg='Gruppenstand geladen; separate Gruppen-Dienste wurden ebenfalls übernommen, falls vorhanden.';
+      restoreMsg='Gruppenstand geladen; separate Bereiche wurden ebenfalls übernommen'+(mergedSections.length?': '+mergedSections.join(', '):'.');
     }else if(section==='duties' && data.groupDuties){
       const ok=applyGroupDutiesValueToState(data.groupDuties.value||data.groupDuties,{render:true,saveLocal:true});
       __groupServerRevision=data.groupRevision||data.revision||__groupServerRevision;
