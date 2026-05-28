@@ -81,6 +81,7 @@ main{max-width:1320px;margin:auto;padding:18px}
     </div>
     <div class="big-actions">
       <button id="reloadBtn" class="primary" onclick="loadGroupOnly()">Daten dieser Gruppe neu laden</button>
+      <button onclick="splitStateIntoSections()">Fehlende Bereiche aus Status anlegen</button>
       <button onclick="location.href='/'">Zur Startseite</button>
       <button id="adminBtn" class="admin-link hidden" onclick="location.href='gruppen-speicher.html?admin=1'">Admin-Übersicht</button>
     </div>
@@ -218,6 +219,98 @@ async function checkSection(ctx,section,em){
     return {section,ok:true,hasContent:!!d.hasContent,revision:d.revision||0,hash:d.hash||'',updatedAt:d.updatedAt||'',updatedBy:d.updatedBy||{},history:h};
   }catch(e){return {section,ok:false,message:e.message||String(e)}}
 }
+
+function groupSectionApi(section){
+  section=slug(section||'state')||'state';
+  const map={state:'group-state',employees:'group-employees',plan:'group-plan',duties:'group-duties',wishes:'group-wishes'};
+  return '/api/'+(map[section]||'group-state');
+}
+function valueHasRealContent(section,value){
+  section=slug(section||'');
+  if(value==null)return false;
+  if(section==='employees')return Array.isArray(value)&&value.length>0;
+  if(section==='plan')return value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length>0;
+  if(section==='wishes'){
+    if(Array.isArray(value))return value.length>0;
+    if(value&&typeof value==='object')return Object.keys(value.wishes||value).length>0;
+    return false;
+  }
+  if(Array.isArray(value))return value.length>0;
+  if(value&&typeof value==='object')return Object.keys(value).length>0;
+  return !!value;
+}
+function statusPayloadFromSection(data){
+  return (data&&data.groupState&&data.groupState.payload) || (data&&data.value) || (data&&data.state) || {};
+}
+function wishesFromStatusPayload(payload){
+  payload=payload&&typeof payload==='object'?payload:{};
+  const keys=['wishes','employeeWishes','wishRequests','requests','wuensche','wunsche','dayWishes','wishData'];
+  for(const k of keys){
+    const v=payload[k];
+    if(valueHasRealContent('wishes',v))return v;
+  }
+  return {};
+}
+function sectionValueFromStatusPayload(payload,section){
+  payload=payload&&typeof payload==='object'?payload:{};
+  if(section==='employees')return Array.isArray(payload.employees)?payload.employees:[];
+  if(section==='plan')return (payload.plan&&typeof payload.plan==='object'&&!Array.isArray(payload.plan))?payload.plan:{};
+  if(section==='wishes')return wishesFromStatusPayload(payload);
+  return {};
+}
+async function saveSplitSection(ctx,section,value){
+  const session=readServerSession();
+  const headers={'Content-Type':'application/json'};
+  if(session&&session.access_token)headers.Authorization='Bearer '+session.access_token;
+  const body={
+    mode:'save',siteId:ctx.siteId,groupKey:ctx.groupKey,section,value,
+    userEmail:session?.user?.email||readServerUserEmail(),source:'gruppen-speicher-status-aufteilen'
+  };
+  if(section==='employees')body.employees=value;
+  if(section==='plan')body.plan=value;
+  if(section==='wishes')body.wishes=value;
+  return fetchJson(groupSectionApi(section),{method:'POST',headers,credentials:'same-origin',body:JSON.stringify(body)});
+}
+async function splitStateIntoSections(){
+  const ctx=readContext();
+  const status=document.getElementById('groupStatus');
+  if(!(ctx.siteId&&ctx.groupKey)){
+    if(status){status.className='notice bad';status.textContent='Keine eindeutige Gruppe gewählt.';}
+    return false;
+  }
+  if(!confirm('Fehlende Bereiche aus dem aktuellen Status anlegen?\n\nEs werden nur leere Bereiche gefüllt. Vorhandene Bereiche werden nicht überschrieben.'))return false;
+  if(status){status.className='notice warn';status.textContent='Status wird gelesen und fehlende Bereiche werden geprüft …';}
+  try{
+    const stateData=await fetchJson(withTs(groupSectionApi('state')+'?siteId='+encodeURIComponent(ctx.siteId)+'&groupKey='+encodeURIComponent(ctx.groupKey)));
+    const payload=statusPayloadFromSection(stateData);
+    const todo=['employees','plan','wishes'];
+    const done=[];
+    const skipped=[];
+    const failed=[];
+    for(const section of todo){
+      let current=null;
+      try{current=await fetchJson(withTs(groupSectionApi(section)+'?siteId='+encodeURIComponent(ctx.siteId)+'&groupKey='+encodeURIComponent(ctx.groupKey)));}
+      catch(e){failed.push(secLabel(section)+': Prüfung fehlgeschlagen '+(e.message||e));continue;}
+      if(current&&current.hasContent){skipped.push(secLabel(section)+' war schon vorhanden');continue;}
+      const value=sectionValueFromStatusPayload(payload,section);
+      if(!valueHasRealContent(section,value)){skipped.push(secLabel(section)+' nicht im Status gefunden');continue;}
+      try{
+        const saved=await saveSplitSection(ctx,section,value);
+        done.push(secLabel(section)+' Rev '+(saved.revision||''));
+      }catch(e){failed.push(secLabel(section)+': '+(e.message||e));}
+    }
+    const parts=[];
+    if(done.length)parts.push('Angelegt: '+done.join(', '));
+    if(skipped.length)parts.push('Übersprungen: '+skipped.join(', '));
+    if(failed.length)parts.push('Fehler: '+failed.join(', '));
+    if(status){status.className='notice '+(failed.length?'bad':'ok');status.textContent=parts.join('\n')||'Keine fehlenden Daten im Status gefunden.';}
+    await loadGroupOnly();
+  }catch(e){
+    if(status){status.className='notice bad';status.textContent='Fehlende Bereiche konnten nicht angelegt werden: '+(e.message||e);}
+  }
+  return false;
+}
+
 function renderSection(s){
   if(!s.ok)return '<div class="sec bad"><b>'+esc(secLabel(s.section))+'</b>Fehler<br>'+esc(s.message)+'</div>';
   let last=s.history&&s.history[0];let user=who(s.updatedBy)||who(last&&last.createdBy);let time=s.updatedAt||(last&&last.createdAt)||'';
