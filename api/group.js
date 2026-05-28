@@ -61,6 +61,12 @@ function idsFrom(req,body){
   }
   return {siteId,groupKey};
 }
+function optionalIdsFrom(req,body){
+  const qs=parseQuery(req);
+  const rawSite=qs.get('siteId') || body?.siteId || body?.site || '';
+  const rawGroup=qs.get('groupKey') || qs.get('plannerKey') || body?.groupKey || body?.plannerKey || body?.unitId || '';
+  return {siteId:rawSite?group.slug(rawSite):'',groupKey:rawGroup?group.slug(rawGroup):''};
+}
 
 module.exports=async function handler(req,res){
   if(allow(req,res)) return;
@@ -82,6 +88,17 @@ module.exports=async function handler(req,res){
     const body=await readBody(req);
     const mode=group.safe(body.mode||'save');
     const section=sectionFromReq(req,body);
+
+    if(mode==='restore' || mode==='restoreBackup'){
+      const ids=optionalIdsFrom(req,body);
+      const restored=group.restoreBackup(data,ids.siteId,ids.groupKey,body.section||parseQuery(req).get('section')||'',body.backupId,{
+        user:group.userFromBody(Object.assign({},body,{source:body.source||'group-restore'}))
+      });
+      const saved=await saveStore(data);
+      restored.updatedAt=saved.updated_at||restored.updatedAt;
+      return send(res,200,decorateSectionResult(restored,restored.section));
+    }
+
     const ids=idsFrom(req,body);
 
     if(mode==='load'){
@@ -113,6 +130,8 @@ module.exports=async function handler(req,res){
     const updated=group.updateSection(data,ids.siteId,ids.groupKey,section,value,{
       allowEmpty:body.allowEmpty===true,
       force:body.force===true,
+      requireRevision:body.requireRevision===true,
+      baseRevision:body.baseGroupRevision ?? body.baseRevision ?? body.revision ?? '',
       imported:mode==='import' || body.imported===true,
       user:group.userFromBody(body)
     });
