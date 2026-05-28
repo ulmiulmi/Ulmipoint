@@ -290,7 +290,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
   </article></section>
 
   <section id="rules" class="view"><article class="card"><div class="section"><h2>Dienste</h2><span class="pill blue">Dienste</span></div>
-    <details open style="margin-top:12px"><summary><b>Dienste dieser Gruppe</b></summary><div class="mini" style="margin:8px 0">In der Gruppe werden <b>keine Dienste vorgegeben</b>. Die Dienste werden aus dem zentralen Organisationskatalog übernommen. Ganz vorne wird pro Dienst nur <b>Aktiv für diese Gruppe</b> angeklickt; erst bei aktiven Diensten werden Arbeit / Gruppe / Auto / Manuell für diese Gruppe gesetzt. Andere Gruppen werden nicht verändert.</div><div class="toolbar" style="margin:8px 0"><button class="primary" onclick="showCentralDutyPicker()">Dienste aus zentralem Katalog auswählen</button><button class="okbtn" onclick="saveGroupDutiesFromUI(true)">Gruppen-Dienste auf Server speichern</button></div><div id="centralDutyPicker" class="inline-duty-picker"><div class="inline-duty-picker-head"><div><h3 style="margin:0">Dienste für diese Gruppe auswählen</h3><div class="mini">Die Dienste kommen aus dem zentralen Organisationskatalog. Ganz vorne aktivierst du den Dienst für diese Gruppe. Sitzungen/Verfügungsdienste, kurzfristige Einsätze, Frei/Ferien, Krankheit/Unfall, Weiterbildung/Schule und Gleitzeit sind für jede Gruppe bereits aktiv vorgeschlagen. Danach werden nur für aktive Dienste Arbeit / Gruppe / Auto / Manuell angezeigt.</div></div><div class="toolbar" style="margin:0"><button class="primary" onclick="applyCentralDutyPicker()">Auswahl in diese Gruppe übernehmen</button><button onclick="hideCentralDutyPicker()">Schliessen</button></div></div><div id="centralDutyPickerStatus" class="mini">Noch nicht geladen.</div><div id="centralDutyPickerNav" class="inline-duty-nav"></div><div id="centralDutyPickerList"></div></div><div class="table-wrap duty-catalog-wrap" style="max-height:none;overflow-x:auto;overflow-y:visible"><table id="dutyTable" class="duty-table"><thead><tr><th><span class="duty-col-help" tabindex="0">Kurz <span class="info-dot">i</span><span class="duty-col-pop">Kurzcode des Dienstes. Dieser Code erscheint im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Name <span class="info-dot">i</span><span class="duty-col-pop">Lesbarer Name des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Typ <span class="info-dot">i</span><span class="duty-col-pop">Art des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Start <span class="info-dot">i</span><span class="duty-col-pop">Beginn des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Ende <span class="info-dot">i</span><span class="duty-col-pop">Ende des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Intervalle <span class="info-dot">i</span><span class="duty-col-pop">Für geteilte Dienste.</span></span></th><th><span class="duty-col-help" tabindex="0">h <span class="info-dot">i</span><span class="duty-col-pop">Stunden, die der Dienst zählt.</span></span></th><th>Arbeit</th><th>Gruppe</th><th>Auto</th><th>manuell</th><th>Bedeutung</th><th></th></tr></thead><tbody></tbody></table></div></details>
+    <details open style="margin-top:12px"><summary><b>Dienste dieser Gruppe</b></summary><div class="mini" style="margin:8px 0">In der Gruppe werden <b>keine Dienste vorgegeben</b>. Die Dienste werden aus dem zentralen Organisationskatalog übernommen. Ganz vorne wird pro Dienst nur <b>Aktiv für diese Gruppe</b> angeklickt; erst bei aktiven Diensten werden Arbeit / Gruppe / Auto / Manuell für diese Gruppe gesetzt. Andere Gruppen werden nicht verändert.</div><div class="toolbar" style="margin:8px 0"><button class="primary" onclick="showCentralDutyPicker()">Dienste aus zentralem Katalog auswählen</button><button onclick="mergeGroupDutiesFromServer(true,{render:true,saveLocal:true})">🔄 Gruppen-Dienste vom Server laden</button><button class="okbtn" onclick="saveGroupDutiesFromUI(true)">Gruppen-Dienste auf Server speichern</button></div><div id="centralDutyPicker" class="inline-duty-picker"><div class="inline-duty-picker-head"><div><h3 style="margin:0">Dienste für diese Gruppe auswählen</h3><div class="mini">Die Dienste kommen aus dem zentralen Organisationskatalog. Ganz vorne aktivierst du den Dienst für diese Gruppe. Sitzungen/Verfügungsdienste, kurzfristige Einsätze, Frei/Ferien, Krankheit/Unfall, Weiterbildung/Schule und Gleitzeit sind für jede Gruppe bereits aktiv vorgeschlagen. Danach werden nur für aktive Dienste Arbeit / Gruppe / Auto / Manuell angezeigt.</div></div><div class="toolbar" style="margin:0"><button class="primary" onclick="applyCentralDutyPicker()">Auswahl in diese Gruppe übernehmen</button><button onclick="hideCentralDutyPicker()">Schliessen</button></div></div><div id="centralDutyPickerStatus" class="mini">Noch nicht geladen.</div><div id="centralDutyPickerNav" class="inline-duty-nav"></div><div id="centralDutyPickerList"></div></div><div class="table-wrap duty-catalog-wrap" style="max-height:none;overflow-x:auto;overflow-y:visible"><table id="dutyTable" class="duty-table"><thead><tr><th><span class="duty-col-help" tabindex="0">Kurz <span class="info-dot">i</span><span class="duty-col-pop">Kurzcode des Dienstes. Dieser Code erscheint im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Name <span class="info-dot">i</span><span class="duty-col-pop">Lesbarer Name des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Typ <span class="info-dot">i</span><span class="duty-col-pop">Art des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Start <span class="info-dot">i</span><span class="duty-col-pop">Beginn des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Ende <span class="info-dot">i</span><span class="duty-col-pop">Ende des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Intervalle <span class="info-dot">i</span><span class="duty-col-pop">Für geteilte Dienste.</span></span></th><th><span class="duty-col-help" tabindex="0">h <span class="info-dot">i</span><span class="duty-col-pop">Stunden, die der Dienst zählt.</span></span></th><th>Arbeit</th><th>Gruppe</th><th>Auto</th><th>manuell</th><th>Bedeutung</th><th></th></tr></thead><tbody></tbody></table></div></details>
     <details style="margin-top:12px"><summary><b>Standardbedarf Woche / Wochenende normal</b></summary><div class="mini" style="margin:8px 0">Pro Wochentag Dienste direkt anhaken. Bei Bedarf Anzahl erhöhen, zum Beispiel F9 zweimal. Samstag und Sonntag werden jetzt direkt aus dieser Eingabe für <b>Wochenende normal</b> übernommen. Feiertage nutzen weiterhin die Wochenendregel, wenn kein Tagesstatus gesetzt ist.</div><div id="stdNeeds"></div><div class="toolbar"><button class="primary" onclick="saveStandardNeedsFromUI(); makePlan(true)">Standardwoche übernehmen</button></div></details>
     <details style="margin-top:12px"><summary><b>Schulferien / Feiertage Basel-Stadt lokal</b></summary><div class="mini" style="margin:8px 0">Bearbeitbare lokale Liste. Format Ferien: YYYY-MM-DD bis YYYY-MM-DD pro Zeile. Feiertage: YYYY-MM-DD Name. Zusätzliche arbeitsfreie Halbtage werden automatisch als ½FT markiert: Fasnachtsmontag-Nachmittag, Fasnachtsmittwoch-Nachmittag, 31. Juli-Nachmittag, Heiligabend-Nachmittag und Silvester-Nachmittag, sofern diese Tage nicht auf Samstag/Sonntag fallen. Fasnacht wird nicht als ganzer Feiertag geführt.</div><div class="formgrid"><div><label>Schulferien</label><textarea id="schoolHolidayText"></textarea></div><div><label>Feiertage</label><textarea id="holidayText"></textarea></div></div><button class="primary" onclick="saveCalendarLists(); renderAll()">Kalenderlisten übernehmen</button></details>
   </article></section>
@@ -2719,7 +2719,7 @@ async function loadGroupStateFromServer(show=true){
       state.groupRevision=__groupServerRevision;
       state.serverGroupRevision=__groupServerRevision;
       makeDates();
-      try{saveState(false,{force:true,allowEmpty:true,skipServer:true});}catch(_){ }
+      try{saveState(false,{force:true,allowEmpty:true,skipServer:true,skipUiSync:true});}catch(_){ }
       renderAll();
       groupSetStatus(`${PLANER_GROUP_NAME} · Server geladen${dutiesMerged?' + Gruppen-Dienste':''}: `+(state.savedAt?new Date(state.savedAt).toLocaleString('de-CH'):'ohne Datum'),'ok');
       if(show)toast(`${PLANER_GROUP_NAME}: vom Server geladen${dutiesMerged?' + Gruppen-Dienste':''}`,'ok');
@@ -2922,8 +2922,12 @@ function forgetDeviceProfile(){
   toast('Speicher dieses Geräts bleibt aktiv','warn');
 }
 function saveState(show=true,opts={}){
-  syncOpenEditorsBeforeSave({quiet:true});
-  readAPIFromUI();
+  // Beim Laden vom Server darf die alte sichtbare UI den frisch geladenen Zustand
+  // nicht sofort wieder überschreiben. Darum kann das UI-Sync gezielt übersprungen werden.
+  if(!(opts&&opts.skipUiSync)){
+    syncOpenEditorsBeforeSave({quiet:true});
+    readAPIFromUI();
+  }
   const allowFreshSave=!!(opts.force||opts.allowEmpty||state._freshStart||(function(){try{return sessionStorage.getItem(FRESH_START_KEY)==='1';}catch(e){return false;}})());
   const newWeight=stateWeight(state);
   const key=currentStorageKey();
@@ -3010,7 +3014,7 @@ function loadState(show=true,opts={}){
       if(found && stateWeight(found.state)>Math.max(loadedWeight,0)){
         applyLoadedState(found.state);loadedOk=true;source=found.key;loadedWeight=stateWeight(state);
         if(show)toast(`${PLANER_GROUP_NAME}: vorhandener voller Speicherstand geladen`,'warn');
-        try{saveState(false,{force:true,skipServer:true});}catch(e){console.warn(e);}
+        try{saveState(false,{force:true,skipServer:true,skipUiSync:true});}catch(e){console.warn(e);}
       }
     }
     if(allowFallback && (!loadedOk || loadedWeight<1000)){
@@ -7189,7 +7193,7 @@ function applyGroupDutiesValueToState(value,opts={}){
   state.duties=next;
   normalizeDutyCatalog();
   cleanDeletedDutyReferences(state.deletedDutyCodes||[]);
-  if(opts.saveLocal){try{saveState(false,{force:true,allowEmpty:true,skipServer:true});}catch(_){ }}
+  if(opts.saveLocal){try{saveState(false,{force:true,allowEmpty:true,skipServer:true,skipUiSync:true});}catch(_){ }}
   if(opts.render){
     try{renderDutyTable();}catch(_){ }
     try{renderStandardNeeds();}catch(_){ }
@@ -7302,7 +7306,7 @@ async function restoreGroupBackup(backupId,section,skipConfirm=false,btn=null){
       state.groupRevision=__groupServerRevision;
       state.serverGroupRevision=__groupServerRevision;
       makeDates();
-      try{saveState(false,{force:true,allowEmpty:true,skipServer:true});}catch(_){ }
+      try{saveState(false,{force:true,allowEmpty:true,skipServer:true,skipUiSync:true});}catch(_){ }
       renderAll();
       restoreMsg='Gruppenstand geladen; separate Gruppen-Dienste wurden ebenfalls übernommen, falls vorhanden.';
     }else if(section==='duties' && data.groupDuties){
