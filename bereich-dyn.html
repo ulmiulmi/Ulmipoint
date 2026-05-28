@@ -228,7 +228,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
 <main class="app">
   <section class="hero no-print">
     <div><div class="eyebrow" id="dynEyebrow">ULMIPOINT Adapter · Bereich</div><h1 id="dynTitle">Bereich</h1></div>
-    <div class="toolbar"><button class="primary" onclick="saveState(true)">💾 Speichern auf Server</button><button onclick="loadGroupStateFromServer(true)">🔄 Vom Server laden</button><button onclick="makePlan(true)">Monat planen</button><button onclick="fixCurrentMonth()">Monat sperren</button><button onclick="unfixCurrentMonth()">Monat freigeben</button><span class="pill" id="aiStatus">KI: prüft…</span></div>
+    <div class="toolbar"><button class="primary" onclick="saveState(true)">💾 Alles speichern</button><button onclick="loadGroupStateFromServer(true)">🔄 Vom Server laden</button><button onclick="makePlan(true)">Monat planen</button><button onclick="fixCurrentMonth()">Monat sperren</button><button onclick="unfixCurrentMonth()">Monat freigeben</button><span class="pill" id="aiStatus">KI: prüft…</span></div>
   </section>
   <nav class="tabs no-print">
     <button class="tab active" onclick="showView('plan',this)">📅 Plan</button>
@@ -323,7 +323,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
     <div class="section"><h2>Gruppen-Speicher</h2><span class="pill blue" id="groupStorageContext">Gruppe</span></div>
     <div class="mini" style="margin-bottom:10px">Diese Seite betrifft nur diese Gruppe / diesen Bereich. Es wird keine ganze Organisation gespeichert, geladen oder wiederhergestellt.</div>
     <div class="toolbar">
-      <button class="primary" onclick="saveState(true)">💾 Speichern auf Server</button>
+      <button class="primary" onclick="saveState(true)">💾 Alles speichern</button>
       <button onclick="loadGroupStateFromServer(true)">🔄 Vom Server neu laden</button>
       <button onclick="groupStorageRefresh(true)">Gruppenstatus prüfen</button>
       <button onclick="downloadGroupBackup()">Gruppen-Sicherung herunterladen</button>
@@ -2649,21 +2649,49 @@ async function saveGroupSectionToServer(section,value,show=false){
   };
   if(section==='employees')body.employees=value;
   if(section==='plan')body.plan=value;
+  if(section==='duties')body.duties=value;
+  if(section==='wishes')body.wishes=value;
   const resp=await fetch(groupSectionApi(section),{method:'POST',headers,body:JSON.stringify(body)});
   let data={}; try{data=await resp.json();}catch(_){data={message:'Ungültige Serverantwort'};}
   if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
   return data;
 }
-async function saveCoreGroupSectionsToServer(show=false){
+function groupWishesPayloadFromState(){
+  const candidates=[
+    state&&state.wishes,
+    state&&state.groupWishes,
+    state&&state.employeeWishes,
+    state&&state.wishRequests,
+    state&&state.requests,
+    state&&state.dayWishes,
+    state&&state.wishData
+  ];
+  for(const v of candidates){
+    if(groupSectionHasContent('wishes',v))return clone(v);
+  }
+  return {};
+}
+async function saveCompleteGroupSectionsToServer(show=false){
   const results=[];
   try{if(typeof readEmployeesFromTable==='function')readEmployeesFromTable(false);}catch(_){ }
-  try{results.push(['Mitarbeitende',await saveGroupSectionToServer('employees',clone(state.employees||[]),show)]);}catch(e){results.push(['Mitarbeitende',{ok:false,error:(e&&e.message)||String(e)}]);}
-  try{results.push(['Dienstplan',await saveGroupSectionToServer('plan',clone(state.plan||{}),show)]);}catch(e){results.push(['Dienstplan',{ok:false,error:(e&&e.message)||String(e)}]);}
+  try{if(typeof syncDutyCatalogFromUI==='function')syncDutyCatalogFromUI({quiet:true});}catch(_){ }
+  const dutiesValue=(typeof groupDutySelectionPayloadFromState==='function')?groupDutySelectionPayloadFromState():{version:'1.0',duties:clone(state.duties||[])};
+  const wishesValue=groupWishesPayloadFromState();
+  const jobs=[
+    ['Mitarbeitende','employees',clone(state.employees||[])],
+    ['Dienstplan','plan',clone(state.plan||{})],
+    ['Gruppen-Dienste','duties',dutiesValue],
+    ['Wünsche','wishes',wishesValue]
+  ];
+  for(const job of jobs){
+    try{results.push([job[0],await saveGroupSectionToServer(job[1],job[2],show)]);}
+    catch(e){results.push([job[0],{ok:false,error:(e&&e.message)||String(e)}]);}
+  }
   const failed=results.filter(x=>x[1]&&x[1].ok===false);
   const saved=results.filter(x=>x[1]&&x[1].ok!==false&&!x[1].skipped);
   const skipped=results.filter(x=>x[1]&&x[1].skipped);
   if(failed.length){
-    const msg='Zusatzspeicher nicht vollständig: '+failed.map(x=>x[0]+': '+x[1].error).join(' · ');
+    const msg='Nicht vollständig gespeichert: '+failed.map(x=>x[0]+': '+x[1].error).join(' · ');
     groupSetStatus(msg,'warn');
     if(show)toast(msg,'warn');
     return false;
@@ -2672,6 +2700,7 @@ async function saveCoreGroupSectionsToServer(show=false){
   if(show&&skipped.length)toast('Leer übersprungen: '+skipped.map(x=>x[0]).join(', '),'warn');
   return true;
 }
+function saveCoreGroupSectionsToServer(show=false){return saveCompleteGroupSectionsToServer(show);}
 function groupSetStatus(text,kind=''){
   const el=q('saveStatus');
   if(el) el.textContent=text;
@@ -2719,9 +2748,9 @@ async function saveGroupStateToServer(show=true,opts={}){
     state.serverGroupRevision=__groupServerRevision;
     __groupServerLastHash=hash;
     let sectionsOk=true;
-    if(show)sectionsOk=await saveCoreGroupSectionsToServer(true);
-    groupSetStatus(sectionsOk?'Gruppe vollständig gespeichert: Status, Mitarbeitende und Dienstplan.':'Status gespeichert. Mitarbeitende/Dienstplan bitte prüfen.','ok');
-    if(show)toast(sectionsOk?'Gruppe vollständig gespeichert':'Status gespeichert; Zusatzspeicher prüfen',sectionsOk?'ok':'warn');
+    if(show)sectionsOk=await saveCompleteGroupSectionsToServer(true);
+    groupSetStatus(sectionsOk?'Alles gespeichert: Status, Mitarbeitende, Dienstplan, Gruppen-Dienste und vorhandene Wünsche.':'Status gespeichert. Einzelne Bereiche bitte prüfen.','ok');
+    if(show)toast(sectionsOk?'Alles gespeichert':'Status gespeichert; Einzelbereiche prüfen',sectionsOk?'ok':'warn');
     return true;
   }catch(e){
     const msg=(e&&e.message)||'Server-Speichern nicht möglich';
