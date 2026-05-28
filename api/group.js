@@ -20,6 +20,38 @@ function sectionFromReq(req,body){
   return group.sectionName(body?.section||'state');
 }
 
+
+function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+function cleanServerErrorMessage(err,context){
+  const raw=String(err&&err.message?err.message:err||'');
+  const isHtml=/<!doctype html|<html|cloudflare|cf-error-code|error code 520/i.test(raw);
+  if(isHtml){
+    return (context?context+': ':'')+'Supabase/Cloudflare hat gerade Fehler 520 geliefert. Bitte in 30 Sekunden nochmals laden. Es wurde nichts wiederhergestellt oder überschrieben.';
+  }
+  return raw || ((context?context+': ':'')+'Unbekannter Serverfehler.');
+}
+async function withRetries(fn,context){
+  let lastErr=null;
+  for(let attempt=0; attempt<3; attempt++){
+    try{return await fn();}
+    catch(err){
+      lastErr=err;
+      const msg=String(err&&err.message?err.message:err||'');
+      const retry=/<!doctype html|<html|cloudflare|cf-error-code|error code 520|http 5\d\d|network|fetch failed|econnreset|etimedout/i.test(msg);
+      if(!retry || attempt===2) break;
+      await sleep(500+(attempt*900));
+    }
+  }
+  const e=new Error(cleanServerErrorMessage(lastErr,context));
+  e.original=lastErr;
+  throw e;
+}
+function compactGroupHistoryForRestore(data,keepEvents=350,keepBackups=180){
+  if(!data || typeof data!=='object') return;
+  if(Array.isArray(data.groupEvents) && data.groupEvents.length>keepEvents) data.groupEvents=data.groupEvents.slice(0,keepEvents);
+  if(Array.isArray(data.groupBackups) && data.groupBackups.length>keepBackups) data.groupBackups=data.groupBackups.slice(0,keepBackups);
+}
+
 function decorateSectionResult(result,section){
   if(!result || typeof result!=='object') return result;
   section=group.sectionName(section);
@@ -71,7 +103,7 @@ function optionalIdsFrom(req,body){
 module.exports=async function handler(req,res){
   if(allow(req,res)) return;
   try{
-    const row=await fetchStore();
+    const row=await withRetries(()=>fetchStore(),'Serverdaten laden');
     const data=row.data||{};
 
     if(req.method==='GET'){
@@ -94,7 +126,8 @@ module.exports=async function handler(req,res){
       const restored=group.restoreBackup(data,ids.siteId,ids.groupKey,body.section||parseQuery(req).get('section')||'',body.backupId,{
         user:group.userFromBody(Object.assign({},body,{source:body.source||'group-restore'}))
       });
-      const saved=await saveStore(data);
+      compactGroupHistoryForRestore(data);
+      const saved=await withRetries(()=>saveStore(data),'Wiederherstellung speichern');
       restored.updatedAt=saved.updated_at||restored.updatedAt;
       return send(res,200,decorateSectionResult(restored,restored.section));
     }
@@ -136,10 +169,12 @@ module.exports=async function handler(req,res){
       user:group.userFromBody(body)
     });
 
-    const saved=await saveStore(data);
+    const saved=await withRetries(()=>saveStore(data),'Gruppenstand speichern');
     updated.updatedAt=saved.updated_at||updated.updatedAt;
     return send(res,200,decorateSectionResult(updated,section));
   }catch(err){
-    return send(res,400,{ok:false,message:err.message||String(err)});
+    const msg=cleanServerErrorMessage(err);
+    const status=/Supabase\/Cloudflare|520|Serverdaten laden|Wiederherstellung speichern/i.test(msg)?503:400;
+    return send(res,status,{ok:false,message:msg});
   }
 };
