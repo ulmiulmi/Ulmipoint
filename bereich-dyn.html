@@ -2601,6 +2601,77 @@ async function groupServerCall(mode,extra={}){
   if(!resp.ok || !data.ok) throw Object.assign(new Error(data.message||('Serverfehler '+resp.status)),{status:resp.status,data});
   return data;
 }
+
+function groupSectionApi(section){
+  section=String(section||'').trim().toLowerCase();
+  if(section==='employees')return '/api/group-employees';
+  if(section==='plan')return '/api/group-plan';
+  if(section==='duties')return '/api/group-duties';
+  if(section==='wishes')return '/api/group-wishes';
+  return '/api/group-state';
+}
+function groupSectionHasContent(section,value){
+  if(value==null)return false;
+  section=String(section||'').trim().toLowerCase();
+  if(section==='employees')return Array.isArray(value)&&value.length>0;
+  if(section==='plan')return value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).length>0;
+  if(section==='wishes'){
+    if(Array.isArray(value))return value.length>0;
+    if(value&&typeof value==='object')return Object.keys(value.wishes||value).length>0;
+    return false;
+  }
+  if(section==='duties'){
+    if(Array.isArray(value))return value.length>0;
+    if(value&&typeof value==='object')return Array.isArray(value.duties)?value.duties.length>0:Object.keys(value).length>0;
+    return false;
+  }
+  if(Array.isArray(value))return value.length>0;
+  if(value&&typeof value==='object')return Object.keys(value).length>0;
+  return !!value;
+}
+async function saveGroupSectionToServer(section,value,show=false){
+  section=String(section||'').trim().toLowerCase();
+  if(!groupSectionHasContent(section,value))return {ok:true,skipped:true,section,reason:'leer'};
+  const session=groupServerSession();
+  const headers={'Content-Type':'application/json'};
+  if(session&&session.access_token)headers.Authorization='Bearer '+session.access_token;
+  const body={
+    mode:'save',
+    siteId:ULMI_DYNAMIC_CONTEXT.siteId||'',
+    siteName:ULMI_DYNAMIC_CONTEXT.siteName||'',
+    unitId:ULMI_DYNAMIC_CONTEXT.unitId||'',
+    unitName:ULMI_DYNAMIC_CONTEXT.unitName||PLANER_GROUP_NAME,
+    groupKey:ULMI_DYNAMIC_CONTEXT.plannerKey||ULMI_DYNAMIC_CONTEXT.unitId||PLANER_GROUP_ID,
+    groupId:PLANER_GROUP_ID,
+    value,
+    userEmail:session?.user?.email||'',
+    source:'bereich-dyn-complete-save'
+  };
+  if(section==='employees')body.employees=value;
+  if(section==='plan')body.plan=value;
+  const resp=await fetch(groupSectionApi(section),{method:'POST',headers,body:JSON.stringify(body)});
+  let data={}; try{data=await resp.json();}catch(_){data={message:'Ungültige Serverantwort'};}
+  if(!resp.ok||data.ok===false)throw new Error(data.message||('HTTP '+resp.status));
+  return data;
+}
+async function saveCoreGroupSectionsToServer(show=false){
+  const results=[];
+  try{if(typeof readEmployeesFromTable==='function')readEmployeesFromTable(false);}catch(_){ }
+  try{results.push(['Mitarbeitende',await saveGroupSectionToServer('employees',clone(state.employees||[]),show)]);}catch(e){results.push(['Mitarbeitende',{ok:false,error:(e&&e.message)||String(e)}]);}
+  try{results.push(['Dienstplan',await saveGroupSectionToServer('plan',clone(state.plan||{}),show)]);}catch(e){results.push(['Dienstplan',{ok:false,error:(e&&e.message)||String(e)}]);}
+  const failed=results.filter(x=>x[1]&&x[1].ok===false);
+  const saved=results.filter(x=>x[1]&&x[1].ok!==false&&!x[1].skipped);
+  const skipped=results.filter(x=>x[1]&&x[1].skipped);
+  if(failed.length){
+    const msg='Zusatzspeicher nicht vollständig: '+failed.map(x=>x[0]+': '+x[1].error).join(' · ');
+    groupSetStatus(msg,'warn');
+    if(show)toast(msg,'warn');
+    return false;
+  }
+  if(show&&saved.length)toast('Zusätzlich gespeichert: '+saved.map(x=>x[0]).join(', '),'ok');
+  if(show&&skipped.length)toast('Leer übersprungen: '+skipped.map(x=>x[0]).join(', '),'warn');
+  return true;
+}
 function groupSetStatus(text,kind=''){
   const el=q('saveStatus');
   if(el) el.textContent=text;
@@ -2647,8 +2718,10 @@ async function saveGroupStateToServer(show=true,opts={}){
     state.groupRevision=__groupServerRevision;
     state.serverGroupRevision=__groupServerRevision;
     __groupServerLastHash=hash;
-    groupSetStatus('Gruppe gespeichert und vom Server bestätigt.','ok');
-    if(show)toast('Gruppe gespeichert und vom Server bestätigt','ok');
+    let sectionsOk=true;
+    if(show)sectionsOk=await saveCoreGroupSectionsToServer(true);
+    groupSetStatus(sectionsOk?'Gruppe vollständig gespeichert: Status, Mitarbeitende und Dienstplan.':'Status gespeichert. Mitarbeitende/Dienstplan bitte prüfen.','ok');
+    if(show)toast(sectionsOk?'Gruppe vollständig gespeichert':'Status gespeichert; Zusatzspeicher prüfen',sectionsOk?'ok':'warn');
     return true;
   }catch(e){
     const msg=(e&&e.message)||'Server-Speichern nicht möglich';
