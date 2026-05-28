@@ -2613,14 +2613,16 @@ async function loadGroupStateFromServer(show=true){
     const entry=data.groupState;
     if(entry&&entry.payload&&stateWeight(entry.payload)>0){
       applyLoadedState(entry.payload);
+      let dutiesMerged=false;
+      try{dutiesMerged=await mergeGroupDutiesFromServer(false,{saveLocal:false});}catch(dutyErr){console.warn('Gruppen-Dienste separat nicht geladen',dutyErr);}
       __groupServerRevision=data.groupRevision||entry.revisionId||'';
       state.groupRevision=__groupServerRevision;
       state.serverGroupRevision=__groupServerRevision;
       makeDates();
       try{saveState(false,{force:true,allowEmpty:true,skipServer:true});}catch(_){ }
       renderAll();
-      groupSetStatus(`${PLANER_GROUP_NAME} · Server geladen: `+(state.savedAt?new Date(state.savedAt).toLocaleString('de-CH'):'ohne Datum'),'ok');
-      if(show)toast(`${PLANER_GROUP_NAME}: vom Server geladen`,'ok');
+      groupSetStatus(`${PLANER_GROUP_NAME} · Server geladen${dutiesMerged?' + Gruppen-Dienste':''}: `+(state.savedAt?new Date(state.savedAt).toLocaleString('de-CH'):'ohne Datum'),'ok');
+      if(show)toast(`${PLANER_GROUP_NAME}: vom Server geladen${dutiesMerged?' + Gruppen-Dienste':''}`,'ok');
       return true;
     }
     groupSetStatus(`${PLANER_GROUP_NAME} · kein Serverstand gefunden`,'warn');
@@ -7040,6 +7042,69 @@ async function fetchGroupSection(section){
   return data;
 }
 function groupSectionLabel(section){return ({state:'Gruppenstand',employees:'Mitarbeitende',plan:'Dienstplan',duties:'Dienste',wishes:'Wünsche'}[section]||section);}
+
+function groupDutyListFromServerValue(value){
+  if(!value)value={};
+  const raw=Array.isArray(value)?value:(Array.isArray(value.duties)?value.duties:[]);
+  const defMap={};
+  (DEFAULT_DUTIES||[]).forEach(d=>{if(d&&d.code)defMap[String(d.code).trim().toUpperCase()]=d;});
+  const seen=new Set();
+  const out=[];
+  raw.forEach((d,i)=>{
+    if(!d)return;
+    const code=String(d.code||d.short||d.dutyId||'').trim().toUpperCase();
+    if(!code||seen.has(code))return;
+    seen.add(code);
+    const def=defMap[code]||{};
+    const obj={
+      ...def,
+      code,
+      name:String(d.name||def.name||code).trim(),
+      type:d.type||def.type||'group',
+      start:String((d.start??def.start)??'').trim(),
+      end:String((d.end??def.end)??'').trim(),
+      hours:parseFloat((d.hours??def.hours)??0)||0,
+      countsAsWork:d.countsAsWork!==undefined?!!d.countsAsWork:!!def.countsAsWork,
+      countsForCoverage:d.countsForCoverage!==undefined?!!d.countsForCoverage:!!def.countsForCoverage,
+      autoPlan:d.autoPlan!==undefined?!!d.autoPlan:!!def.autoPlan,
+      manualOnly:d.manualOnly!==undefined?!!d.manualOnly:!!def.manualOnly,
+      meaning:String(d.meaning||def.meaning||'').trim(),
+      active:d.active!==false
+    };
+    if(Array.isArray(d.intervals)&&d.intervals.length)obj.intervals=d.intervals;
+    else if(Array.isArray(def.intervals)&&def.intervals.length)obj.intervals=def.intervals;
+    if(d.hoursMode||def.hoursMode)obj.hoursMode=d.hoursMode||def.hoursMode;
+    out.push({...obj,...protectedDutyPatch(code)});
+  });
+  return out;
+}
+function applyGroupDutiesValueToState(value,opts={}){
+  const next=groupDutyListFromServerValue(value);
+  if(!next.length)return false;
+  const loadedCodes=new Set(next.map(d=>String(d.code||'').trim().toUpperCase()).filter(Boolean));
+  if(!Array.isArray(state.deletedDutyCodes))state.deletedDutyCodes=[];
+  state.deletedDutyCodes=state.deletedDutyCodes.filter(c=>!loadedCodes.has(String(c||'').trim().toUpperCase()));
+  state.duties=next;
+  normalizeDutyCatalog();
+  cleanDeletedDutyReferences(state.deletedDutyCodes||[]);
+  if(opts.saveLocal){try{saveState(false,{force:true,allowEmpty:true,skipServer:true});}catch(_){ }}
+  if(opts.render){
+    try{renderDutyTable();}catch(_){ }
+    try{renderStandardNeeds();}catch(_){ }
+    try{renderRuleCards();}catch(_){ }
+    try{fillDutySelect();}catch(_){ }
+    try{renderPlan();}catch(_){ }
+    try{renderSystem();}catch(_){ }
+  }
+  return true;
+}
+async function mergeGroupDutiesFromServer(show=false,opts={}){
+  const data=await fetchGroupSection('duties');
+  const value=data.groupDuties?.value ?? data.groupDuties ?? data.value ?? {};
+  const ok=applyGroupDutiesValueToState(value,{render:!!opts.render,saveLocal:!!opts.saveLocal});
+  if(ok&&show)toast('Gruppen-Dienste vom Server geladen','ok');
+  return ok;
+}
 function groupSectionInfo(data,section){
   const value=data.groupDuties?.value ?? data.groupState?.payload ?? data.value ?? {};
   let count=0;
@@ -7084,7 +7149,14 @@ async function loadGroupActivity(show=true){
     const data=await resp.json().catch(()=>({ok:false,message:'Ungültige Serverantwort'}));
     if(!resp.ok||!data.ok)throw new Error(data.message||('Serverfehler '+resp.status));
     const events=Array.isArray(data.events)?data.events:[];
-    if(el)el.innerHTML=events.length?events.map(ev=>`<div class="server-history-row"><div><div class="server-history-title">${esc(ev.type||'Änderung')} · ${esc(ev.section||'')}</div><div class="server-history-meta">${esc(ev.createdAt?new Date(ev.createdAt).toLocaleString('de-CH'):'')} · Revision ${esc(ev.revisionVorher||0)} → ${esc(ev.revisionNachher||0)} · Backup ${esc(ev.backupId||'-')} · ${esc(ev.createdBy?.email||'')}</div>${ev.backupId?`<div style="margin-top:8px"><button class="js-restore-group-backup" type="button" data-backup-id="${esc(ev.backupId)}" data-section="${esc(ev.section||'state')}" onclick="return restoreGroupBackup(${jsArg(ev.backupId)},${jsArg(ev.section||'state')},false,this)">Backup laden</button></div>`:''}</div></div>`).join(''):'<div class="server-history-row"><div><div class="server-history-title">Keine Aktivität für diese Gruppe.</div></div></div>';
+    if(el)el.innerHTML=events.length?events.map(ev=>{
+      const section=ev.section||'state';
+      const restoreBtn=ev.backupId?`<button class="js-restore-group-backup" type="button" data-backup-id="${esc(ev.backupId)}" data-section="${esc(section)}" onclick="return restoreGroupBackup(${jsArg(ev.backupId)},${jsArg(section)},false,this)">Backup laden</button>`:'';
+      const safetyLine=ev.safetyBackupId?`<div class="server-history-meta">Sicherheits-Backup aktueller Stand: ${esc(ev.safetyBackupId)}</div>`:'';
+      const safetyBtn=ev.safetyBackupId?`<button class="js-restore-group-backup" type="button" data-backup-id="${esc(ev.safetyBackupId)}" data-section="${esc(section)}" onclick="return restoreGroupBackup(${jsArg(ev.safetyBackupId)},${jsArg(section)},false,this)">Sicherheits-Backup laden</button>`:'';
+      const buttons=[restoreBtn,safetyBtn].filter(Boolean).join(' ');
+      return `<div class="server-history-row"><div><div class="server-history-title">${esc(ev.type||'Änderung')} · ${esc(section)}</div><div class="server-history-meta">${esc(ev.createdAt?new Date(ev.createdAt).toLocaleString('de-CH'):'')} · Revision ${esc(ev.revisionVorher||0)} → ${esc(ev.revisionNachher||0)} · Backup ${esc(ev.backupId||'-')} · ${esc(ev.createdBy?.email||'')}</div>${safetyLine}${buttons?`<div style="margin-top:8px">${buttons}</div>`:''}</div></div>`;
+    }).join(''):'<div class="server-history-row"><div><div class="server-history-title">Keine Aktivität für diese Gruppe.</div></div></div>';
     window.__groupActivityCache=data;
     if(show)toast('Aktivität dieser Gruppe geladen','ok');
   }catch(e){if(el)el.innerHTML='<div class="server-history-row"><div><div class="server-history-title">Aktivität nicht geladen</div><div class="server-history-meta">'+esc(e.message)+'</div></div></div>';if(show)toast(e.message,'bad');}
@@ -7120,21 +7192,30 @@ async function restoreGroupBackup(backupId,section,skipConfirm=false,btn=null){
     })});
     const data=await resp.json().catch(()=>({ok:false,message:'Ungültige Serverantwort'}));
     if(!resp.ok||data.ok===false)throw new Error(data.message||('Serverfehler '+resp.status));
+    let restoreMsg='Backup als neue Revision geladen.';
     if(section==='state' && data.groupState&&data.groupState.payload&&stateWeight(data.groupState.payload)>0){
       applyLoadedState(data.groupState.payload);
+      try{await mergeGroupDutiesFromServer(false,{saveLocal:false});}catch(dutyErr){console.warn('Gruppen-Dienste nach Restore nicht separat geladen',dutyErr);}
       __groupServerRevision=data.groupRevision||data.groupState.revisionId||data.revision||'';
       state.groupRevision=__groupServerRevision;
       state.serverGroupRevision=__groupServerRevision;
       makeDates();
       try{saveState(false,{force:true,allowEmpty:true,skipServer:true});}catch(_){ }
       renderAll();
+      restoreMsg='Gruppenstand geladen; separate Gruppen-Dienste wurden ebenfalls übernommen, falls vorhanden.';
+    }else if(section==='duties' && data.groupDuties){
+      const ok=applyGroupDutiesValueToState(data.groupDuties.value||data.groupDuties,{render:true,saveLocal:true});
+      __groupServerRevision=data.groupRevision||data.revision||__groupServerRevision;
+      groupStorageRefresh(false);
+      loadGroupActivity(false);
+      restoreMsg=ok?'Dienste-Backup geladen und in den Planer übernommen.':'Dienste-Backup geladen, aber es enthielt keine Dienste.';
     }else{
       __groupServerRevision=data.groupRevision||data.revision||__groupServerRevision;
       groupStorageRefresh(false);
       loadGroupActivity(false);
     }
-    groupSetStatus('Backup als neue Revision geladen.','ok');
-    toast('Backup als neue Revision geladen','ok');
+    groupSetStatus(restoreMsg,'ok');
+    toast(restoreMsg,'ok');
   }catch(e){
     const msg=(e&&e.message)||'Backup konnte nicht geladen werden';
     groupSetStatus('Backup nicht geladen – '+msg,'bad');
