@@ -314,7 +314,7 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
   </article></section>
 
   <section id="rules" class="view"><article class="card"><div class="section"><h2>Dienste</h2><span class="pill blue">Dienste</span></div>
-    <details open style="margin-top:12px"><summary><b>Dienste dieser Gruppe</b></summary><div class="mini" style="margin:8px 0">In der Gruppe werden <b>keine Dienste vorgegeben</b>. Die Dienste werden aus dem zentralen Organisationskatalog übernommen. Ganz vorne wird pro Dienst nur <b>Aktiv für diese Gruppe</b> angeklickt; erst bei aktiven Diensten werden Arbeit / Gruppe / Auto / Manuell für diese Gruppe gesetzt. Andere Gruppen werden nicht verändert.</div><div class="toolbar" style="margin:8px 0"><button class="primary" onclick="showCentralDutyPicker()">Dienste aus zentralem Katalog auswählen</button><button onclick="mergeGroupDutiesFromServer(true,{render:true,saveLocal:true})">🔄 Gruppen-Dienste vom Server laden</button><button class="okbtn" onclick="saveGroupDutiesFromUI(true)">Gruppen-Dienste auf Server speichern</button></div><div id="centralDutyPicker" class="inline-duty-picker"><div class="inline-duty-picker-head"><div><h3 style="margin:0">Dienste für diese Gruppe auswählen</h3><div class="mini">Die Dienste kommen aus dem zentralen Organisationskatalog. Ganz vorne aktivierst du den Dienst für diese Gruppe. Sitzungen/Verfügungsdienste, kurzfristige Einsätze, Frei/Ferien, Krankheit/Unfall, Weiterbildung/Schule und Gleitzeit sind für jede Gruppe bereits aktiv vorgeschlagen. Danach werden nur für aktive Dienste Arbeit / Gruppe / Auto / Manuell angezeigt.</div></div><div class="toolbar" style="margin:0"><button class="primary" onclick="applyCentralDutyPicker()">Auswahl in diese Gruppe übernehmen</button><button onclick="hideCentralDutyPicker()">Schliessen</button></div></div><div id="centralDutyPickerStatus" class="mini">Noch nicht geladen.</div><div id="centralDutyPickerNav" class="inline-duty-nav"></div><div id="centralDutyPickerList"></div></div><div class="table-wrap duty-catalog-wrap" style="max-height:none;overflow-x:auto;overflow-y:visible"><table id="dutyTable" class="duty-table"><thead><tr><th><span class="duty-col-help" tabindex="0">Kurz <span class="info-dot">i</span><span class="duty-col-pop">Kurzcode des Dienstes. Dieser Code erscheint im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Name <span class="info-dot">i</span><span class="duty-col-pop">Lesbarer Name des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Typ <span class="info-dot">i</span><span class="duty-col-pop">Art des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Start <span class="info-dot">i</span><span class="duty-col-pop">Beginn des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Ende <span class="info-dot">i</span><span class="duty-col-pop">Ende des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Intervalle <span class="info-dot">i</span><span class="duty-col-pop">Für geteilte Dienste.</span></span></th><th><span class="duty-col-help" tabindex="0">h <span class="info-dot">i</span><span class="duty-col-pop">Stunden, die der Dienst zählt.</span></span></th><th>Arbeit</th><th>Gruppe</th><th>Auto</th><th>manuell</th><th>Bedeutung</th><th></th></tr></thead><tbody></tbody></table></div></details>
+    <details open style="margin-top:12px"><summary><b>Dienste dieser Gruppe</b></summary><div class="mini" style="margin:8px 0">In der Gruppe werden <b>keine Dienste vorgegeben</b>. Die Dienste werden aus dem zentralen Organisationskatalog übernommen. Ganz vorne wird pro Dienst nur <b>Aktiv für diese Gruppe</b> angeklickt; erst bei aktiven Diensten werden Arbeit / Gruppe / Auto / nur manuell für diese Gruppe gesetzt. Andere Gruppen werden nicht verändert.</div><div class="toolbar" style="margin:8px 0"><button class="primary" onclick="showCentralDutyPicker()">Dienste aus zentralem Katalog auswählen</button><button onclick="mergeGroupDutiesFromServer(true,{render:true,saveLocal:true})">🔄 Gruppen-Dienste vom Server laden</button><button class="okbtn" onclick="saveGroupDutiesFromUI(true)">Gruppen-Dienste auf Server speichern</button></div><div id="centralDutyPicker" class="inline-duty-picker"><div class="inline-duty-picker-head"><div><h3 style="margin:0">Dienste für diese Gruppe auswählen</h3><div class="mini">Die Dienste kommen aus dem zentralen Organisationskatalog. Ganz vorne aktivierst du den Dienst für diese Gruppe. Sitzungen/Verfügungsdienste, kurzfristige Einsätze, Frei/Ferien, Krankheit/Unfall, Weiterbildung/Schule und Gleitzeit sind für jede Gruppe bereits aktiv vorgeschlagen. Danach werden nur für aktive Dienste Arbeit / Gruppe / Auto / nur manuell angezeigt.</div></div><div class="toolbar" style="margin:0"><button class="primary" onclick="applyCentralDutyPicker()">Auswahl in diese Gruppe übernehmen</button><button onclick="hideCentralDutyPicker()">Schliessen</button></div></div><div id="centralDutyPickerStatus" class="mini">Noch nicht geladen.</div><div id="centralDutyPickerNav" class="inline-duty-nav"></div><div id="centralDutyPickerList"></div></div><div class="table-wrap duty-catalog-wrap" style="max-height:none;overflow-x:auto;overflow-y:visible"><table id="dutyTable" class="duty-table"><thead><tr><th><span class="duty-col-help" tabindex="0">Kurz <span class="info-dot">i</span><span class="duty-col-pop">Kurzcode des Dienstes. Dieser Code erscheint im Plan.</span></span></th><th><span class="duty-col-help" tabindex="0">Name <span class="info-dot">i</span><span class="duty-col-pop">Lesbarer Name des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Typ <span class="info-dot">i</span><span class="duty-col-pop">Art des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Start <span class="info-dot">i</span><span class="duty-col-pop">Beginn des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Ende <span class="info-dot">i</span><span class="duty-col-pop">Ende des Dienstes.</span></span></th><th><span class="duty-col-help" tabindex="0">Intervalle <span class="info-dot">i</span><span class="duty-col-pop">Für geteilte Dienste.</span></span></th><th><span class="duty-col-help" tabindex="0">h <span class="info-dot">i</span><span class="duty-col-pop">Stunden, die der Dienst zählt.</span></span></th><th>Arbeit</th><th>Gruppe</th><th>Auto</th><th>nur manuell</th><th>Bedeutung</th><th></th></tr></thead><tbody></tbody></table></div></details>
     <details style="margin-top:12px"><summary><b>Standardbedarf Woche / Wochenende normal</b></summary><div class="mini" style="margin:8px 0">Pro Wochentag Dienste direkt anhaken. Bei Bedarf Anzahl erhöhen, zum Beispiel F9 zweimal. Samstag und Sonntag werden jetzt direkt aus dieser Eingabe für <b>Wochenende normal</b> übernommen. Feiertage nutzen weiterhin die Wochenendregel, wenn kein Tagesstatus gesetzt ist.</div><div id="stdNeeds"></div><div class="toolbar"><button class="primary" onclick="saveStandardNeedsFromUI(); makePlan(true)">Standardwoche übernehmen</button></div></details>
     <details style="margin-top:12px"><summary><b>Schulferien / Feiertage Basel-Stadt lokal</b></summary><div class="mini" style="margin:8px 0">Bearbeitbare lokale Liste. Format Ferien: YYYY-MM-DD bis YYYY-MM-DD pro Zeile. Feiertage: YYYY-MM-DD Name. Zusätzliche arbeitsfreie Halbtage werden automatisch als ½FT markiert: Fasnachtsmontag-Nachmittag, Fasnachtsmittwoch-Nachmittag, 31. Juli-Nachmittag, Heiligabend-Nachmittag und Silvester-Nachmittag, sofern diese Tage nicht auf Samstag/Sonntag fallen. Fasnacht wird nicht als ganzer Feiertag geführt.</div><div class="formgrid"><div><label>Schulferien</label><textarea id="schoolHolidayText"></textarea></div><div><label>Feiertage</label><textarea id="holidayText"></textarea></div></div><button class="primary" onclick="saveCalendarLists(); renderAll()">Kalenderlisten übernehmen</button></details>
   </article></section>
@@ -3484,6 +3484,7 @@ function readDutyFromRow(row){
     manualOnly:!!get('manualOnly')?.checked,
     meaning:String(get('meaning')?.value||'').trim()
   };
+  if(obj.autoPlan&&obj.manualOnly)obj.manualOnly=false;
   if(intervals.length)obj.intervals=intervals;
   const existing=duty(code);
   if(existing?.hoursMode)obj.hoursMode=existing.hoursMode;
@@ -3560,6 +3561,16 @@ function installEditorAutosave(){
     const target=e.target;
     if(!target||!target.closest)return;
     if(target.closest('#dutyTable')){
+      const dutyRow=target.closest('tr[data-duty-row="1"]');
+      const dutyField=target?.dataset?.dutyField||'';
+      if(dutyRow&&dutyField==='autoPlan'&&target.checked){
+        const manual=dutyRow.querySelector('[data-duty-field="manualOnly"]');
+        if(manual)manual.checked=false;
+      }
+      if(dutyRow&&dutyField==='manualOnly'&&target.checked){
+        const auto=dutyRow.querySelector('[data-duty-field="autoPlan"]');
+        if(auto)auto.checked=false;
+      }
       if(syncDutyCatalogFromUI({quiet:true})){
         fillDutySelect();
         saveState(false);
@@ -3734,7 +3745,7 @@ function renderCentralDutyPicker(){
         + centralDutyPickerCheck('countsAsWork','Arbeit',!!f.countsAsWork)
         + centralDutyPickerCheck('countsForCoverage','Gruppe',!!f.countsForCoverage)
         + centralDutyPickerCheck('autoPlan','Auto',!!f.autoPlan)
-        + centralDutyPickerCheck('manualOnly','Manuell',!!f.manualOnly)
+        + centralDutyPickerCheck('manualOnly','nur manuell',!!f.manualOnly)
         + '</div></div>';
     }).join('');
     return '<section class="inline-duty-category" id="'+centralDutyCategoryId(cat)+'"><div class="inline-duty-cat-head"><span>'+esc(CENTRAL_DUTY_CATEGORY_ICON[cat]||'📌')+' '+esc(cat)+'</span><span class="pill">'+(byCat[cat]||[]).length+' Dienste</span></div>'+rows+'</section>';
@@ -3759,7 +3770,7 @@ function centralDutyToLocal(d,row,sort){
     countsAsWork:!!row.querySelector('[data-central-field="countsAsWork"]')?.checked,
     countsForCoverage:!!row.querySelector('[data-central-field="countsForCoverage"]')?.checked,
     autoPlan:!!row.querySelector('[data-central-field="autoPlan"]')?.checked,
-    manualOnly:!!row.querySelector('[data-central-field="manualOnly"]')?.checked,
+    manualOnly:!!row.querySelector('[data-central-field="manualOnly"]')?.checked && !row.querySelector('[data-central-field="autoPlan"]')?.checked,
     meaning:String(d.note||d.category||cur.meaning||''),active:true
   };
   if(cur.intervals)local.intervals=cur.intervals;
@@ -3790,6 +3801,15 @@ function applyCentralDutyPicker(){
 document.addEventListener('change',e=>{
   const row=e.target?.closest&&e.target.closest('#centralDutyPickerList [data-central-duty-index]');
   if(!row)return;
+  const changedField=e.target?.dataset?.centralField||'';
+  if(changedField==='autoPlan'&&e.target.checked){
+    const manual=row.querySelector('[data-central-field="manualOnly"]');
+    if(manual){manual.checked=false;manual.closest('.inline-duty-check')?.classList.toggle('on',false);}
+  }
+  if(changedField==='manualOnly'&&e.target.checked){
+    const auto=row.querySelector('[data-central-field="autoPlan"]');
+    if(auto){auto.checked=false;auto.closest('.inline-duty-check')?.classList.toggle('on',false);}
+  }
   const active=!!row.querySelector('[data-central-field="active"]')?.checked;
   row.classList.toggle('off',!active);
   e.target.closest('.inline-duty-check')?.classList.toggle('on',!!e.target.checked);
@@ -3887,7 +3907,7 @@ function stdDutyTimeText(d){
 function renderStandardNeeds(){
   const el=q('stdNeeds');if(!el)return;
   const opts=standardDutyOptions();
-  if(!opts.length){el.innerHTML='<div class="std-duty-empty">Standarddienste wurden repariert. Falls hier trotzdem nichts erscheint: oben im Dienstkatalog einmal Standarddienste ergänzen klicken.</div>';return;}
+  if(!opts.length){el.innerHTML='<div class="std-duty-empty"><b>Kein Standardbedarf sichtbar.</b><br>Für normale Gruppendienste müssen oben im Dienstkatalog die Haken <b>Aktiv + Arbeit + Gruppe + Auto</b> gesetzt sein und <b>nur manuell</b> muss ausgeschaltet sein.</div>';return;}
   el.innerHTML='<div class="std-week">'+WORKDAYS.map(day=>{
     const selected=(state.standardNeeds[day]||[]).filter(Boolean);
     const selectedText=selected.length?selected.join(', '):'kein Standardbedarf';
@@ -7152,6 +7172,74 @@ function openPrintPDFPage(){
 })();
 <\/script>
 
+
+<script>
+(function(){
+  'use strict';
+  let syncing=false;
+  let refreshTimer=0;
+  function planWrap(){
+    const table=document.getElementById('planTable');
+    return table ? (table.closest('.plan-main-wrap') || table.closest('.table-wrap')) : null;
+  }
+  function slider(){return document.getElementById('planScrollSlider');}
+  function sliderInner(){return document.getElementById('planScrollSliderInner');}
+  function setVisible(el,visible){ if(el) el.style.display=visible?'block':'none'; }
+  function refreshPlanSlider(){
+    const wrap=planWrap();
+    const bar=slider();
+    const inner=sliderInner();
+    const table=document.getElementById('planTable');
+    if(!wrap||!bar||!inner||!table) return;
+    if(document.body.classList.contains('fullscreen-plan')){setVisible(bar,false);return;}
+    const scrollWidth=Math.max(wrap.scrollWidth||0,table.scrollWidth||0,wrap.clientWidth||0);
+    inner.style.width=Math.max(scrollWidth,wrap.clientWidth||0)+'px';
+    const needsSlider=scrollWidth>(wrap.clientWidth||0)+8;
+    setVisible(bar,needsSlider);
+    if(needsSlider && !syncing) bar.scrollLeft=wrap.scrollLeft;
+  }
+  function scheduleRefreshPlanSlider(){
+    clearTimeout(refreshTimer);
+    refreshTimer=setTimeout(refreshPlanSlider,40);
+  }
+  function bindPlanSlider(){
+    const wrap=planWrap();
+    const bar=slider();
+    if(!wrap||!bar||bar.dataset.bound==='1') return;
+    bar.dataset.bound='1';
+    bar.addEventListener('scroll',()=>{
+      if(syncing) return;
+      syncing=true;
+      wrap.scrollLeft=bar.scrollLeft;
+      syncing=false;
+    },{passive:true});
+    wrap.addEventListener('scroll',()=>{
+      if(syncing) return;
+      syncing=true;
+      bar.scrollLeft=wrap.scrollLeft;
+      syncing=false;
+    },{passive:true});
+  }
+  function initPlanSlider(){
+    bindPlanSlider();
+    refreshPlanSlider();
+  }
+  window.__ULMIPOINT_REFRESH_PLAN_SLIDER__=function(){setTimeout(initPlanSlider,60);};
+  window.addEventListener('load',()=>setTimeout(initPlanSlider,120));
+  window.addEventListener('resize',scheduleRefreshPlanSlider);
+  window.addEventListener('orientationchange',()=>setTimeout(initPlanSlider,160));
+  document.addEventListener('click',scheduleRefreshPlanSlider,true);
+  document.addEventListener('change',scheduleRefreshPlanSlider,true);
+  const mo=new MutationObserver(scheduleRefreshPlanSlider);
+  function observePlan(){
+    const table=document.getElementById('planTable');
+    if(table) mo.observe(table,{childList:true,subtree:true,attributes:true});
+    initPlanSlider();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',observePlan); else observePlan();
+})();
+</script>
+
 </body></html>`;
   const win=window.open('','_blank');
   if(!win){toast('Popup blockiert – bitte Popups erlauben','bad');return;}
@@ -7575,74 +7663,6 @@ window.addEventListener('load',init);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',applyUnifiedGroupLabels);
   else applyUnifiedGroupLabels();
   setTimeout(applyUnifiedGroupLabels,300);
-})();
-</script>
-
-
-<script>
-(function(){
-  'use strict';
-  let syncing=false;
-  let refreshTimer=0;
-  function planWrap(){
-    const table=document.getElementById('planTable');
-    return table ? (table.closest('.plan-main-wrap') || table.closest('.table-wrap')) : null;
-  }
-  function slider(){return document.getElementById('planScrollSlider');}
-  function sliderInner(){return document.getElementById('planScrollSliderInner');}
-  function setVisible(el,visible){ if(el) el.style.display=visible?'block':'none'; }
-  function refreshPlanSlider(){
-    const wrap=planWrap();
-    const bar=slider();
-    const inner=sliderInner();
-    const table=document.getElementById('planTable');
-    if(!wrap||!bar||!inner||!table) return;
-    if(document.body.classList.contains('fullscreen-plan')){setVisible(bar,false);return;}
-    const scrollWidth=Math.max(wrap.scrollWidth||0,table.scrollWidth||0,wrap.clientWidth||0);
-    inner.style.width=Math.max(scrollWidth,wrap.clientWidth||0)+'px';
-    const needsSlider=scrollWidth>(wrap.clientWidth||0)+8;
-    setVisible(bar,needsSlider);
-    if(needsSlider && !syncing) bar.scrollLeft=wrap.scrollLeft;
-  }
-  function scheduleRefreshPlanSlider(){
-    clearTimeout(refreshTimer);
-    refreshTimer=setTimeout(refreshPlanSlider,40);
-  }
-  function bindPlanSlider(){
-    const wrap=planWrap();
-    const bar=slider();
-    if(!wrap||!bar||bar.dataset.bound==='1') return;
-    bar.dataset.bound='1';
-    bar.addEventListener('scroll',()=>{
-      if(syncing) return;
-      syncing=true;
-      wrap.scrollLeft=bar.scrollLeft;
-      syncing=false;
-    },{passive:true});
-    wrap.addEventListener('scroll',()=>{
-      if(syncing) return;
-      syncing=true;
-      bar.scrollLeft=wrap.scrollLeft;
-      syncing=false;
-    },{passive:true});
-  }
-  function initPlanSlider(){
-    bindPlanSlider();
-    refreshPlanSlider();
-  }
-  window.__ULMIPOINT_REFRESH_PLAN_SLIDER__=function(){setTimeout(initPlanSlider,60);};
-  window.addEventListener('load',()=>setTimeout(initPlanSlider,120));
-  window.addEventListener('resize',scheduleRefreshPlanSlider);
-  window.addEventListener('orientationchange',()=>setTimeout(initPlanSlider,160));
-  document.addEventListener('click',scheduleRefreshPlanSlider,true);
-  document.addEventListener('change',scheduleRefreshPlanSlider,true);
-  const mo=new MutationObserver(scheduleRefreshPlanSlider);
-  function observePlan(){
-    const table=document.getElementById('planTable');
-    if(table) mo.observe(table,{childList:true,subtree:true,attributes:true});
-    initPlanSlider();
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',observePlan); else observePlan();
 })();
 </script>
 
