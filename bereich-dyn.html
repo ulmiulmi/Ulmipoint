@@ -161,26 +161,32 @@ label{display:block;font-size:12px;color:var(--muted);font-weight:950;margin-bot
 
 
 
-/* Normalansicht: sichtbarer horizontaler Plan-Slider, ohne Speicherbuttons und ohne Plan zu überdecken. */
+/* Normalansicht: dauerhaft sichtbarer horizontaler Plan-Schiebebalken. Keine Speicherbuttons, keine Druckänderung. */
 .plan-scroll-slider{
   display:none;
+  position:fixed;
+  left:18px;
+  right:18px;
+  bottom:12px;
+  z-index:10020;
   overflow-x:auto;
   overflow-y:hidden;
-  height:18px;
-  margin:6px 0 8px;
+  height:24px;
+  margin:0;
   border:1px solid var(--line);
   border-radius:999px;
   background:#fff;
-  box-shadow:inset 0 1px 2px rgba(16,24,40,.06);
+  box-shadow:0 8px 24px rgba(16,24,40,.18), inset 0 1px 2px rgba(16,24,40,.06);
   -webkit-overflow-scrolling:touch;
 }
 .plan-scroll-slider-inner{height:1px;min-width:100%;}
-.plan-scroll-slider::-webkit-scrollbar{height:14px;}
+.plan-scroll-slider::-webkit-scrollbar{height:18px;}
 .plan-scroll-slider::-webkit-scrollbar-track{background:#eef2f7;border-radius:999px;}
-.plan-scroll-slider::-webkit-scrollbar-thumb{background:#98a2b3;border-radius:999px;border:3px solid #eef2f7;}
-.plan-scroll-slider::-webkit-scrollbar-thumb:hover{background:#667085;}
+.plan-scroll-slider::-webkit-scrollbar-thumb{background:#667085;border-radius:999px;border:3px solid #eef2f7;}
+.plan-scroll-slider::-webkit-scrollbar-thumb:hover{background:#475467;}
 .fullscreen-plan .plan-scroll-slider{display:none!important;}
-@media(max-width:740px){.plan-scroll-slider{height:22px;margin:8px 0 10px}.plan-scroll-slider::-webkit-scrollbar{height:18px}}
+body.has-plan-scroll-slider{padding-bottom:34px;}
+@media(max-width:740px){.plan-scroll-slider{left:10px;right:10px;bottom:8px;height:28px}.plan-scroll-slider::-webkit-scrollbar{height:22px}body.has-plan-scroll-slider{padding-bottom:42px}}
 
 </style>
 </head>
@@ -5930,9 +5936,9 @@ function openCellPopover(empId,date,anchor=null){
 function saveQuickCell(){
   if(!selected?.empId)return toast('Bitte Feld wählen','warn');
   const qd=q('quickDuty'); const qh=q('quickHours');
-  if(qd&&q('editDuty'))q('editDuty').value=qd.value;
-  if(qh&&q('editVDHours'))q('editVDHours').value=qh.value;
-  saveCell();
+  const code=qd?qd.value:(q('editDuty')?.value||'');
+  const hours=qh?qh.value:(q('editVDHours')?.value||0);
+  saveCellValue(code,hours);
   closeCellPopover();
 }
 function quickSetCode(code){
@@ -6653,7 +6659,11 @@ function applyVacationRange(){
 }
 function saveCell(){
   if(!selected?.empId)return toast('Bitte Mitarbeiterfeld wählen','warn');
-  const code=q('editDuty').value;
+  return saveCellValue(q('editDuty')?.value||'',q('editVDHours')?.value||0);
+}
+function saveCellValue(code,hoursValue){
+  if(!selected?.empId)return toast('Bitte Mitarbeiterfeld wählen','warn');
+  code=String(code||'').trim().toUpperCase();
   if(code==='FER'&&!isNormalVacationDay(selected.date))return toast('Ferien nur Montag bis Freitag, nicht an Wochenende/Feiertag/½-Feiertag','bad');if(code==='KF'&&!isCompensationCandidateDate(selected.date))return toast('KF nur auf normale Werktage, nicht an Wochenende/Feiertag/½-Feiertag','bad');if(code==='KGL'&&!isCompensationCandidateDate(selected.date))return toast('KGL nur auf normale Werktage, nicht an Wochenende/Feiertag/½-Feiertag','bad');const emp=empById(selected.empId);const schoolWhy=code?protectedSchoolReason(emp,selected.date,code):protectedSchoolReason(emp,selected.date,'');if(schoolWhy)return toast(schoolWhy,'bad');if(code==='P'&&employeePikettBlockedByPct(emp))return toast('Pikett ist bei 90% Pensum und mehr nicht erlaubt','bad');const allowException=allowForbiddenOnDate(selected.date);if(isOfficeDutyCode(code)&&!allowException){const why=officeDutyRuleViolation(emp,code,selected.date);if(why)return toast(why,'bad');}
   if(code&&!allowException){const seqWhy=workSequenceAssignmentReason(emp,code,selected.date);if(seqWhy)return toast(seqWhy,'bad');}
   const k=entryKey(selected.empId,selected.date);
@@ -6662,17 +6672,19 @@ function saveCell(){
     delete state.plan[k];
   }else{
     const d=duty(code);
-    const mh=d?.hoursMode==='manual'?(parseFloat(q('editVDHours').value)||0):0;
+    if(!d)return toast('Dienst '+code+' ist im Dienstkatalog nicht aktiv','bad');
+    const mh=d?.hoursMode==='manual'?(parseFloat(hoursValue)||0):0;
     const newEntry={code,manual:true,manualHours:mh,vdHours:code==='VD'?mh:0};
     const limWhy=employeeLimitEntryViolation(emp,selected.date,newEntry);if(limWhy)return toast(limWhy,'bad');
     const lateEarlyWhy=lateEarlyConflictReason(emp,code,selected.date,{entry:newEntry});if(lateEarlyWhy)return toast(lateEarlyWhy,'bad');
     state.plan[k]=newEntry;
     if(code==='FER')setVacationWeekendFreeForEmployee(empById(selected.empId));
-    if(allowForbiddenOnDate(selected.date))state.plan[k].dayOverrideApplied=true;
+    if(allowException)state.plan[k].dayOverrideApplied=true;
     if(d?.manualOnly)toast(code+' manuell eingetragen','warn');
   }
-  saveState(true);
+  saveState(true,{skipUiSync:true});
   renderPlan();
+  return true;
 }
 function removeDuty(){if(!selected?.empId)return toast('Bitte Mitarbeiterfeld wählen','warn');const k=entryKey(selected.empId,selected.date);if(isHardFrozenEntry(state.plan[k]))return toast('Dieses Feld ist durch Dienstplan bis hier eingefroren','bad');const emp=empById(selected.empId);const why=protectedSchoolReason(emp,selected.date,'');if(why)return toast(why,'bad');state.plan[k]={removed:true,manual:true,code:''};saveState(true);renderPlan();}
 function clearCell(){if(!selected?.empId)return;const k=entryKey(selected.empId,selected.date);if(isHardFrozenEntry(state.plan[k]))return toast('Dieses Feld ist durch Dienstplan bis hier eingefroren','bad');const emp=empById(selected.empId);const why=protectedSchoolReason(emp,selected.date,'FR');if(why)return toast(why,'bad');state.plan[k]={code:'FR',manual:true};saveState(true);renderPlan();}
@@ -7663,6 +7675,102 @@ window.addEventListener('load',init);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',applyUnifiedGroupLabels);
   else applyUnifiedGroupLabels();
   setTimeout(applyUnifiedGroupLabels,300);
+})();
+</script>
+
+<script>
+/* ULMIPOINT normal plan scroll slider actual page */
+(function(){
+  'use strict';
+  let syncing=false;
+  let refreshTimer=0;
+  function q(id){return document.getElementById(id);}
+  function planSection(){return q('plan');}
+  function planActive(){const p=planSection(); return !!p && p.classList.contains('active') && !document.body.classList.contains('fullscreen-plan');}
+  function wrap(){
+    const table=q('planTable');
+    return table ? (table.closest('.plan-main-wrap') || table.closest('.table-wrap')) : null;
+  }
+  function slider(){
+    let bar=q('planScrollSlider');
+    const w=wrap();
+    if(!bar && w){
+      bar=document.createElement('div');
+      bar.id='planScrollSlider';
+      bar.className='plan-scroll-slider no-print';
+      bar.setAttribute('aria-label','Monatsplan horizontal verschieben');
+      const inner=document.createElement('div');
+      inner.id='planScrollSliderInner';
+      inner.className='plan-scroll-slider-inner';
+      bar.appendChild(inner);
+      w.insertAdjacentElement('afterend',bar);
+    }
+    return bar;
+  }
+  function inner(){
+    const bar=slider();
+    if(!bar)return null;
+    let el=q('planScrollSliderInner');
+    if(!el){el=document.createElement('div');el.id='planScrollSliderInner';el.className='plan-scroll-slider-inner';bar.appendChild(el);}
+    return el;
+  }
+  function showBar(bar,show){
+    if(!bar)return;
+    bar.style.display=show?'block':'none';
+    document.body.classList.toggle('has-plan-scroll-slider',!!show);
+  }
+  function refresh(){
+    const w=wrap();
+    const table=q('planTable');
+    const bar=slider();
+    const inn=inner();
+    if(!w||!table||!bar||!inn){document.body.classList.remove('has-plan-scroll-slider');return;}
+    if(!planActive()){showBar(bar,false);return;}
+    const sw=Math.max(w.scrollWidth||0,table.scrollWidth||0,w.clientWidth||0);
+    const cw=w.clientWidth||0;
+    inn.style.width=Math.max(sw,cw+1)+'px';
+    const visible=sw>cw+6;
+    showBar(bar,visible);
+    if(visible && !syncing)bar.scrollLeft=w.scrollLeft;
+  }
+  function schedule(){clearTimeout(refreshTimer);refreshTimer=setTimeout(refresh,60);}
+  function bind(){
+    const w=wrap();
+    const bar=slider();
+    if(!w||!bar)return;
+    if(bar.dataset.planSliderBound!=='1'){
+      bar.dataset.planSliderBound='1';
+      bar.addEventListener('scroll',function(){
+        if(syncing)return;
+        syncing=true;
+        const ww=wrap(); if(ww)ww.scrollLeft=bar.scrollLeft;
+        syncing=false;
+      },{passive:true});
+    }
+    if(w.dataset.planSliderBound!=='1'){
+      w.dataset.planSliderBound='1';
+      w.addEventListener('scroll',function(){
+        if(syncing)return;
+        syncing=true;
+        const b=q('planScrollSlider'); if(b)b.scrollLeft=w.scrollLeft;
+        syncing=false;
+      },{passive:true});
+    }
+  }
+  function init(){bind();refresh();}
+  window.__ULMIPOINT_REFRESH_PLAN_SLIDER__=function(){setTimeout(init,80);};
+  window.addEventListener('load',function(){setTimeout(init,160);});
+  window.addEventListener('resize',schedule);
+  window.addEventListener('orientationchange',function(){setTimeout(init,220);});
+  document.addEventListener('click',function(){setTimeout(init,80);},true);
+  document.addEventListener('change',schedule,true);
+  const mo=new MutationObserver(schedule);
+  function observe(){
+    const table=q('planTable');
+    if(table)mo.observe(table,{childList:true,subtree:true,attributes:true});
+    init();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',observe); else observe();
 })();
 </script>
 
