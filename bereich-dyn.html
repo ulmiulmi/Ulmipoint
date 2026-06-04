@@ -464,6 +464,7 @@ const DEFAULT_RULES={
       'Plane ausschliesslich den aktuell gewählten Monat.',
       'Plane strukturiert in Phasen: zuerst Abwesenheiten/Ferien und geschützte Felder, dann Pflichtdeckung/Fachperson/TV, danach Schüler nur zusätzlich, Teamsitzung, Büro, Saldo/Kompensation, Pikett und erst am Schluss Fairness/Glättung.',
       'Ändere niemals fixierte Monate oder fixierte Felder.',
+      'Manuell gesetzte Dienste gelten immer als fixiert und dürfen durch eine automatische Neuberechnung niemals verändert, verschoben, überschrieben oder entfernt werden. Sie zählen trotzdem vollständig mit ihrer tatsächlichen Dienstart, Arbeitszeit, Dienstkategorie, Wochenend-/Feiertagsbelastung und Ruhezeit.',
       'Decke zuerst den Tagesbedarf mit erlaubten Gruppendiensten.',
       'Plane mit hoher Priorität Dienste in Blöcken: möglichst zusammenhängende Arbeitstage, optisch diagonal nach oben/unten, aber nie gegen harte Regeln.',
       'Mitarbeiter-Vorgaben/Wünsche möglichst einhalten: bevorzugte Dienste, Früh/Spät/Mitte/Büro, freie Tage und Ausschlüsse stark gewichten.',
@@ -1019,6 +1020,39 @@ function repairOrphanPlanEmployeeIds(){
   }
 }
 
+function normalizeManualPlanEntries(){
+  if(!state||!state.plan||typeof state.plan!=='object'||Array.isArray(state.plan))return 0;
+  let changed=0;
+  Object.values(state.plan).forEach(e=>{
+    if(!e||typeof e!=='object'||!e.manual)return;
+    // Manuell gesetzte Einträge sind immer geschützt. Die automatische Planung
+    // darf sie weder verschieben, überschreiben, entfernen noch in Frei umdeuten.
+    if(e.fixed!==true){e.fixed=true;changed++;}
+    if(e.manualFixed!==true){e.manualFixed=true;changed++;}
+    if(e.code&&!e.dutySnapshot){
+      const d=(state.duties||[]).find(x=>String(x?.code||'').trim().toUpperCase()===String(e.code||'').trim().toUpperCase());
+      const snap=planDutySnapshot(d);
+      if(snap){e.dutySnapshot=snap;changed++;}
+    }
+  });
+  return changed;
+}
+function protectedManualDutyCodes(){
+  const out=new Set();
+  Object.values(state?.plan||{}).forEach(e=>{if(e&&(e.manual||e.fixed)&&e.code)out.add(String(e.code).trim().toUpperCase());});
+  return out;
+}
+function preserveProtectedDutyDefinitions(nextDuties){
+  const next=Array.isArray(nextDuties)?nextDuties.slice():[];
+  const seen=new Set(next.map(d=>String(d?.code||'').trim().toUpperCase()).filter(Boolean));
+  protectedManualDutyCodes().forEach(code=>{
+    if(seen.has(code))return;
+    const existing=(state.duties||[]).find(d=>String(d?.code||'').trim().toUpperCase()===code)||dutySnapshotFromPlan(code);
+    if(existing){next.push(clone(existing));seen.add(code);}
+  });
+  return next;
+}
+
 function normalizeStorageObjects(){
   if(!state||typeof state!=='object')state=defaultState();
   if(!state.plan||typeof state.plan!=='object'||Array.isArray(state.plan))state.plan={};
@@ -1053,6 +1087,7 @@ function normalizeStorageObjects(){
   }
   cleanDeletedDutyReferences(state.deletedDutyCodes||[]);
   repairOrphanPlanEmployeeIds();
+  normalizeManualPlanEntries();
 }
 
 function q(id){return document.getElementById(id);}
@@ -1089,7 +1124,26 @@ function monthKey(y=state.selectedYear,m=state.selectedMonth){return `${y}-${pad
 function entryKey(empId,date){return `${date}__${empId}`;}
 function targetKey(empId,y=state.selectedYear,m=state.selectedMonth){return `${y}-${pad(m)}__${empId}`;}
 function balanceCarryoverKey(empId,y=state.selectedYear,m=state.selectedMonth){return `${y}-${pad(m)}__${empId}`;}
-function duty(code){return state.duties.find(d=>d.code===code)||null;}
+function planDutySnapshot(d){
+  if(!d||!d.code)return null;
+  const snap={code:String(d.code||'').trim().toUpperCase(),name:String(d.name||d.code||''),type:String(d.type||''),start:String(d.start||''),end:String(d.end||''),hours:parseFloat(d.hours)||0,countsAsWork:!!d.countsAsWork,countsForCoverage:!!d.countsForCoverage,countsForSequence:!!d.countsForSequence,autoPlan:!!d.autoPlan,manualOnly:!!d.manualOnly,hoursMode:d.hoursMode||'',meaning:String(d.meaning||'')};
+  if(Array.isArray(d.intervals))snap.intervals=clone(d.intervals);
+  return snap;
+}
+function dutySnapshotFromPlan(code){
+  const c=String(code||'').trim().toUpperCase();
+  if(!c||!state?.plan||typeof state.plan!=='object')return null;
+  for(const e of Object.values(state.plan)){
+    if(!e||String(e.code||'').trim().toUpperCase()!==c||!e.dutySnapshot)continue;
+    return Object.assign({code:c},clone(e.dutySnapshot));
+  }
+  return null;
+}
+function duty(code){
+  const c=String(code||'').trim().toUpperCase();
+  if(!c)return null;
+  return state.duties.find(d=>String(d.code||'').trim().toUpperCase()===c)||dutySnapshotFromPlan(c)||null;
+}
 function empById(id){return state.employees.find(e=>e.id===id)||null;}
 function minutes(t){if(!t)return null;const [h,m]=String(t).split(':').map(Number);return h*60+(m||0);}
 function fmtTime(){return new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit'});}
@@ -1669,7 +1723,12 @@ function cleanDeletedDutyReferences(codes){
       const e=state.plan[k];
       const code=String(e?.code||'').trim().toUpperCase();
       const need=String(e?.need||'').trim().toUpperCase();
-      if(del.has(code)||del.has(need))delete state.plan[k];
+      if(del.has(code)||del.has(need)){
+        // Ein manuell gesetzter/fixierter Dienst bleibt im Plan und behält seine
+        // gespeicherte Dienstart. Nur automatische/offene Einträge werden entfernt.
+        if(e&&(e.manual||e.fixed)&&code)return;
+        delete state.plan[k];
+      }
     });
   }
 }
@@ -2556,7 +2615,7 @@ function clearCurrentMonthAndRecalc(){
   openClearModal(true);
 }
 function fixCurrentMonth(){state.lockedMonths[monthKey()]=true;for(const k of Object.keys(state.plan)){if(k.startsWith(monthKey()))state.plan[k].fixed=true;}saveState(true);renderPlan();}
-function unfixCurrentMonth(){delete state.lockedMonths[monthKey()];for(const k of Object.keys(state.plan)){if(k.startsWith(monthKey())&&!isHardFrozenEntry(state.plan[k]))state.plan[k].fixed=false;}saveState(true);renderPlan();}
+function unfixCurrentMonth(){delete state.lockedMonths[monthKey()];for(const k of Object.keys(state.plan)){if(k.startsWith(monthKey())&&!isHardFrozenEntry(state.plan[k]))state.plan[k].fixed=state.plan[k]?.manual?true:false;}saveState(true);renderPlan();}
 function storageProfile(){return 'default';}
 function storageProfileLabel(profile=storageProfile()){
   return 'dieses Gerät';
@@ -2960,6 +3019,7 @@ function saveState(show=true,opts={}){
     syncOpenEditorsBeforeSave({quiet:true});
     readAPIFromUI();
   }
+  normalizeManualPlanEntries();
   const allowFreshSave=!!(opts.force||opts.allowEmpty||state._freshStart||(function(){try{return sessionStorage.getItem(FRESH_START_KEY)==='1';}catch(e){return false;}})());
   const newWeight=stateWeight(state);
   const key=currentStorageKey();
@@ -3390,6 +3450,7 @@ function renderRuleCards(){
     {key:'planning',title:'Planung',text:'nur aktueller Monat; fixierte Monate geschützt. Bei Krank-Ausfällen kann der ganze Plan bis zu einem Datum hart eingefroren werden. Dienste werden prozentual nach Sollstunden/Pensum verteilt, nicht nur nach absolutem Minus.'},
     {key:'planningPhases',title:'Planungsphasen',text:'Der Auto-Planer läuft jetzt bewusst in festen Phasen: 1 Abwesenheiten/Ferien schützen, 2 Pflichtdeckung/Fachperson/TV, 3 Schüler nur zusätzlich, 4 Teamsitzung, 5 Büro, 6 Pausen/Skill-Mix/Reserve prüfen, 7 Saldo/Kompensation, 8 Pikett, 9 Endkontrolle/Glättung. Harte Regeln bleiben in jeder Phase stärker.'},
     {key:'hardSafety',title:'Harte Schutzregeln',readonly:true,readonlyLabel:'nicht abschaltbar',text:'Eine Wahrheit: SCH/SCHF/ÜK niemals überschreiben. Mindestens 11h Ruhezeit zwischen zwei Diensten; Spät → Früh absolut verboten. P nie auf Arbeit/Schule/TS und nie bei 90%+. TS ist Pflicht, aber nicht in GD-Pausen und nicht als TS + S6 + Büro. Fixierte Felder und Mitarbeitereinschränkungen bleiben immer stärker als Wünsche.'},
+    {key:'manualDuties',title:'Manuell gesetzte Dienste',readonly:true,readonlyLabel:'fixiert',text:'Von Hand eingetragene Dienste werden bei der Neuberechnung nicht verändert, verschoben, überschrieben oder entfernt. Sie zählen weiterhin vollständig als ihre echte Dienstart inklusive Arbeitszeit, Gruppe, Wochenend-/Feiertagsbelastung und Ruhezeit. Mit Auto wird ein Feld bewusst wieder freigegeben.'},
     {key:'pikett',title:'Pikett',text:'Pikettdienst P nur planen, wenn alle regulären Dienste des Tages gedeckt sind und das Pensum unter 90% liegt. Wenn F/M/S/GD usw. offen sind oder jemand 90%+ hat, bleibt P weg. Wenn Pikett mit Azore geteilt ist, kann der Tag im Datums-Dropdown als Azore-gedeckt markiert werden. P bleibt ein eigener Eintrag ohne anderen Dienst.'},
     {key:'preferences',title:'Vorgaben',text:'Mitarbeiter-Vorgaben/Wünsche werden stark bevorzugt: Dienste, Früh/Spät/Mitte/Büro, frei, nicht/kein. Harte Regeln bleiben stärker.'},
     {key:'blockPlanning',title:'Blockplanung',text:'Priorität hoch: Dienste möglichst am Stück planen, in 2–5-Tage-Blöcken. Angenehme 5er-Woche wird bevorzugt: 2 Früh, 1 geteilter Dienst, 2 Spät. Harte Regeln bleiben stärker.'},
@@ -3462,6 +3523,7 @@ function removeDutyRow(btn){
   const code=(tr.querySelector('[data-duty-field="code"]')?.value||'').trim().toUpperCase();
   const protectedCodes=protectedDutyDeleteCodes();
   if(protectedCodes.includes(code))return toast(code+' ist ein Systemdienst und bleibt im Katalog','warn');
+  if(code&&protectedManualDutyCodes().has(code))return toast(code+' wird in einem manuell gesetzten oder fixierten Planfeld verwendet und kann deshalb nicht entfernt werden','bad');
   if(code){markDutyCodeDeleted(code);cleanDeletedDutyReferences(code);}
   tr.remove();
   syncDutyCatalogFromUI({quiet:true});
@@ -3518,7 +3580,7 @@ function syncDutyCatalogFromUI(opts={}){
     cleanDeletedDutyReferences(state.deletedDutyCodes||[]);
     return true;
   }
-  state.duties=next;
+  state.duties=preserveProtectedDutyDefinitions(next);
   normalizeDutyCatalog();
   cleanDeletedDutyReferences(state.deletedDutyCodes||[]);
   return true;
@@ -5486,6 +5548,7 @@ function canAssign(emp,code,date,opt={}){
   const schoolWhy=protectedSchoolReason(emp,date,code);if(schoolWhy)return {ok:false,why:schoolWhy};
   const existing=state.plan[entryKey(emp.id,date)];
   if(isHardFrozenEntry(existing))return {ok:false,why:'Dienstplan bis hier eingefroren'};
+  if(existing&&(existing.manual||existing.fixed))return {ok:false,why:'manuell gesetzt / fixiert'};
   if(existing&&existing.code&&!['FR','WF'].includes(existing.code))return {ok:false,why:'bereits belegt'};
   const limWhy=employeeLimitAssignmentViolation(emp,code,date,{entry:{code,manualHours:d.hours||0}});if(limWhy)return {ok:false,why:limWhy};
   const lateEarlyWhy=lateEarlyConflictReason(emp,code,date,{entry:{code,manualHours:d.hours||0}});if(lateEarlyWhy)return {ok:false,why:lateEarlyWhy};
@@ -5901,6 +5964,7 @@ function quickDutyOptions(current=''){
   const seen=new Set();
   const opts=[];
   priority.forEach(code=>{if(code===''||duty(code)){seen.add(code);opts.push(code);}});
+  if(current&&!seen.has(current)&&duty(current)){seen.add(current);opts.unshift(current);}
   state.duties.forEach(d=>{if(!seen.has(d.code)){seen.add(d.code);opts.push(d.code);}});
   return opts.map(code=>code===''?'<option value="">leer</option>':`<option value="${esc(code)}" ${code===current?'selected':''}>${esc(code)} · ${esc(duty(code)?.name||'')}</option>`).join('');
 }
@@ -5908,7 +5972,7 @@ function renderCellPopoverBody(empId,date){
   const body=q('cellPopoverBody'); if(!body)return;
   const emp=empById(empId); const e=state.plan[entryKey(empId,date)]||{}; const code=e.code||'';
   const mh=e.manualHours??e.vdHours??0;
-  const fixed=isHardFrozenEntry(e)?'<span class="pill red">Plan eingefroren</span>':(e.fixed?'<span class="pill yellow">fixiert</span>':'');
+  const fixed=isHardFrozenEntry(e)?'<span class="pill red">Plan eingefroren</span>':(e.manual?'<span class="pill green">manuell fixiert</span>':(e.fixed?'<span class="pill yellow">fixiert</span>':''));
   const replacementHint=(e.sickOriginalCode||code)?'<div class="quick-buttons"><button onclick="suggestQuickReplacement()">Vorschlag zum Einspringen</button></div><div id="quickReplacementBox" class="replacement-box" style="display:none"></div>':'';
   body.innerHTML=`<div class="day-popover-head"><div><h3>${esc(emp?.name||'')}</h3><div class="mini">${esc(date)} · ${esc(emp?.role||'')}${fixed?' · fixiert':''}</div></div><button class="day-popover-close" onclick="closeCellPopover()">×</button></div><div class="field-grid"><div><label>Dienst direkt wählen</label><select id="quickDuty" onchange="applyQuickDutySelection()">${quickDutyOptions(code)}</select></div><div><label>eff. h</label><input id="quickHours" type="number" min="0" max="24" step="0.25" value="${esc(String(mh))}"></div></div><div class="quick-buttons"><button class="primary" onclick="saveQuickCell()">Speichern</button><button onclick="quickSetCode('FR')">Frei</button><button onclick="quickRemoveDuty()">entfernen</button><button onclick="quickAutoCell()">Auto</button><button onclick="quickToggleFixed()">Fix</button></div><div class="lockbox"><b>Dienstplan bis hier</b><div class="mini" style="margin:3px 0 7px">Nur ${esc(emp?.name||'diese Person')}: vom Monatsanfang bis ${esc(date)} fixieren. Leere Felder werden als Frei fixiert, damit die KI dort nichts mehr hineinplant.</div><div class="quick-buttons"><button class="primary" onclick="quickFixEmployeeUntil()">bis hier fixieren</button><button onclick="quickUnfixEmployeeUntil()">bis hier lösen</button></div></div>${replacementHint}${employeeLimitBoxHtml(emp,date)}<div class="sickbox"><b>Krank / KA für diese Person</b><div class="mini" style="margin:3px 0 7px">Setzt KR nur Montag–Freitag auf normale Tage. Wochenende, Feiertage und ½-Feiertage werden übersprungen. Stunden: KR-Tag 1–3 wie geplanter Eintrag, ab KR-Tag 4 Tages-Soll. Bestehende Dienste werden als Ausfall gespeichert, damit Einspringer vorgeschlagen werden können.</div><div class="vacgrid"><div><label>krank von</label><input id="quickSickStart" type="date" value="${esc(date)}"></div><div><label>krank bis</label><input id="quickSickEnd" type="date" value="${esc(date)}"></div></div><div class="quick-buttons"><button class="primary" onclick="applyQuickSickRange()">Krank setzen</button><button onclick="quickSetSickToday()">nur diesen Tag KR</button><button onclick="suggestQuickReplacement()">Einspringer vorschlagen</button></div></div><div class="vacbox"><b>Ferienblock für diese Person</b><div class="mini" style="margin:3px 0 7px">Setzt FER nur auf normale Werktage. Wochenende davor/danach bleibt frei.</div><div class="vacgrid"><div><label>von</label><input id="quickVacStart" type="date" value="${esc(date)}"></div><div><label>bis</label><input id="quickVacEnd" type="date" value="${esc(date)}"></div></div><div class="quick-buttons"><button class="primary" onclick="applyQuickVacationRange()">Ferien setzen</button><button onclick="quickSetCode('FER')">nur diesen Tag FER</button></div></div><div class="vacbox"><b>KF / Feiertags-Frei als Block</b><div class="mini" style="margin:3px 0 7px">Wie zusätzliche freie Tage: setzt KF auf normale freie Werktage im Zeitraum. Zählt nicht als Arbeitszeit und wird auf den Jahresanspruch angerechnet. Offen: ${esc(String(holidayCompRemainingDays(empId,state.selectedYear)))} von ${esc(String(holidayCompAnnualDays(emp,state.selectedYear)))} Tagen.</div><div class="vacgrid"><div><label>KF von</label><input id="quickKFStart" type="date" value="${esc(date)}"></div><div><label>KF bis</label><input id="quickKFEnd" type="date" value="${esc(date)}"></div></div><div class="quick-buttons"><button class="primary" onclick="applyQuickHolidayCompRange()">KF-Zeitraum setzen</button><button onclick="quickSetCode('KF')">nur diesen Tag KF</button><button onclick="clearAutoHolidayCompForEmployeeYear()">Auto-KF dieses Jahr löschen</button></div></div><div class="vacbox"><b>KGL / Überzeit kompensieren als Block</b><div class="mini" style="margin:3px 0 7px">Setzt KGL auf normale freie Werktage im Zeitraum. Zählt nicht als Arbeitszeit und reduziert den POLYPOINT-Saldo. Es wird nicht mehr KGL gesetzt, als Überzeit vorhanden ist. Verfügbar: ${esc(formatHoursHMLabel(kglRemainingCompHours(emp)))} · Tageswert: ${esc(formatHoursHMLabel(kglCompDailyHours(emp,date)))}. Belegte Dienste, Schule, Ferien, Krank, Feiertage und Wochenenden werden übersprungen.</div><div class="vacgrid"><div><label>KGL von</label><input id="quickKGLStart" type="date" value="${esc(date)}"></div><div><label>KGL bis</label><input id="quickKGLEnd" type="date" value="${esc(date)}"></div></div><div class="quick-buttons"><button class="primary" onclick="applyQuickOvertimeCompRange()">KGL-Zeitraum setzen</button><button onclick="quickSetCode('KGL')">nur diesen Tag KGL</button></div></div>`;
   syncQuickHoursBox();
@@ -5993,6 +6057,7 @@ function fixEmployeeUntil(empId,date,unlock=false){
       if(!e){skipped++;return;}
       if(isHardFrozenEntry(e)){skipped++;return;}
       if(e.lockedEmpty){delete state.plan[k];empty++;touched++;return;}
+      if(e.manual){e.fixed=true;e.manualFixed=true;skipped++;return;}
       if(e.fixed){e.fixed=false;touched++;}else skipped++;
       return;
     }
@@ -6059,7 +6124,7 @@ function unfreezeWholePlanUntil(date){
       if(!isHardFrozenEntry(e))return;
       if(e.lockedEmpty){delete state.plan[k];empty++;touched++;return;}
       delete e.hardFrozen;delete e.globalFrozen;delete e.globalFreezeUntil;
-      e.fixed=false;touched++;
+      e.fixed=e.manual?true:false;if(e.manual)e.manualFixed=true;touched++;
     });
   });
   if(state.globalPlanFreezes?.[monthKey()]&&state.globalPlanFreezes[monthKey()]<=date)delete state.globalPlanFreezes[monthKey()];
@@ -6691,7 +6756,7 @@ function saveCellValue(code,hoursValue){
     const d=duty(code);
     if(!d)return toast('Dienst '+code+' ist im Dienstkatalog nicht aktiv','bad');
     const mh=d?.hoursMode==='manual'?(parseFloat(hoursValue)||0):0;
-    const newEntry={code,manual:true,manualHours:mh,vdHours:code==='VD'?mh:0};
+    const newEntry={code,manual:true,fixed:true,manualFixed:true,dutySnapshot:planDutySnapshot(d),manualHours:mh,vdHours:code==='VD'?mh:0,reason:'manuell gesetzt – vor Auto-Neuberechnung geschützt'};
     const limWhy=employeeLimitEntryViolation(emp,selected.date,newEntry);if(limWhy)return toast(limWhy,'bad');
     const lateEarlyWhy=lateEarlyConflictReason(emp,code,selected.date,{entry:newEntry});if(lateEarlyWhy)return toast(lateEarlyWhy,'bad');
     state.plan[k]=newEntry;
@@ -6706,7 +6771,7 @@ function saveCellValue(code,hoursValue){
 function removeDuty(){if(!selected?.empId)return toast('Bitte Mitarbeiterfeld wählen','warn');const k=entryKey(selected.empId,selected.date);if(isHardFrozenEntry(state.plan[k]))return toast('Dieses Feld ist durch Dienstplan bis hier eingefroren','bad');const emp=empById(selected.empId);const why=protectedSchoolReason(emp,selected.date,'');if(why)return toast(why,'bad');state.plan[k]={removed:true,manual:true,code:''};saveState(true);renderPlan();}
 function clearCell(){if(!selected?.empId)return;const k=entryKey(selected.empId,selected.date);if(isHardFrozenEntry(state.plan[k]))return toast('Dieses Feld ist durch Dienstplan bis hier eingefroren','bad');const emp=empById(selected.empId);const why=protectedSchoolReason(emp,selected.date,'FR');if(why)return toast(why,'bad');state.plan[k]={code:'FR',manual:true};saveState(true);renderPlan();}
 function autoCell(){if(!selected?.empId)return;const k=entryKey(selected.empId,selected.date);if(isHardFrozenEntry(state.plan[k]))return toast('Dieses Feld ist durch Dienstplan bis hier eingefroren','bad');const emp=empById(selected.empId);const why=protectedSchoolReason(emp,selected.date,'');if(why)return toast(why,'bad');delete state.plan[k];makePlan(true);}
-function toggleCellFixed(){if(!selected?.empId)return;const k=entryKey(selected.empId,selected.date);if(isHardFrozenEntry(state.plan[k]))return toast('Diese Fixierung gehört zum eingefrorenen Gesamtplan','bad');if(!state.plan[k])state.plan[k]={code:'FR',manual:true};state.plan[k].fixed=!state.plan[k].fixed;saveState(true);renderPlan();}
+function toggleCellFixed(){if(!selected?.empId)return;const k=entryKey(selected.empId,selected.date);if(isHardFrozenEntry(state.plan[k]))return toast('Diese Fixierung gehört zum eingefrorenen Gesamtplan','bad');if(state.plan[k]?.manual&&state.plan[k]?.fixed)return toast('Manuell gesetzte Dienste bleiben fixiert. Mit Auto kannst du das Feld wieder für die Planung freigeben.','warn');if(!state.plan[k])state.plan[k]={code:'FR',manual:true,fixed:true,manualFixed:true};state.plan[k].fixed=!state.plan[k].fixed;saveState(true);renderPlan();}
 function saveDayStatus(){if(!selected?.date)return toast('Bitte Datum wählen','warn');{const ds=q('dayStatusSelect'); if(!ds)return toast('Tagesbedarf bitte im Bereich BT / Tagesstatus bearbeiten','warn'); state.dayStatus[selected.date]=ds.value;}saveState(true);renderPlan();toast('Tagesstatus gespeichert','ok');}
 function clearDayStatus(){if(!selected?.date)return;delete state.dayStatus[selected.date];saveState(true);renderPlan();}
 function deleteSpecialDay(){if(!selected?.date)return;delete state.dayStatus[selected.date];if(state.dayNeeds)delete state.dayNeeds[selected.date];state.employees.forEach(emp=>{const k=entryKey(emp.id,selected.date);const e=state.plan[k];if(e&&!e.fixed&&!e.manual)delete state.plan[k];});makePlan(true);}
@@ -7005,7 +7070,7 @@ function renderQuickIssues(){
   q('quickIssues').innerHTML=html||'Keine roten Punkte und keine fehlenden Dienste.';
 }
 function monthTarget(emp,y,m){const ov=monthTargetOverride(emp.id,y,m);return ov===null?autoMonthTarget(emp,y,m):ov;}
-function entryHours(e){if(!e||e.removed)return 0;const d=duty(e.code);if(!d)return 0;const addon=officeAddonHours(e);if(e.code==='KR'&&Number.isFinite(parseFloat(e.manualHours)))return (parseFloat(e.manualHours)||0)+addon;if(d.hoursMode==='manual')return (parseFloat(e.manualHours??e.vdHours??0)||0)+addon;return (d.countsAsWork?(parseFloat(d.hours)||0):0)+addon;}
+function entryHours(e){if(!e||e.removed)return 0;const d=duty(e.code);if(!d)return 0;/* manual/fixed ändert nie die Dienstart: Code und Dienstdefinition bleiben für Stunden/Kategorie massgebend. */const addon=officeAddonHours(e);if(e.code==='KR'&&Number.isFinite(parseFloat(e.manualHours)))return (parseFloat(e.manualHours)||0)+addon;if(d.hoursMode==='manual')return (parseFloat(e.manualHours??e.vdHours??0)||0)+addon;return (d.countsAsWork?(parseFloat(d.hours)||0):0)+addon;}
 function monthHours(empId,y,m){let sum=0;for(let d=1;d<=daysInMonth(y,m);d++){const date=iso(y,m,d);const emp=empById(empId);if(emp&&!isActiveOn(emp,date))continue;sum+=entryHours(state.plan[entryKey(empId,date)]);}return sum;}
 function yearBalance(empId,y,untilM){
   const emp=empById(empId);if(!emp)return 0;
