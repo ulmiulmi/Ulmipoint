@@ -5919,7 +5919,7 @@ function renderPlan(){
     let streak=displayWorkStreakBefore(emp,dates[0]);
     dates.forEach(date=>{
       const e=state.plan[entryKey(emp.id,date)]||null;
-      const code=e?.removed?'RAUS':(e?.code||'');
+      const code=e?.removed?'':(e?.code||'');
       if(entryCountsForWorkSequence(e))streak++;else if(!code||['FR','WF','RAUS'].includes(code))streak=0;
       const d=duty(code);
       let cls=isWeekend(date)?' weekend':'';
